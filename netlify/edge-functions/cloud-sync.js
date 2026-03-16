@@ -87,8 +87,7 @@ export default async (request, context) => {
             let profilesJson = existingRecord.fields["Profiles Data"];
             let fullText = "";
             
-            // 🛠️ CRITICAL FIX: Lark chunks long text fields into an array of segment objects.
-            // We must map and join them together so the JSON doesn't tear in half!
+            // Re-stitch the chunked text segments back together for the frontend
             if (Array.isArray(profilesJson)) {
                 fullText = profilesJson.map(segment => segment.text || "").join("");
             } else if (typeof profilesJson === 'object' && profilesJson !== null) {
@@ -105,11 +104,23 @@ export default async (request, context) => {
             const body = await request.json();
             const profilesString = JSON.stringify(body.profiles);
 
+            // 🛠️ CRITICAL FIX: Lark rejects simple strings > 1000 chars.
+            // We must chunk the long JSON string into an array of Segment Objects
+            const MAX_SEGMENT_LENGTH = 900;
+            const profilesSegments = [];
+            
+            for (let i = 0; i < profilesString.length; i += MAX_SEGMENT_LENGTH) {
+                profilesSegments.push({
+                    type: "text",
+                    text: profilesString.substring(i, i + MAX_SEGMENT_LENGTH)
+                });
+            }
+
             const payload = {
                 fields: {
                     "Device ID": deviceId,
                     "App Name": appName,
-                    "Profiles Data": profilesString,
+                    "Profiles Data": profilesSegments,
                     "Last Synced": Date.now()
                 }
             };
