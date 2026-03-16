@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TET 节点计算器</title>
+    <link rel="manifest" href="manifest.json">
+
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="TET 节点计算器">
+    <link rel="apple-touch-icon" href="icon.png">
+    
+    <meta name="theme-color" content="#4f46e5">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Roboto', 'PingFang SC', 'Microsoft YaHei', sans-serif; background-color: #f8fafc; -webkit-tap-highlight-color: transparent; }
+        .blur-lock { filter: blur(12px); pointer-events: none; user-select: none; transition: filter 0.5s ease; }
+        
+        /* Scrollbar Styling */
+        .log-container::-webkit-scrollbar, .timeline-scroll::-webkit-scrollbar { height: 6px; }
+        .log-container::-webkit-scrollbar-thumb, .timeline-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        
+        /* Accordion Styles */
+        details > summary { list-style: none; cursor: pointer; transition: all 0.2s; }
+        details > summary::-webkit-details-marker { display: none; }
+        details[open] > summary { border-bottom-color: #e2e8f0; margin-bottom: 0; }
+        details > summary:after { content: '+'; float: right; font-weight: bold; font-size: 1.2em; color: #64748b; }
+        details[open] > summary:after { content: '-'; color: #4f46e5; }
+
+        /* Custom Inputs */
+        .input-group { position: relative; }
+        .input-group label { position: absolute; top: -8px; left: 10px; background: white; padding: 0 4px; font-size: 10px; font-weight: bold; color: #64748b; cursor: pointer; display: flex; align-items: center; gap: 4px; }
+        .input-group label:hover { color: #4f46e5; }
+
+        /* Info Icon */
+        .info-btn { display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; border-radius: 50%; background-color: #e2e8f0; color: #64748b; font-size: 9px; transition: all 0.2s; }
+        .input-group label:hover .info-btn { background-color: #4f46e5; color: white; }
+        label:hover .info-btn { background-color: #4f46e5; color: white; }
+        
+        /* Toggle Switch */
+        .toggle-checkbox:checked { right: 0; border-color: #4f46e5; }
+        .toggle-checkbox:checked + .toggle-label { background-color: #4f46e5; }
+        
+        /* Toast Notification & Overlay */
+        #toast-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.2); z-index: 9998; display: none; }
+        #toast-container { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 9999; pointer-events: none; width: 90%; max-width: 400px; display: flex; flex-direction: column; align-items: center; }
+        .toast { background: rgba(15, 23, 42, 0.95); color: white; padding: 16px; border-radius: 16px; font-size: 14px; margin-bottom: 10px; opacity: 0; transform: translateY(-20px); transition: all 0.3s; pointer-events: auto; display: flex; flex-direction: column; align-items: center; gap: 12px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3); border: 1px solid rgba(255,255,255,0.1); width: auto; max-width: 100%; }
+        .toast.show { opacity: 1; transform: translateY(0); }
+        .toast img { max-width: 100%; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); }
+        .toast-text { text-align: center; font-weight: 500; }
+
+        /* Ledger Table Styles */
+        .col-bal { color: #64748b; font-family: monospace; }
+        .col-prod { color: #16a34a; font-weight: bold; font-family: monospace; }
+        .col-prod-red { color: #ef4444; font-weight: bold; font-family: monospace; }
+        .col-acc { color: #f59e0b; font-size: 9px; font-family: monospace; }
+        
+        /* Sticky Elements */
+        .sticky-col { position: sticky; left: 0; z-index: 20; background-color: inherit; }
+        .sticky-col-header { position: sticky; left: 0; z-index: 30; }
+        .sticky-shadow { box-shadow: 2px 0 5px -2px rgba(0,0,0,0.1); }
+        .sticky-right { position: sticky; right: 0; z-index: 20; background-color: inherit; border-left: 2px solid #f1f5f9; }
+        
+        /* Timeline specific */
+        .sticky-node { position: sticky; left: 0; z-index: 10; background: white; padding-right: 8px; font-weight: 900; border-right: 1px solid #f1f5f9; }
+
+        /* Modal Scroll */
+        .modal-scroll { max-height: 85vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+
+        /* Sync Indicator Badge Styles */
+        .sync-badge { display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px; border-radius: 9999px; font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; transition: all 0.3s; }
+        .sync-dot { width: 6px; height: 6px; border-radius: 50%; position: relative; }
+        .sync-dot-ping { position: absolute; width: 100%; height: 100%; border-radius: 50%; opacity: 0.75; animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite; }
+        @keyframes ping { 75%, 100% { transform: scale(2.5); opacity: 0; } }
+
+        /* Individual Row Dot */
+        .row-dot { width: 5px; height: 5px; border-radius: 50%; display: inline-block; position: relative; vertical-align: middle; }
+        .row-ping { position: absolute; width: 100%; height: 100%; border-radius: 50%; background: inherit; opacity: 0.6; animation: row-ping-anim 1.5s infinite; }
+        @keyframes row-ping-anim { 0% { transform: scale(1); opacity: 0.6; } 100% { transform: scale(3.5); opacity: 0; } }
+
+        @media print { .no-print { display: none !important; } }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+    <div id="toast-overlay" onclick="dismissAllToasts()"></div>
+    <div id="toast-container"></div>
+
+    <!-- PROFILE MODAL (Shared Hub System) -->
+    <div id="profileModal" class="fixed inset-0 z-40 hidden flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 no-print">
+        <div class="bg-white w-full max-w-4xl h-[80vh] rounded-2xl shadow-xl flex flex-col overflow-hidden">
+            <div class="bg-slate-100 p-4 border-b border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                <div class="flex items-center gap-4">
+                    <h3 class="font-black text-slate-700 uppercase" data-i18n="saved_profiles">Saved Profiles</h3>
+                    
+                    <div class="sync-badge bg-indigo-50 text-indigo-500 border border-indigo-100 shadow-sm">
+                        <div class="sync-dot bg-indigo-500">
+                            <div class="sync-dot-ping bg-indigo-400"></div>
+                        </div>
+                        <span class="sync-status-text">Cloud Sync</span>
+                    </div>
+                </div>
+                
+                <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                    <button onclick="exportProfiles()" class="flex-1 sm:flex-none justify-center text-[10px] bg-white border border-slate-300 hover:bg-slate-50 text-slate-600 px-2 py-1.5 rounded-lg shadow-sm font-bold transition flex items-center gap-1">
+                        ⬇️ <span data-i18n="export">Export</span>
+                    </button>
+                    <label class="flex-1 sm:flex-none justify-center text-[10px] bg-white border border-slate-300 hover:bg-slate-50 text-slate-600 px-2 py-1.5 rounded-lg shadow-sm font-bold transition cursor-pointer flex items-center gap-1 m-0">
+                        ⬆️ <span data-i18n="import">Import</span>
+                        <input type="file" class="hidden" accept=".json" onchange="importProfiles(event)">
+                    </label>
+                    <button onclick="toggleProfiles()" class="text-slate-500 text-xl font-bold hover:text-red-500 transition ml-2 hidden sm:block">&times;</button>
+                </div>
+            </div>
+            
+            <div class="bg-indigo-50/80 px-4 py-3 border-b border-indigo-100 flex items-center justify-between">
+                <span class="text-[11px] font-bold text-indigo-700 uppercase tracking-wide" data-i18n="auto_project">Auto-project days on load (from save date)</span>
+                <div class="relative inline-block w-8 h-4 align-middle select-none transition duration-200 ease-in">
+                    <input type="checkbox" id="autoProjectToggle" class="toggle-checkbox absolute block w-4 h-4 rounded-full bg-white border-4 appearance-none cursor-pointer border-slate-300 transition-all duration-300" onchange="localStorage.setItem('tet_yolo_auto_project', this.checked)"/>
+                    <label for="autoProjectToggle" class="toggle-label block overflow-hidden h-4 rounded-full bg-slate-300 cursor-pointer"></label>
+                </div>
+            </div>
+
+            <div class="flex-grow overflow-auto p-0">
+                <table class="w-full text-left border-collapse">
+                    <thead class="bg-slate-50 sticky top-0 z-10 shadow-sm">
+                        <tr class="text-[10px] text-slate-400 uppercase tracking-wider">
+                            <th class="px-3 py-3 font-bold w-[100px]" data-i18n="date">Date</th>
+                            <th class="px-3 py-3 font-bold text-left" data-i18n="profile_name">Profile Name</th>
+                            <th class="px-3 py-3 font-bold text-left" data-i18n="result">Result</th>
+                            <th class="px-3 py-3 font-bold text-right whitespace-nowrap" data-i18n="action">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="profileTableBody" class="text-xs font-mono text-slate-600 divide-y divide-slate-100"></tbody>
+                </table>
+            </div>
+            <div class="sm:hidden p-3 border-t border-slate-200">
+                <button onclick="toggleProfiles()" class="w-full bg-slate-200 text-slate-600 font-bold py-2 rounded-lg">关闭 / Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SAVE PROFILE MODAL -->
+    <div id="saveProfileModal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 no-print">
+        <div class="bg-white w-full max-w-md rounded-2xl shadow-xl flex flex-col overflow-hidden">
+            <div class="bg-slate-100 p-4 border-b border-slate-200 flex justify-between items-center">
+                <h3 class="font-black text-slate-700 uppercase" data-i18n="save_profile">Save Profile</h3>
+                <button onclick="closeSaveProfileModal()" class="text-slate-500 text-xl font-bold hover:text-red-500 transition">&times;</button>
+            </div>
+            <div class="p-5 flex flex-col gap-5 bg-slate-50/50">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1" data-i18n="profile_name">Profile Name</label>
+                    <input type="text" id="newProfileName" class="w-full border-2 border-slate-200 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-indigo-500 shadow-sm transition" placeholder="Enter name...">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-2" data-i18n="overwrite_existing">Or Overwrite Existing:</label>
+                    <div id="existingProfilesList" class="max-h-48 overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-sm divide-y divide-slate-100">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+                <button onclick="confirmSaveProfile()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl shadow-lg shadow-indigo-200 transition transform active:scale-95 flex items-center justify-center gap-2 mt-2">
+                    💾 <span data-i18n="save">Save</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN APP -->
+    <div id="appContent" class="max-w-[1400px] mx-auto p-4 md:p-6 space-y-6 transition-all duration-700 pb-24">
+        
+        <!-- HEADER -->
+        <div class="flex flex-wrap justify-between items-start gap-4 no-print mb-2">
+            <div class="flex flex-col">
+                <div class="flex items-center gap-2">
+                    <h1 class="text-3xl font-black text-slate-800 tracking-tight">TET <span class="text-indigo-600" data-i18n="title_name">节点计算器</span></h1>
+                </div>
+                <div class="flex items-center gap-2 mt-1">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase">V11.1.0 • Hub Edition</p>
+                    
+                    <div class="sync-badge bg-indigo-50 text-indigo-500 border border-indigo-100 shadow-sm">
+                        <div class="sync-dot bg-indigo-500">
+                            <div class="sync-dot-ping bg-indigo-400"></div>
+                        </div>
+                        <span class="sync-status-text">Cloud Sync</span>
+                    </div>
+
+                    <span id="activeProfileBadge" class="hidden text-[9px] font-bold bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded border border-indigo-200 uppercase tracking-widest shadow-sm"></span>
+                </div>
+            </div>
+            
+            <div id="topControls" class="flex gap-2 transition-opacity duration-300">
+                <button onclick="toggleProfiles()" class="bg-white/90 backdrop-blur border border-slate-300 shadow-sm text-indigo-600 font-bold text-xs px-3 py-2 rounded-full hover:bg-slate-50 transition flex items-center gap-1">
+                    📂 <span data-i18n="profiles_btn">Profiles</span>
+                </button>
+                <button onclick="toggleLanguage()" class="bg-white/90 backdrop-blur border border-slate-300 shadow-sm text-slate-700 font-bold text-xs px-3 py-2 rounded-full hover:bg-slate-50 transition flex items-center gap-1">
+                    🌐 <span id="langBtnText">EN / 中</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 1. NODE SETTINGS (ACCORDION) -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            <details class="group" open>
+                <summary class="px-5 py-4 bg-slate-50 border-b border-slate-200 font-bold text-xs text-slate-600 uppercase flex justify-between items-center select-none">
+                    <span><span class="w-2 h-2 rounded-full bg-blue-500 inline-block mr-2"></span><span data-i18n="node_settings">Node Settings</span></span>
+                </summary>
+                <div class="p-4 bg-slate-50/50">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4" id="nodesContainer">
+                        <!-- Dynamic Nodes Injected Here -->
+                    </div>
+                </div>
+            </details>
+        </div>
+
+        <!-- 2. GLOBAL INPUTS -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 space-y-5">
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div class="input-group">
+                    <label onclick="showHelp('tip_accel')"><span data-i18n="lbl_accel">Acceleration (TET)</span> <span class="info-btn">💡</span></label>
+                    <input type="number" id="accelToken" value="0" oninput="saveState(); refreshBadges()" class="w-full border-2 border-slate-100 rounded-xl px-3 py-3 text-lg font-bold outline-none focus:border-indigo-500 transition">
+                </div>
+                <div class="input-group">
+                    <label onclick="showHelp('tip_wallet')"><span data-i18n="lbl_wallet">Wallet (TET)</span> <span class="info-btn">💡</span></label>
+                    <input type="number" id="currentWallet" value="0" oninput="saveState()" class="w-full border-2 border-slate-100 rounded-xl px-3 py-3 text-lg font-bold outline-none focus:border-indigo-500 transition">
+                </div>
+                <div class="input-group">
+                    <label onclick="showHelp('tip_global_cycle')"><span data-i18n="lbl_global_cycle">Auto Cycle</span> <span class="info-btn">💡</span></label>
+                    <select id="globalCycleInput" onchange="saveState()" class="w-full border-2 border-slate-100 rounded-xl px-3 py-3 text-lg font-bold outline-none focus:border-indigo-500 transition bg-white appearance-none">
+                    </select>
+                </div>
+            </div>
+            <button onclick="calculate()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl shadow-lg shadow-indigo-200 transition transform active:scale-95 flex items-center justify-center gap-2">
+                <span data-i18n="run_analysis">🔎 Run Analysis</span>
+            </button>
+            <button onclick="resetInputs()" class="w-full bg-white border-2 border-slate-200 text-slate-500 hover:text-red-500 hover:border-red-200 font-bold py-3 rounded-xl transition flex items-center justify-center gap-2 active:scale-95">
+                <span data-i18n="clear_inputs">Clear All Inputs</span>
+            </button>
+        </div>
+
+        <!-- 3. RESULT HERO CARD -->
+        <div id="resultCard" class="bg-slate-800 text-white rounded-2xl shadow-xl overflow-hidden relative transition-colors duration-500">
+            <div class="absolute top-0 right-0 w-64 h-64 bg-white rounded-full mix-blend-overlay filter blur-3xl opacity-10 pointer-events-none"></div>
+            <div class="p-6 text-center">
+                <h2 class="text-[10px] font-bold uppercase tracking-widest opacity-70 mb-2" data-i18n="analysis_result">Analysis Result</h2>
+                
+                <div id="safeState" class="hidden">
+                    <p class="text-sm font-bold opacity-80" data-i18n="safe_to_sell">Safe Withdrawal Amount</p>
+                    <div class="text-5xl font-black tracking-tighter my-2"><span id="safeAmount">0.00</span> <span class="text-lg">TET</span></div>
+                    <p class="text-[10px] opacity-75 max-w-md mx-auto mt-2 leading-relaxed" data-i18n="safe_desc">Even if you sell this amount, your future production will cover all restaking costs.</p>
+                </div>
+
+                <div id="dangerState" class="hidden">
+                    <div class="flex items-center justify-center gap-2 my-2 text-red-100">
+                        <svg class="w-9 h-9 opacity-90 drop-shadow-md" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path>
+                        </svg>
+                        <div class="text-4xl font-black tracking-wide" data-i18n="warning_title">Shortage Risk</div>
+                    </div>
+                    <p class="text-sm font-bold text-red-200 mb-1"><span data-i18n="shortage">Shortage:</span> <span id="shortageAmount">0.00</span> TET</p>
+                    <div class="inline-block bg-red-900/40 rounded-lg px-3 py-1 mb-2 mt-1">
+                        <span class="text-xs font-bold text-red-200">⚠️ <span data-i18n="shortage_day">Happens on Day:</span> <span id="shortageDayDisplay">--</span></span>
+                    </div>
+                    <p class="text-[10px] text-red-200/60 max-w-md mx-auto" data-i18n="danger_desc">Your current wallet + future production is NOT enough to cover the next restake. Do not withdraw.</p>
+                </div>
+                
+                <div id="initialState">
+                    <p class="text-sm text-slate-400 italic" data-i18n="press_run">Press button above to analyze...</p>
+                </div>
+
+                <div class="mt-6 flex justify-center gap-3 no-print relative z-10">
+                    <button onclick="openSaveProfileModal()" class="text-[10px] bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg font-bold transition flex items-center gap-1 shadow-sm">💾 <span data-i18n="save_profile">Save Profile</span></button>
+                    <button onclick="shareResult()" class="text-[10px] bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg font-bold transition flex items-center gap-1 shadow-sm">📋 <span data-i18n="copy">Copy</span></button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. VISUAL GANTT TIMELINE -->
+        <div id="timelineSection" class="bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col overflow-hidden hidden">
+            <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+                <h3 class="font-bold text-xs text-slate-700 uppercase">📊 <span data-i18n="timeline_title">Node Timeline</span></h3>
+            </div>
+            
+            <div class="p-4 w-full">
+                <div class="flex flex-wrap gap-4 text-[9px] font-bold text-slate-500 mb-4 px-1">
+                    <div class="flex items-center gap-1.5"><div class="w-3 h-3 rounded-[2px] bg-emerald-400"></div> <span data-i18n="legend_prod">Producing</span></div>
+                    <div class="flex items-center gap-1.5"><div class="w-3 h-3 rounded-[2px] bg-purple-500"></div> <span data-i18n="legend_buy">Buy/Restake</span></div>
+                    <div class="flex items-center gap-1.5"><div class="w-3 h-3 rounded-[2px] bg-amber-400"></div> <span data-i18n="legend_wait">Waiting</span></div>
+                    <div class="flex items-center gap-1.5"><div class="w-3 h-3 rounded-[2px] bg-red-400"></div> <span data-i18n="legend_stop">Stopped</span></div>
+                </div>
+
+                <div class="overflow-x-auto timeline-scroll pb-4">
+                    <div id="timelineContainer" class="flex flex-col min-w-max"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. LEDGER TABLE (DETAILED) -->
+        <div id="ledgerSection" class="bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col min-h-[500px] overflow-hidden hidden">
+            <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center sticky top-0 z-20">
+                <h3 class="font-bold text-xs text-slate-700 uppercase"><span data-i18n="ledger_title">Cashflow Forecast</span> (<span id="simDaysDisplay">0</span> <span data-i18n="days">Days</span>)</h3>
+            </div>
+            <div class="overflow-auto log-container flex-grow bg-white w-full">
+                <table id="mainLogTable" class="text-[10px] text-right font-mono border-collapse min-w-full whitespace-nowrap">
+                    <thead id="logThead" class="bg-slate-100 text-slate-600 sticky-col-header shadow-sm"></thead>
+                    <tbody id="logBody" class="divide-y divide-slate-100"></tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // ==========================================
+        // CONFIGURATION
+        // ==========================================
+        const PROFILES_KEY = 'tet_hub_shared_profiles'; 
+        const INPUTS_KEY = 'tet_yolo_inputs_isolated'; 
+        const LANG_KEY = 'tet_hub_shared_lang';
+        const ACTIVE_PROFILE_KEY = 'tet_yolo_active_profile_isolated'; // Fixed: Isolated active state
+        const DEVICE_ID_KEY = 'tet_ecosystem_id';
+        const CLOUD_SYNC_URL = "/api/cloud-sync?app=hub"; 
+        
+        let activeProfileName = localStorage.getItem(ACTIVE_PROFILE_KEY) || '';
+
+        document.addEventListener('input', function(e) {
+            if (e.target.tagName.toLowerCase() === 'input' && e.target.type === 'number') {
+                let val = e.target.value;
+                if (val.length > 1 && val.startsWith('0') && val[1] !== '.') {
+                    e.target.value = val.replace(/^0+/, '');
+                    if (e.target.value === '') e.target.value = '0';
+                }
+            }
+        });
+        
+        const HELP_IMAGES = {
+            tip_accel: "acceleration", tip_wallet: "wallet", tip_global_cycle: "", tip_harv: "node_harvest", tip_cyc: "node_cycle", tip_over: "node_override"
+        };
+
+        let currentLang = localStorage.getItem(LANG_KEY) || 'zh';
+
+        const i18n = {
+            zh: {
+                saved_profiles: '已保存的档案', date: '日期', profile_name: '档案名称', result: '结果', action: '操作',
+                profiles_btn: '档案', save_profile: '保存档案', load: '加载', overwrite_existing: '或覆盖现有档案：',
+                confirm_overwrite: '档案名称已存在。要覆盖保存吗？', confirm_load: '加载档案将覆盖当前未保存的输入，继续？', loaded_success: '档案加载成功',
+                confirm_delete: '确定要删除此档案吗？', auto_project: '加载时自动推算天数 (根据保存日期)',
+                export: '导出', import: '导入', confirm_import: '导入将覆盖现有档案。确定继续吗？',
+                syncing: '同步中...', sync_success: '云端已同步', sync_fail: '离线模式',
+                node_settings: '节点设置 (点击展开/收起)',
+                lbl_accel: '加速 (TET)', lbl_wallet: '户口现有 (TET)', run_analysis: '🔎 运行安全分析',
+                lbl_global_cycle: '自动复投周期',
+                analysis_result: '流动性分析结果', safe_to_sell: '✅ 安全可售额度', 
+                safe_desc: '即使提现此额度，未来的产出也足以覆盖复投成本。但请注意：若未来增加【加速】，节点周期将提前结束。建议额外保留部分 TET 备用，以防因提前复投造成资金断链。',
+                warning_title: '资金紧张', shortage: '资金缺口:', danger_desc: '未来某个时间点的余额将不足以支付复投费用。请勿提现。', shortage_day: '发生于天数:',
+                press_run: '请点击上方按钮运行分析...', save: '保存', copy: '复制', ledger_title: '资金流向预测', days: '天',
+                timeline_title: '节点生命周期图', legend_prod: '正常产出', legend_buy: '购买·复投', legend_wait: '资金不足·等待', legend_stop: '周期结束·停止',
+                node_n: '节点', days_harv: '已产天数', cycle_days: '周期天数', override: '覆盖(TET)', days_left: '天剩余',
+                th_day: '天数', th_bal: '余', th_prod: '产', th_acc: '加', th_wallet: '总余额', th_net: '净变', th_name: '名称',
+                msg_safe_copy: '✅ TET YOLO 安全提现分析\n💰 可售: *{amt} TET*\n📅 模拟时长: {days} 天\n----------------\n由 TET YOLO 生成',
+                msg_danger_copy: '🚫 TET YOLO 资金预警\n⚠️ 缺口: {amt} TET\n🛑 发生于: 第 {day} 天\n请保留资金以备复投。\n----------------\n由 TET YOLO 生成',
+                activate_node: '启用', harvested_val: '已产出:', enter_acc_name: '请输入账户名称',
+                title_name: '节点计算器',
+                clear_inputs: '清除所有输入', confirm_reset: '确定要清除所有输入吗？', reset_done: '已重置',
+                auto_restake: '自动复投/购买',
+                tip_accel: '输入你账户当前的加速总额 (TET)。', tip_wallet: '输入你钱包里目前可用的 TET 余额。', tip_global_cycle: '当节点自动复投或自动购买时，将默认使用此周期天数。', tip_harv: '该节点从购买至今已经运行了多少天。', tip_cyc: '节点的生命周期。默认为 55 天，复投后会增加。', tip_over: '【可选】如果你知道确切的已产出数量，在此输入以覆盖自动计算。', tip_restake: '开启后，该节点将在钱包余额充足时自动复投或自动购买。关闭则让其自然过期停止。'
+            },
+            en: {
+                saved_profiles: 'Saved Profiles', date: 'Date', profile_name: 'Profile Name', result: 'Result', action: 'Action',
+                profiles_btn: 'Profiles', save_profile: 'Save Profile', load: 'Load', overwrite_existing: 'Or Overwrite Existing:',
+                confirm_overwrite: 'A profile with this name exists. Overwrite?', confirm_load: 'Loading a profile will replace your current inputs. Continue?', loaded_success: 'Profile loaded successfully',
+                confirm_delete: 'Are you sure you want to delete this profile?', auto_project: 'Auto-project days on load (from save date)',
+                export: 'Export', import: 'Import', confirm_import: 'Importing will overwrite existing profiles. Continue?',
+                syncing: 'Syncing...', sync_success: 'Cloud Synced', sync_fail: 'Offline Mode',
+                node_settings: 'Node Settings',
+                lbl_accel: 'Acceleration (TET)', lbl_wallet: 'Current Account (TET)', run_analysis: '🔎 Run Analysis',
+                lbl_global_cycle: 'Auto Cycle (Days)',
+                analysis_result: 'Liquidity Analysis', safe_to_sell: '✅ Safe to Sell', 
+                safe_desc: 'Your future production will cover restaking costs. However, higher [acceleration] will cause cycles to end earlier. We advise keeping a TET reserve to prevent shortages from early restaking.',
+                warning_title: 'Shortage Risk', shortage: 'Shortage:', danger_desc: 'Your wallet will not have enough funds for a future restake. Do not withdraw.', shortage_day: 'Happens on Day:',
+                press_run: 'Tap button above to analyze...', save: 'Save', copy: 'Copy', ledger_title: 'Cashflow Forecast', days: 'Days',
+                timeline_title: 'Node Timeline', legend_prod: 'Producing', legend_buy: 'Buy / Restake', legend_wait: 'Waiting (Shortage)', legend_stop: 'Stopped',
+                node_n: 'Node', days_harv: 'Harvested Days', cycle_days: 'Cycle Days', override: 'Override (TET)', days_left: 'Days Left',
+                th_day: 'Day', th_bal: 'Bal', th_prod: 'Prd', th_acc: 'Acc', th_wallet: 'Account', th_net: 'Net', th_name: 'Name',
+                msg_safe_copy: '✅ TET YOLO Safe Withdrawal\n💰 Sell: *{amt} TET*\n📅 Sim Days: {days}\n----------------\nGen by TET YOLO',
+                msg_danger_copy: '🚫 TET YOLO Shortage Warning\n⚠️ Shortage: {amt} TET\n🛑 On Day: {day}\nKeep funds for restaking.\n----------------\nGen by TET YOLO',
+                activate_node: 'Active', harvested_val: 'Harvested:', enter_acc_name: 'Enter Account Name',
+                title_name: 'Node Calculator',
+                clear_inputs: 'Clear All Inputs', confirm_reset: 'Are you sure you want to clear all inputs?', reset_done: 'Reset Complete',
+                auto_restake: 'Auto Buy/Restake',
+                tip_accel: 'Enter your current total Acceleration (TET).', tip_wallet: 'Enter the current available TET in your account.', tip_global_cycle: 'When a node auto-restakes or auto-buys, it will default to this cycle length.', tip_harv: 'How many days this node has been running since purchase.', tip_cyc: 'Lifecycle of the node. Default 55, increases after restake.', tip_over: '[Optional] Enter exact harvested amount here to override calculation.', tip_restake: 'If enabled, this node will auto-restake or auto-buy when funds are available. Disable to let it stop.'
+            }
+        };
+
+        function t(key) { return i18n[currentLang][key] || key; }
+
+        const nodeDefinitions = [
+            { id: 5000, cost: 5000, reward: 6500 }, { id: 3000, cost: 3000, reward: 3900 }, { id: 1000, cost: 1000, reward: 1300 },
+            { id: 500,  cost: 500,  reward: 650 }, { id: 300,  cost: 300,  reward: 390 }, { id: 100,  cost: 100,  reward: 130 }
+        ];
+
+        let currentSyncStatus = 'syncing';
+
+        // --- INIT & UI ---
+        function initApp() {
+            renderGlobalCycleOptions();
+            renderNodes();
+            const savedToggle = localStorage.getItem('tet_yolo_auto_project');
+            if (savedToggle !== null) { document.getElementById('autoProjectToggle').checked = (savedToggle === 'true'); }
+            loadState(); applyLanguage(); updateProfileDisplay();
+            setTimeout(autoRestoreProfiles, 1500); 
+        }
+
+        // --- STRATEGY STYLE SYNC UPDATER ---
+        function updateSyncStatus(status) {
+            currentSyncStatus = status;
+            const badges = document.querySelectorAll('.sync-badge');
+            badges.forEach(badge => {
+                const dot = badge.querySelector('.sync-dot');
+                const ping = badge.querySelector('.sync-dot-ping');
+                const text = badge.querySelector('.sync-status-text');
+
+                if (status === 'syncing') {
+                    badge.className = "sync-badge bg-indigo-50 text-indigo-500 border border-indigo-100 shadow-sm";
+                    dot.className = "sync-dot bg-indigo-500";
+                    ping.className = "sync-dot-ping bg-indigo-400";
+                    text.innerText = t('syncing');
+                } else if (status === 'success') {
+                    badge.className = "sync-badge bg-emerald-50 text-emerald-600 border border-emerald-100 shadow-sm";
+                    dot.className = "sync-dot bg-emerald-500";
+                    ping.className = "hidden";
+                    text.innerText = t('sync_success');
+                } else if (status === 'error') {
+                    badge.className = "sync-badge bg-amber-50 text-amber-600 border border-amber-100 shadow-sm";
+                    dot.className = "sync-dot bg-amber-500";
+                    ping.className = "hidden";
+                    text.innerText = t('sync_fail');
+                }
+            });
+
+            if (!document.getElementById('profileModal').classList.contains('hidden')) renderProfiles();
+        }
+
+        // --- SILENT CLOUD SYNC LOGIC ---
+        function smartMergeProfiles(local, cloud) {
+            let merged = [...local];
+            let changed = false;
+            cloud.forEach(cp => {
+                const idx = merged.findIndex(p => p.name === cp.name);
+                if (idx === -1) { merged.push(cp); changed = true; } 
+                else if ((cp.timestamp || 0) > (merged[idx].timestamp || 0)) { merged[idx] = cp; changed = true; }
+            });
+            if (changed) merged.sort((a,b) => (b.timestamp || 0) - (a.timestamp || 0));
+            return { merged, changed };
+        }
+
+        async function autoRestoreProfiles() {
+            const deviceId = localStorage.getItem(DEVICE_ID_KEY);
+            if (!deviceId) return;
+            try {
+                updateSyncStatus('syncing');
+                const res = await fetch(`${CLOUD_SYNC_URL}&deviceId=${deviceId}`);
+                if (res.status !== 200) { updateSyncStatus('error'); return; }
+                const data = await res.json();
+                if (data.success && data.data) {
+                    let cloud = typeof data.data === 'string' ? JSON.parse(data.data) : data.data;
+                    let local = JSON.parse(localStorage.getItem(PROFILES_KEY) || "[]");
+                    const { merged, changed } = smartMergeProfiles(local, cloud);
+                    if (changed) {
+                        localStorage.setItem(PROFILES_KEY, JSON.stringify(merged));
+                        if (!document.getElementById('profileModal').classList.contains('hidden')) renderProfiles();
+                    }
+                    updateSyncStatus('success');
+                }
+            } catch (err) { updateSyncStatus('error'); }
+        }
+
+        async function autoBackupProfiles() {
+            const deviceId = localStorage.getItem(DEVICE_ID_KEY);
+            if (!deviceId) return;
+            try {
+                updateSyncStatus('syncing');
+                const profiles = JSON.parse(localStorage.getItem(PROFILES_KEY) || "[]");
+                const res = await fetch(`${CLOUD_SYNC_URL}&deviceId=${deviceId}`, {
+                    method: 'POST', keepalive: true, headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ profiles: profiles })
+                });
+                if (res.status === 200) updateSyncStatus('success');
+                else updateSyncStatus('error');
+            } catch (err) { updateSyncStatus('error'); }
+        }
+
+        function renderGlobalCycleOptions() {
+            const select = document.getElementById('globalCycleInput');
+            if (!select) return;
+            let options = '';
+            for(let i=55; i<=120; i+=5) { options += `<option value="${i}">${i}</option>`; }
+            select.innerHTML = options;
+        }
+
+        function toggleLanguage() {
+            currentLang = currentLang === 'zh' ? 'en' : 'zh';
+            localStorage.setItem(LANG_KEY, currentLang);
+            applyLanguage(); renderNodes(); loadState();
+            if (!document.getElementById('ledgerSection').classList.contains('hidden')) calculate();
+        }
+
+        function applyLanguage() {
+            document.querySelectorAll('[data-i18n]').forEach(el => el.innerText = t(el.getAttribute('data-i18n')));
+            document.getElementById('langBtnText').innerText = currentLang === 'zh' ? 'EN' : '中文';
+        }
+
+        function showHelp(key) {
+            const msg = t(key);
+            const imgBase = HELP_IMAGES[key];
+            let imgUrl = null;
+            if(imgBase) { imgUrl = `${imgBase}_${currentLang.toUpperCase()}.jpeg`; }
+            showToast("💡 " + msg, imgUrl, false);
+        }
+
+        function renderNodes() {
+            const container = document.getElementById('nodesContainer');
+            container.innerHTML = '';
+            let cycleOptions = '';
+            for(let i=55; i<=120; i+=5) { cycleOptions += `<option value="${i}">${i}</option>`; }
+
+            nodeDefinitions.forEach(def => {
+                container.innerHTML += `
+                    <div class="bg-white border border-slate-200 rounded-xl p-3 shadow-sm hover:border-indigo-400 transition relative h-full flex flex-col justify-between">
+                        <div>
+                            <div class="flex justify-between items-center mb-2 border-b border-slate-100 pb-2">
+                                 <div class="flex items-center gap-2">
+                                    <div class="relative inline-block w-8 h-4 align-middle select-none transition duration-200 ease-in">
+                                        <input type="checkbox" name="toggle" id="active_${def.id}" class="toggle-checkbox absolute block w-4 h-4 rounded-full bg-white border-4 appearance-none cursor-pointer border-slate-300 transition-all duration-300" onchange="saveState(); refreshBadges()" checked/>
+                                        <label for="active_${def.id}" class="toggle-label block overflow-hidden h-4 rounded-full bg-slate-300 cursor-pointer"></label>
+                                    </div>
+                                    <span class="font-black text-sm text-slate-700 whitespace-nowrap"><span data-i18n="node_n">${t('node_n')}</span> ${def.id}</span>
+                                </div>
+                                <span id="badge_${def.id}" class="text-[9px] font-bold px-2 py-1 bg-slate-100 rounded text-slate-400 whitespace-nowrap min-w-[80px] text-center">OFF</span>
+                            </div>
+                            <div class="space-y-3 mt-3">
+                                <div class="input-group">
+                                    <label onclick="showHelp('tip_harv')"><span data-i18n="days_harv">${t('days_harv')}</span> <span class="info-btn">💡</span></label>
+                                    <input type="number" id="harv_${def.id}" placeholder="0" oninput="saveState(); updateBadge(${def.id}, ${def.reward})" class="w-full border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-mono outline-none focus:border-indigo-500">
+                                    <div class="text-[10px] text-slate-400 text-right mt-1 font-mono">
+                                        <span data-i18n="harvested_val">${t('harvested_val')}</span> <span id="calc_harv_${def.id}" class="font-bold text-slate-600">0.00</span> TET
+                                    </div>
+                                </div>
+                                <div class="input-group">
+                                    <label onclick="showHelp('tip_cyc')"><span data-i18n="cycle_days">${t('cycle_days')}</span> <span class="info-btn">💡</span></label>
+                                    <select id="cyc_${def.id}" onchange="saveState(); updateBadge(${def.id}, ${def.reward})" class="w-full border border-slate-200 bg-white rounded-lg px-2 py-1.5 text-xs font-mono outline-none focus:border-indigo-500">
+                                        ${cycleOptions}
+                                    </select>
+                                </div>
+                                <div class="input-group">
+                                    <label class="text-indigo-500" onclick="showHelp('tip_over')"><span data-i18n="override">${t('override')}</span> <span class="info-btn">💡</span></label>
+                                    <input type="number" id="over_${def.id}" placeholder="Optional" oninput="saveState(); updateBadge(${def.id}, ${def.reward})" class="w-full border border-indigo-100 bg-indigo-50/10 rounded-lg px-2 py-1.5 text-xs font-mono outline-none focus:border-indigo-500">
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center justify-between mt-4 pt-3 border-t border-slate-100">
+                                <label class="text-[10px] font-bold text-slate-500 uppercase flex items-center gap-1 cursor-pointer hover:text-indigo-500 transition-colors" onclick="showHelp('tip_restake')">
+                                    <span data-i18n="auto_restake">${t('auto_restake')}</span> <span class="info-btn">💡</span>
+                                </label>
+                                <div class="relative inline-block w-8 h-4 align-middle select-none transition duration-200 ease-in">
+                                    <input type="checkbox" id="restake_${def.id}" class="toggle-checkbox absolute block w-4 h-4 rounded-full bg-white border-4 appearance-none cursor-pointer border-slate-300 transition-all duration-300" onchange="saveState()" checked/>
+                                    <label for="restake_${def.id}" class="toggle-label block overflow-hidden h-4 rounded-full bg-slate-300 cursor-pointer"></label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function updateBadge(id, reward) {
+            const h = parseFloat(document.getElementById(`harv_${id}`).value) || 0;
+            const c = parseFloat(document.getElementById(`cyc_${id}`).value) || 55;
+            const o = parseFloat(document.getElementById(`over_${id}`).value) || 0;
+            const globalAccel = parseFloat(document.getElementById('accelToken').value) || 0;
+            const isActive = document.getElementById(`active_${id}`).checked;
+            const badge = document.getElementById(`badge_${id}`);
+            const calcDisp = document.getElementById(`calc_harv_${id}`);
+            
+            let harvestedAmt = 0; let currentBalance = 0;
+            const dailyRateTrunc = truncateTo2(reward / c);
+
+            if (o > 0) { harvestedAmt = o; currentBalance = Math.max(0, reward - o); } 
+            else { harvestedAmt = dailyRateTrunc * h; currentBalance = Math.max(0, reward - harvestedAmt); }
+            calcDisp.innerText = harvestedAmt.toFixed(2);
+            
+            if(isActive) {
+                let isHighestActive = false;
+                for(let n of nodeDefinitions) {
+                    if (document.getElementById(`active_${n.id}`).checked) { if (n.id === id) isHighestActive = true; break; }
+                }
+                const currentSpeed = dailyRateTrunc + (isHighestActive ? globalAccel : 0);
+                let daysByBalance = Math.ceil(currentBalance / currentSpeed);
+                if (currentBalance > 0 && daysByBalance === 0) daysByBalance = 1;
+                const finalDays = Math.min(daysByBalance, Math.max(0, c - h));
+                badge.innerText = finalDays + " " + t('days_left');
+                badge.className = "text-[9px] font-bold px-0 py-1 rounded whitespace-nowrap min-w-[60px] text-center " + (finalDays < 5 ? "bg-red-100 text-red-600" : "bg-green-100 text-green-600");
+            } else { badge.innerText = "OFF"; badge.className = "text-[9px] font-bold px-0 py-1 bg-slate-100 rounded text-slate-400 whitespace-nowrap min-w-[60px] text-center"; }
+        }
+        
+        function refreshBadges() { nodeDefinitions.forEach(def => updateBadge(def.id, def.reward)); }
+        function truncateTo2(num) { return Math.floor(num * 100) / 100; }
+
+        function calculate() {
+            const analysisResult = calculateAnalysis();
+            calculateLedger(analysisResult.lowest, analysisResult.simDays, analysisResult.shortageDay);
+        }
+
+        function getInitialState() {
+            const accel = parseFloat(document.getElementById('accelToken').value) || 0;
+            const startWallet = parseFloat(document.getElementById('currentWallet').value) || 0;
+            const globalCycle = parseInt(document.getElementById('globalCycleInput').value) || 55;
+            let nodes = [];
+            nodeDefinitions.forEach(def => {
+                const isActive = document.getElementById(`active_${def.id}`).checked;
+                const autoRestake = document.getElementById(`restake_${def.id}`).checked;
+                const h = parseFloat(document.getElementById(`harv_${def.id}`).value) || 0;
+                const c = parseFloat(document.getElementById(`cyc_${def.id}`).value) || 55;
+                const o = document.getElementById(`over_${def.id}`).value;
+                let balance = 0; let remainingDays = Math.max(0, c - h);
+                if (isActive) {
+                    const dailyRateTrunc = truncateTo2(def.reward / c);
+                    if (o && parseFloat(o) > 0) balance = Math.max(0, def.reward - parseFloat(o));
+                    else balance = Math.max(0, def.reward - (dailyRateTrunc * h));
+                }
+                nodes.push({ def: def, balance: balance, currentCycle: c, cycleRemainingDays: remainingDays, active: isActive, autoRestake: autoRestake, waiting: false, justBought: false, dead: false });
+            });
+            return { accel, startWallet, globalCycle, nodes };
+        }
+
+        function calculateAnalysis() {
+            let { accel, startWallet, globalCycle, nodes } = getInitialState();
+            let maxRemaining = 0;
+            nodes.filter(n=>n.active).forEach(n => { if(n.cycleRemainingDays > maxRemaining) maxRemaining = n.cycleRemainingDays; });
+            const simDays = maxRemaining === 0 ? 60 : maxRemaining; 
+            let currentWallet = startWallet; let lowestWalletPoint = startWallet; let shortageDay = null;
+            for (let d = 1; d <= simDays; d++) {
+                let dailyProd = 0; let dailyCost = 0; let dailyAccelRemaining = accel;
+                nodes.forEach(node => {
+                    if (node.active && !node.dead && !node.justBought && !node.waiting && node.cycleRemainingDays > 0) { 
+                        const baseRate = truncateTo2(node.def.reward / node.currentCycle);
+                        let isLastDayOfCycle = (node.cycleRemainingDays === 1);
+                        let potentialProd = baseRate + dailyAccelRemaining;
+                        let nodeProd = 0;
+                        if (isLastDayOfCycle) nodeProd = node.balance;
+                        else {
+                            if (node.balance >= potentialProd) { nodeProd = potentialProd; dailyAccelRemaining = 0; } 
+                            else { nodeProd = node.balance; dailyAccelRemaining -= Math.max(0, nodeProd - baseRate); }
+                        }
+                        node.balance -= nodeProd; dailyProd += nodeProd; node.cycleRemainingDays--;
+                        if (node.cycleRemainingDays <= 0 || node.balance <= 0.001) {
+                            if (node.autoRestake) { dailyCost += node.def.cost; node.currentCycle = Math.min(120, node.currentCycle + 5); node.cycleRemainingDays = node.currentCycle; node.balance = node.def.reward; } 
+                            else { node.dead = true; node.active = false; }
+                        }
+                    }
+                });
+                currentWallet = currentWallet + dailyProd - dailyCost;
+                for(let node of nodes) {
+                    if (!node.active && !node.dead && node.autoRestake && currentWallet >= node.def.cost) {
+                        currentWallet -= node.def.cost; node.active = true; node.justBought = true; node.balance = node.def.reward; node.currentCycle = globalCycle; node.cycleRemainingDays = globalCycle; break; 
+                    }
+                }
+                if (currentWallet < lowestWalletPoint) lowestWalletPoint = currentWallet;
+                if (currentWallet < 0 && shortageDay === null) shortageDay = d; 
+                nodes.forEach(n => n.justBought = false);
+            }
+            return { lowest: lowestWalletPoint, simDays: simDays, shortageDay: shortageDay };
+        }
+
+        function calculateLedger(analysisLowest, simDays, shortageDay) {
+            let { accel, startWallet, globalCycle, nodes } = getInitialState();
+            document.getElementById('simDaysDisplay').innerText = simDays;
+            let currentWallet = startWallet; let ledgerHTML = '';
+            let timelineData = {}; nodeDefinitions.forEach(nd => timelineData[nd.id] = []);
+            const thead = document.getElementById('logThead'); thead.innerHTML = ''; 
+            let headerHTML = `<tr class="bg-slate-100 text-slate-600"><th class="px-2 py-2 border-r text-center sticky-col bg-slate-100 sticky-shadow w-[40px] z-50">${t('th_day')}</th>`;
+            nodes.forEach(n => { headerHTML += `<th class="px-1 py-2 bg-slate-50 border-l font-bold text-center text-slate-600" colspan="3">N${n.def.id}</th>`; });
+            headerHTML += `<th class="px-2 py-2 bg-slate-100 border-l font-bold text-slate-700 text-right sticky-right">${t('th_wallet')}</th></tr>`;
+            let subHeaderHTML = `<tr class="text-[9px] text-slate-400 bg-slate-50 border-b border-slate-200"><th class="sticky-col bg-slate-50 border-r sticky-shadow z-50"></th>`;
+            nodes.forEach(() => { subHeaderHTML += `<th class="px-1 py-1 border-l">${t('th_bal')}</th><th class="px-1 py-1">${t('th_prod')}</th><th class="px-1 py-1">${t('th_acc')}</th>`; });
+            subHeaderHTML += `<th class="px-2 py-1 border-l text-right sticky-right bg-slate-50"></th></tr>`;
+            thead.innerHTML = headerHTML + subHeaderHTML;
+
+            for (let d = 1; d <= simDays; d++) {
+                let dailyTotalProd = 0; let dailyTotalCost = 0; let dailyAccelRemaining = accel; let buyEventId = null; const rowData = [];
+                nodes.forEach(node => {
+                    let nodeProd = 0; let nodeUsedAccel = 0; let startOfDayBal = node.balance;
+                    if (node.active && !node.dead && !node.waiting && !node.justBought && node.cycleRemainingDays > 0) { 
+                         const baseRate = truncateTo2(node.def.reward / node.currentCycle);
+                         let isLastDayOfCycle = (node.cycleRemainingDays === 1);
+                         let potentialProd = baseRate + dailyAccelRemaining;
+                         if (isLastDayOfCycle) nodeProd = node.balance;
+                         else {
+                             if (node.balance >= potentialProd) { nodeProd = potentialProd; nodeUsedAccel = dailyAccelRemaining; dailyAccelRemaining = 0; } 
+                             else { nodeProd = node.balance; let neededAccel = Math.max(0, nodeProd - baseRate); nodeUsedAccel = neededAccel; dailyAccelRemaining -= neededAccel; }
+                         }
+                         node.balance -= nodeProd; dailyTotalProd += nodeProd; node.cycleRemainingDays--;
+                    }
+                    rowData.push({ id: node.def.id, active: node.active, waiting: node.waiting, justBought: node.justBought, startBal: startOfDayBal, prod: nodeProd, acc: nodeUsedAccel, restake: false, stop: false });
+                });
+                currentWallet += dailyTotalProd;
+                for(let i = 0; i < nodes.length; i++) {
+                    let node = nodes[i];
+                    if (!node.active && !node.dead && node.autoRestake && currentWallet >= node.def.cost) {
+                        currentWallet -= node.def.cost; node.active = true; node.justBought = true; node.balance = node.def.reward; node.currentCycle = globalCycle; node.cycleRemainingDays = globalCycle; buyEventId = node.def.id;
+                        rowData[i].active = true; rowData[i].justBought = true; break; 
+                    }
+                }
+                nodes.forEach((node, idx) => {
+                    let rInfo = rowData[idx];
+                    if (node.active && !node.justBought) {
+                        if (node.waiting) {
+                             if (currentWallet >= node.def.cost) {
+                                 if (node.autoRestake) {
+                                     currentWallet -= node.def.cost; dailyTotalCost += node.def.cost; node.waiting = false; rInfo.restake = true; 
+                                     node.currentCycle = Math.min(120, node.currentCycle + 5); node.cycleRemainingDays = node.currentCycle; node.balance = node.def.reward;
+                                 } else { node.dead = true; node.active = false; node.waiting = false; rInfo.stop = true; }
+                             }
+                        } else {
+                            if (node.cycleRemainingDays <= 0 || node.balance <= 0.0001) {
+                                if (node.autoRestake) {
+                                    if (currentWallet >= node.def.cost) {
+                                        currentWallet -= node.def.cost; dailyTotalCost += node.def.cost; rInfo.restake = true;
+                                        node.currentCycle = Math.min(120, node.currentCycle + 5); node.cycleRemainingDays = node.currentCycle; node.balance = node.def.reward;
+                                    } else { node.waiting = true; node.balance = 0; node.cycleRemainingDays = 0; }
+                                } else { node.dead = true; node.active = false; rInfo.stop = true; }
+                            }
+                        }
+                    }
+                });
+                let rowNodesHTML = '';
+                rowData.forEach(r => {
+                    let tStatus = 'empty';
+                    if (r.justBought || r.restake) tStatus = 'buy'; else if (r.stop) tStatus = 'stop'; else if (r.waiting && !r.restake) tStatus = 'waiting'; else if (r.active) tStatus = 'producing';
+                    timelineData[r.id].push(tStatus);
+                    let prodClass = "col-prod"; let restakeLabel = ""; let displayProd = ""; let displayBal = ""; let displayAcc = "-";
+                    if (r.active || r.stop) { 
+                        if (r.justBought) { displayBal = "-"; displayAcc = "-"; displayProd = `-${nodeDefinitions.find(n=>n.id==r.id).cost} (NEW)`; prodClass = "text-red-500 font-bold"; } 
+                        else {
+                            displayBal = (r.waiting && !r.restake && !r.stop) ? "0.00" : r.startBal.toFixed(2); displayAcc = r.acc > 0 ? r.acc.toFixed(2) : "-";
+                            if (r.restake) { prodClass = "text-red-500 font-bold"; displayProd = r.prod > 0 ? `+${r.prod.toFixed(2)}` : ""; restakeLabel = `<span class="text-[8px] text-red-400 block">-${nodeDefinitions.find(n=>n.id==r.id).cost} (RE)</span>`; } 
+                            else if (r.stop) { displayProd = `+${r.prod.toFixed(2)}`; prodClass = "text-slate-500 font-bold"; restakeLabel = `<span class="text-[8px] text-slate-400 block">(STOP)</span>`; } 
+                            else if (r.waiting && !r.restake) { if (r.prod > 0) { displayProd = `+${r.prod.toFixed(2)}`; prodClass = "col-prod-red"; } else { displayProd = "+0.00"; prodClass = "col-prod-red"; } } 
+                            else { displayProd = `+${r.prod.toFixed(2)}`; }
+                        }
+                    } else { displayBal = "-"; displayProd = "-"; }
+                    rowNodesHTML += `<td class="px-1 py-1 border-l col-bal">${displayBal}</td><td class="px-1 py-1 ${prodClass}">${displayProd}${restakeLabel}</td><td class="px-1 py-1 col-acc">${displayAcc}</td>`;
+                });
+                let rowClass = dailyTotalCost > 0 ? "bg-red-50/30" : (buyEventId ? "bg-green-50/30" : "");
+                let walletClass = "text-slate-700 font-bold"; 
+                ledgerHTML += `<tr class="${rowClass} border-b border-slate-50"><td class="px-2 py-1 font-bold text-center border-r bg-slate-50 sticky-col sticky-shadow text-slate-400 z-40">${d}</td>${rowNodesHTML}<td class="px-2 py-1 text-right border-l ${walletClass} sticky-right bg-white">${currentWallet.toFixed(2)}</td></tr>`;
+                nodes.forEach(n => n.justBought = false);
+            }
+            document.getElementById('logBody').innerHTML = ledgerHTML;
+            renderTimeline(simDays, timelineData);
+            updateResultCard(analysisLowest, shortageDay);
+        }
+
+        function renderTimeline(simDays, timelineData) {
+            const container = document.getElementById('timelineContainer'); const section = document.getElementById('timelineSection'); container.innerHTML = '';
+            let headerHTML = `<div class="flex items-end w-max mb-1"><div class="sticky-node w-12 border-none"></div>`;
+            for(let d=1; d<=simDays; d++) {
+                if (d % 10 === 0 || d === 1) headerHTML += `<div class="w-[14px] flex-shrink-0 relative h-3"><span class="absolute -left-1 bottom-0 text-[8px] text-slate-400 font-mono leading-none">${d}</span></div>`;
+                else headerHTML += `<div class="w-[14px] flex-shrink-0"></div>`;
+            }
+            headerHTML += `</div>`; container.innerHTML += headerHTML;
+            nodeDefinitions.forEach(nd => {
+                const history = timelineData[nd.id];
+                if (history.every(s => s === 'empty')) return;
+                let rowHTML = `<div class="flex items-center w-max mt-1 hover:bg-slate-50/80 transition-colors"><div class="sticky-node w-12 text-[10px] text-slate-500 flex items-center tracking-tighter">N${nd.id}</div><div class="flex items-center gap-[1px]">`;
+                history.forEach(status => {
+                    let color = 'bg-slate-100/50';
+                    if (status === 'buy') color = 'bg-purple-500 shadow-sm z-0 relative'; else if (status === 'producing') color = 'bg-emerald-400'; else if (status === 'waiting') color = 'bg-amber-400 animate-pulse'; else if (status === 'stop') color = 'bg-red-400';
+                    rowHTML += `<div class="w-[13px] h-[13px] rounded-[2px] ${color} flex-shrink-0"></div>`;
+                });
+                rowHTML += `</div></div>`; container.innerHTML += rowHTML;
+            });
+            section.classList.remove('hidden');
+        }
+
+        function updateResultCard(lowestWalletPoint, shortageDay) {
+            const resultCard = document.getElementById('resultCard'); const safeDiv = document.getElementById('safeState'); const dangerDiv = document.getElementById('dangerState'); const initDiv = document.getElementById('initialState'); const ledgerSec = document.getElementById('ledgerSection');
+            initDiv.classList.add('hidden'); ledgerSec.classList.remove('hidden');
+            if (lowestWalletPoint >= 0) {
+                resultCard.className = "bg-emerald-600 text-white rounded-2xl shadow-xl overflow-hidden relative transition-colors duration-500";
+                safeDiv.classList.remove('hidden'); dangerDiv.classList.add('hidden'); document.getElementById('safeAmount').innerText = lowestWalletPoint.toFixed(2);
+            } else {
+                resultCard.className = "bg-red-600 text-white rounded-2xl shadow-xl overflow-hidden relative transition-colors duration-500";
+                safeDiv.classList.add('hidden'); dangerDiv.classList.remove('hidden'); document.getElementById('shortageAmount').innerText = Math.abs(lowestWalletPoint).toFixed(2); document.getElementById('shortageDayDisplay').innerText = shortageDay ? shortageDay : "--";
+            }
+        }
+
+        function getInputsData() {
+            const raw = localStorage.getItem(INPUTS_KEY); let existingData = raw ? JSON.parse(raw) : {};
+            const data = { accel: document.getElementById('accelToken').value, wallet: document.getElementById('currentWallet').value, globalCycle: document.getElementById('globalCycleInput') ? document.getElementById('globalCycleInput').value : 55, simDays: existingData.simDays || '', price: existingData.price || '0.50', nodes: {} };
+            nodeDefinitions.forEach(def => {
+                const restakeEl = document.getElementById(`restake_${def.id}`);
+                data.nodes[def.id] = { h: document.getElementById(`harv_${def.id}`).value, c: document.getElementById(`cyc_${def.id}`).value, o: document.getElementById(`over_${def.id}`).value, a: document.getElementById(`active_${def.id}`).checked, r: restakeEl ? restakeEl.checked : true };
+            });
+            return data;
+        }
+
+        function saveState() { localStorage.setItem(INPUTS_KEY, JSON.stringify(getInputsData())); }
+        function loadState() { const raw = localStorage.getItem(INPUTS_KEY); if(raw) { applyInputsData(JSON.parse(raw)); } }
+
+        function applyInputsData(data) {
+            document.getElementById('accelToken').value = data.accel || 0; document.getElementById('currentWallet').value = data.wallet || 0;
+            if (document.getElementById('globalCycleInput')) { document.getElementById('globalCycleInput').value = data.globalCycle || 55; }
+            if(data.nodes) {
+                nodeDefinitions.forEach(def => {
+                    if(data.nodes[def.id]) {
+                        document.getElementById(`harv_${def.id}`).value = data.nodes[def.id].h || ''; document.getElementById(`cyc_${def.id}`).value = data.nodes[def.id].c || 55; document.getElementById(`over_${def.id}`).value = data.nodes[def.id].o || ''; document.getElementById(`active_${def.id}`).checked = (data.nodes[def.id].a !== undefined) ? data.nodes[def.id].a : true;
+                        const restakeEl = document.getElementById(`restake_${def.id}`); if (restakeEl) { restakeEl.checked = (data.nodes[def.id].r !== undefined) ? data.nodes[def.id].r : true; }
+                    }
+                });
+            }
+            refreshBadges(); saveState(); 
+        }
+
+        function resetInputs() {
+            if(!confirm(t('confirm_reset'))) return;
+            localStorage.removeItem(INPUTS_KEY); activeProfileName = ''; localStorage.removeItem(ACTIVE_PROFILE_KEY);
+            document.getElementById('accelToken').value = 0; document.getElementById('currentWallet').value = 0;
+            if (document.getElementById('globalCycleInput')) { document.getElementById('globalCycleInput').value = 55; }
+            nodeDefinitions.forEach(def => {
+                document.getElementById(`active_${def.id}`).checked = true; document.getElementById(`harv_${def.id}`).value = ''; document.getElementById(`cyc_${def.id}`).value = 55; document.getElementById(`over_${def.id}`).value = '';
+                const restakeEl = document.getElementById(`restake_${def.id}`); if(restakeEl) restakeEl.checked = true;
+            });
+            document.getElementById('resultCard').className = "bg-slate-800 text-white rounded-2xl shadow-xl overflow-hidden relative transition-colors duration-500";
+            document.getElementById('safeState').classList.add('hidden'); document.getElementById('dangerState').classList.add('hidden'); document.getElementById('initialState').classList.remove('hidden'); document.getElementById('ledgerSection').classList.add('hidden'); document.getElementById('timelineSection').classList.add('hidden');
+            saveState(); refreshBadges(); updateProfileDisplay(); showToast(t('reset_done'), null, true);
+        }
+
+        function openSaveProfileModal() {
+            const m = document.getElementById('saveProfileModal'); const listContainer = document.getElementById('existingProfilesList'); const nameInput = document.getElementById('newProfileName');
+            nameInput.value = activeProfileName || (currentLang === 'zh' ? '我的档案' : 'My Profile');
+            const profiles = JSON.parse(localStorage.getItem(PROFILES_KEY) || "[]"); listContainer.innerHTML = '';
+            if (profiles.length === 0) { listContainer.innerHTML = `<div class="p-4 text-xs font-bold text-slate-400 text-center">${currentLang === 'zh' ? '暂无保存的档案' : 'No saved profiles'}</div>`; } 
+            else {
+                profiles.forEach(p => {
+                    const div = document.createElement('div'); div.className = "p-3 hover:bg-indigo-50 cursor-pointer flex justify-between items-center transition-colors text-sm font-bold text-slate-700"; div.onclick = () => { nameInput.value = p.name; };
+                    div.innerHTML = `<span>${p.name}</span> <span class="text-[10px] text-slate-400 font-normal">${p.date}</span>`; listContainer.appendChild(div);
+                });
+            }
+            m.classList.remove('hidden');
+        }
+
+        function closeSaveProfileModal() { document.getElementById('saveProfileModal').classList.add('hidden'); }
+
+        function confirmSaveProfile() {
+            const name = document.getElementById('newProfileName').value.trim();
+            if (!name) return showToast(currentLang === 'zh' ? '请输入档案名称' : 'Please enter a name', null, true);
+            const data = getInputsData();
+            const isSafe = !document.getElementById('safeState').classList.contains('hidden');
+            const finalAmt = isSafe ? "+ " + document.getElementById('safeAmount').innerText + " TET" : "- " + document.getElementById('shortageAmount').innerText + " TET";
+            let profiles = JSON.parse(localStorage.getItem(PROFILES_KEY) || "[]"); let existingIdx = profiles.findIndex(p => p.name === name);
+            
+            // App: YOLO explicitly marks its origin
+            const record = { date: new Date().toLocaleString(), timestamp: Date.now(), name: name, amt: finalAmt, data: data, app: 'yolo' };
+            
+            if (existingIdx >= 0) { if(confirm(t('confirm_overwrite'))) { profiles[existingIdx] = record; } else { return; } } 
+            else { profiles.unshift(record); }
+            localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles)); activeProfileName = name; localStorage.setItem(ACTIVE_PROFILE_KEY, activeProfileName);
+            updateProfileDisplay(); closeSaveProfileModal(); showToast(currentLang === 'zh' ? '档案保存成功' : 'Profile Saved!', null, true); renderProfiles();
+            autoBackupProfiles();
+        }
+
+        function updateProfileDisplay() {
+            const badge = document.getElementById('activeProfileBadge');
+            if (activeProfileName) { badge.innerText = activeProfileName; badge.classList.remove('hidden'); } else { badge.classList.add('hidden'); }
+        }
+
+        function toggleProfiles() {
+            const m = document.getElementById('profileModal');
+            if(m.classList.contains('hidden')) { m.classList.remove('hidden'); renderProfiles(); } else { m.classList.add('hidden'); }
+        }
+
+        function renderProfiles() {
+            const p = JSON.parse(localStorage.getItem(PROFILES_KEY) || "[]"); const tbody = document.getElementById('profileTableBody'); tbody.innerHTML = '';
+            
+            let dotClass = "bg-indigo-400";
+            if (currentSyncStatus === 'success') dotClass = "bg-emerald-400";
+            else if (currentSyncStatus === 'error') dotClass = "bg-amber-400";
+
+            p.forEach((r, i) => {
+                const displayName = r.name ? r.name : '-';
+                
+                // Cross-App Blind check logic
+                const isYoloProfile = r.app === 'yolo' || (!r.app && (String(r.amt).includes('+') || String(r.amt).includes('-')));
+                
+                let amtDisplay = '-';
+                let colorClass = 'text-slate-400';
+
+                if (isYoloProfile) {
+                    amtDisplay = r.amt || '-'; 
+                    if (r.amt && !String(r.amt).includes('TET')) amtDisplay += " TET"; 
+                    if (String(r.amt).includes('+')) colorClass = 'text-emerald-500'; 
+                    if (String(r.amt).includes('-')) colorClass = 'text-red-500'; 
+                }
+
+                tbody.innerHTML += `
+                    <tr class="border-b border-slate-50 last:border-0 hover:bg-slate-50/50 transition-colors">
+                        <td class="px-3 py-3 text-[10px] leading-tight text-slate-500">${r.date}</td>
+                        <td class="px-3 py-3 font-bold text-slate-700 text-xs">
+                            <span class="mr-2 row-dot ${dotClass}">
+                                <span class="row-ping"></span>
+                            </span>
+                            <span class="text-indigo-600">${displayName}</span>
+                        </td>
+                        <td class="px-3 py-3 font-bold text-xs ${colorClass} whitespace-nowrap">${amtDisplay}</td>
+                        <td class="px-3 py-3 text-right">
+                             <button onclick="loadProfile(${i})" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-600 px-2 py-1 rounded text-[10px] font-bold mr-1">${t('load')}</button>
+                             <button onclick="delProfile(${i})" class="text-slate-300 hover:text-red-500 transition-colors p-1 text-lg leading-none align-middle">&times;</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+        
+        function loadProfile(idx) {
+            if(!confirm(t('confirm_load'))) return;
+            let p = JSON.parse(localStorage.getItem(PROFILES_KEY) || "[]");
+            if(p[idx]) {
+                let profileData = JSON.parse(JSON.stringify(p[idx].data)); 
+                if (document.getElementById('autoProjectToggle').checked) {
+                    let savedTimestamp = p[idx].timestamp;
+                    if (!savedTimestamp && p[idx].date) { const parsed = Date.parse(p[idx].date); if (!isNaN(parsed)) savedTimestamp = parsed; }
+                    if (savedTimestamp) {
+                        const daysPassed = Math.floor((Date.now() - savedTimestamp) / (1000 * 60 * 60 * 24));
+                        if (daysPassed > 0 && profileData.nodes) {
+                            for (let nodeId in profileData.nodes) {
+                                let nd = profileData.nodes[nodeId];
+                                if (nd.a) {
+                                    nd.o = ''; let h = parseFloat(nd.h) || 0; let c = parseFloat(nd.c) || 55; let daysLeftToSimulate = daysPassed;
+                                    while (daysLeftToSimulate > 0) {
+                                        let remainingCycleDays = c - h;
+                                        if (daysLeftToSimulate < remainingCycleDays) { h += daysLeftToSimulate; daysLeftToSimulate = 0; } 
+                                        else { daysLeftToSimulate -= remainingCycleDays; if (nd.r) { c = Math.min(120, c + 5); h = 0; } else { nd.a = false; h = c; daysLeftToSimulate = 0; } }
+                                    }
+                                    nd.h = h; nd.c = c;
+                                }
+                            }
+                        }
+                    }
+                }
+                applyInputsData(profileData); activeProfileName = p[idx].name; localStorage.setItem(ACTIVE_PROFILE_KEY, activeProfileName);
+                updateProfileDisplay(); toggleProfiles(); calculate(); showToast(t('loaded_success'), null, true);
+            }
+        }
+
+        function delProfile(i) {
+            if(!confirm(t('confirm_delete'))) return;
+            let p = JSON.parse(localStorage.getItem(PROFILES_KEY) || "[]");
+            if (activeProfileName === p[i].name) { activeProfileName = ''; localStorage.removeItem(ACTIVE_PROFILE_KEY); updateProfileDisplay(); }
+            p.splice(i, 1); localStorage.setItem(PROFILES_KEY, JSON.stringify(p)); renderProfiles();
+            autoBackupProfiles();
+        }
+
+        function exportProfiles() {
+            const profiles = localStorage.getItem(PROFILES_KEY) || "[]";
+            if (profiles === "[]") return showToast(currentLang === 'zh' ? "没有可导出的档案" : "No profiles to export", null, true);
+            const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([profiles], { type: "application/json" }));
+            a.download = `TET_Hub_Profiles_${new Date().toISOString().slice(0,10)}.json`; a.click(); URL.revokeObjectURL(a.href);
+            showToast(currentLang === 'zh' ? "✅ 导出成功" : "✅ Export Successful", null, true);
+        }
+
+        function importProfiles(event) {
+            const file = event.target.files[0]; if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (Array.isArray(imported)) { 
+                        if (confirm(t('confirm_import'))) { 
+                            localStorage.setItem(PROFILES_KEY, JSON.stringify(imported)); 
+                            renderProfiles(); 
+                            showToast(currentLang === 'zh' ? "✅ 导入成功" : "✅ Import Successful", null, true); 
+                            autoBackupProfiles();
+                        } 
+                    } 
+                    else throw new Error("Invalid format");
+                } catch (err) { showToast("❌ " + (currentLang === 'zh' ? "文件格式错误" : "Invalid file format"), null, true); }
+            };
+            reader.readAsText(file); event.target.value = ''; 
+        }
+
+        function shareResult() {
+            const isSafe = !document.getElementById('safeState').classList.contains('hidden');
+            const amt = isSafe ? document.getElementById('safeAmount').innerText : document.getElementById('shortageAmount').innerText;
+            const days = document.getElementById('simDaysDisplay').innerText; const sDay = document.getElementById('shortageDayDisplay').innerText;
+            const text = (isSafe ? t('msg_safe_copy') : t('msg_danger_copy')).replace('{amt}', amt).replace('{days}', days).replace('{day}', sDay);
+            if(navigator.clipboard) { navigator.clipboard.writeText(text).then(() => showToast("Copied!", null, true)); } else { alert("Copy:\n" + text); }
+        }
+
+        function showToast(msg, imgUrl = null, autoDismiss = false) {
+            const c = document.getElementById('toast-container');
+            const overlay = document.getElementById('toast-overlay');
+            
+            c.innerHTML = '';
+            const el = document.createElement('div');
+            el.className = 'toast';
+            
+            let content = '';
+            if(imgUrl) { 
+                content += `<img src="${imgUrl}" alt="Help Image" onerror="this.style.display='none'">`; 
+            }
+            content += `<div class="toast-text">${msg}</div>`;
+            
+            el.innerHTML = content;
+            c.appendChild(el);
+            
+            if (autoDismiss) {
+                overlay.style.display = 'none'; // No blocking background
+                setTimeout(dismissAllToasts, 2500);
+            } else {
+                overlay.style.display = 'block'; // Block interaction until dismissed
+            }
+            
+            setTimeout(() => el.classList.add('show'), 10);
+        }
+
+        function dismissAllToasts() {
+            const c = document.getElementById('toast-container');
+            const overlay = document.getElementById('toast-overlay');
+            const toasts = c.querySelectorAll('.toast');
+            
+            toasts.forEach(t => t.classList.remove('show'));
+            setTimeout(() => {
+                c.innerHTML = '';
+                overlay.style.display = 'none';
+            }, 300);
+        }
+
+        window.onload = initApp;
+    </script>
+</body>
+</html>

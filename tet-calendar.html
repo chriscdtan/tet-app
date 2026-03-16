@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TET Restake Calendar</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        body, html {
+            margin: 0; padding: 0; 
+            font-family: 'Roboto', sans-serif; 
+            background-color: #f4f7f6; height: 100%;
+        }
+        
+        .top-bar {
+            background: white; padding: 15px 25px; box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+            display: flex; justify-content: space-between; align-items: center; z-index: 10;
+        }
+
+        .btn-lang {
+            border: none; padding: 8px 16px; border-radius: 30px; 
+            font-family: 'Roboto', sans-serif; font-weight: 700; font-size: 12px; 
+            cursor: pointer; background: linear-gradient(135deg, #7f8c8d, #34495e); color: white;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.08);
+        }
+
+        .timeline-line::before {
+            content: ''; position: absolute; top: 0; bottom: 0; left: 15px;
+            width: 2px; background: #e2e8f0; z-index: 0;
+        }
+    </style>
+</head>
+<body class="flex flex-col h-screen overflow-hidden">
+
+    <div class="top-bar shrink-0">
+        <div class="flex flex-col">
+            <h2 class="m-0 text-slate-800 font-black text-xl tracking-tight">TET <span class="text-indigo-600" id="appTitle">智能日历</span></h2>
+            <div class="text-[11px] text-slate-400 font-bold tracking-wide mt-0.5" id="appSubTitle">SINGLE CYCLE PLANNER</div>
+        </div>
+        <button class="btn-lang active:scale-95 transition" onclick="toggleLanguage()" id="btnLang">🌐 EN</button>
+    </div>
+
+    <div class="flex-1 overflow-y-auto p-4 md:p-6 pb-24">
+        <div class="max-w-xl mx-auto space-y-6">
+            
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
+                <h3 class="font-bold text-slate-800 mb-4" id="lblSetup">1. Configure Your Strategy</h3>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5" id="lblStrategy">Select Strategy</label>
+                        <select id="strategySelect" class="w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl p-3 outline-none focus:border-indigo-500 font-medium appearance-none">
+                            <option value="strat1">Strategy 1 (5000T)</option>
+                            <option value="strat2">Strategy 2 (10000T)</option>
+                            <option value="strat3">Strategy 3 (20000T)</option>
+                            <option value="strat4">Strategy 4 (50000T)</option>
+                            <option value="strat5">Strategy 5 (100000T)</option>
+                        </select>
+                    </div>
+
+                    <div class="flex gap-3">
+                        <div class="flex-1">
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5" id="lblStartDate">Start Date (Day 0)</label>
+                            <input type="date" id="startDate" class="w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl p-3 outline-none focus:border-indigo-500 font-bold">
+                        </div>
+                        <div class="w-32">
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5" id="lblCycleDays">Cycle Days</label>
+                            <select id="cycleDays" class="w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl p-3 outline-none focus:border-indigo-500 font-medium appearance-none">
+                                </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 mb-10">
+                <div class="flex justify-between items-end mb-4">
+                    <h3 class="font-bold text-slate-800" id="lblPreview">2. Add to Calendar</h3>
+                    <span class="text-xs font-bold text-indigo-500 bg-indigo-50 px-2 py-1 rounded" id="eventCountBadge">0 Events</span>
+                </div>
+                
+                <p class="text-xs text-slate-500 mb-5" id="lblInstruction">Click the buttons below to add each reminder directly to your phone's calendar.</p>
+
+                <div id="timelineContainer" class="relative timeline-line space-y-4 pl-[38px] min-h-[100px]">
+                    </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // Strategy Data Engine
+        const strategies = {
+            "strat1": {
+                name: "Strategy 1: 5000T",
+                events: [
+                    { day: 3, amount: 300, desc: "Restake" },
+                    { day: 7, amount: 500, desc: "Restake" },
+                    { day: 14, amount: 1000, desc: "Restake" },
+                    { day: 15, amount: 100, desc: "Restake" },
+                    { day: 33, amount: 3000, desc: "Restake" }
+                ]
+            },
+            // Note: Update these placehoder values based on the exact strategy configurations
+            "strat2": {
+                name: "Strategy 2: 10000T",
+                events: [
+                    { day: 3, amount: 600, desc: "Restake" },
+                    { day: 7, amount: 1000, desc: "Restake" },
+                    { day: 14, amount: 2000, desc: "Restake" },
+                    { day: 15, amount: 200, desc: "Restake" },
+                    { day: 33, amount: 6000, desc: "Restake" }
+                ]
+            },
+             "strat3": {
+                name: "Strategy 3: 20000T",
+                events: [
+                    { day: 3, amount: 1200, desc: "Restake" },
+                    { day: 7, amount: 2000, desc: "Restake" },
+                    { day: 14, amount: 4000, desc: "Restake" },
+                    { day: 15, amount: 400, desc: "Restake" },
+                    { day: 33, amount: 12000, desc: "Restake" }
+                ]
+            },
+             "strat4": {
+                name: "Strategy 4: 50000T",
+                events: [
+                    { day: 3, amount: 3000, desc: "Restake" },
+                    { day: 7, amount: 5000, desc: "Restake" },
+                    { day: 14, amount: 10000, desc: "Restake" },
+                    { day: 15, amount: 1000, desc: "Restake" },
+                    { day: 33, amount: 30000, desc: "Restake" }
+                ]
+            },
+             "strat5": {
+                name: "Strategy 5: 100000T",
+                events: [
+                    { day: 3, amount: 6000, desc: "Restake" },
+                    { day: 7, amount: 10000, desc: "Restake" },
+                    { day: 14, amount: 20000, desc: "Restake" },
+                    { day: 15, amount: 2000, desc: "Restake" },
+                    { day: 33, amount: 60000, desc: "Restake" }
+                ]
+            }
+        };
+
+        // Language Engine
+        const i18n = {
+            en: {
+                title: "智能日历", sub: "SINGLE CYCLE PLANNER", setup: "1. Configure Your Strategy",
+                strat: "Select Strategy", start: "Start Date (Day 0)", cycleDays: "Cycle Length",
+                preview: "2. Add to Calendar", 
+                instruction: "Click the buttons below to add each reminder directly to your phone's calendar.",
+                restake: "Restake", cycleEnd: "Cycle Complete / Restart",
+                evtTxt: "Reminders"
+            },
+            zh: {
+                title: "智能日历", sub: "单周期规划器", setup: "1. 配置您的策略",
+                strat: "选择复投策略", start: "初始质押日期 (第0天)", cycleDays: "周期天数",
+                preview: "2. 添加至日历", 
+                instruction: "点击下方按钮，将每个提醒直接添加到您的手机日历中。",
+                restake: "复投", cycleEnd: "周期结束 / 重新开始",
+                evtTxt: "个提醒"
+            }
+        };
+
+        let currentLang = localStorage.getItem('tet_calendar_lang') || 'zh';
+
+        // Populate Cycle Dropdown (55 to 120 step 5)
+        const cycleSelect = document.getElementById('cycleDays');
+        for(let i = 55; i <= 120; i += 5) {
+            let opt = document.createElement('option');
+            opt.value = i;
+            opt.innerText = `${i} Days`;
+            cycleSelect.appendChild(opt);
+        }
+
+        function toggleLanguage() {
+            currentLang = currentLang === 'zh' ? 'en' : 'zh';
+            localStorage.setItem('tet_calendar_lang', currentLang);
+            applyLanguage();
+            generatePreview();
+        }
+
+        function t(key) { return i18n[currentLang][key] || key; }
+
+        function applyLanguage() {
+            document.getElementById('appTitle').innerText = t('title');
+            document.getElementById('appSubTitle').innerText = t('sub');
+            document.getElementById('lblSetup').innerText = t('setup');
+            document.getElementById('lblStrategy').innerText = t('strat');
+            document.getElementById('lblStartDate').innerText = t('start');
+            document.getElementById('lblCycleDays').innerText = t('cycleDays');
+            document.getElementById('lblPreview').innerText = t('preview');
+            document.getElementById('lblInstruction').innerText = t('instruction');
+            document.getElementById('btnLang').innerText = currentLang === 'zh' ? '🌐 EN' : '🌐 中文';
+            
+            Array.from(cycleSelect.options).forEach(opt => {
+                opt.innerText = currentLang === 'zh' ? `${opt.value} 天` : `${opt.value} Days`;
+            });
+        }
+
+        document.getElementById('startDate').valueAsDate = new Date();
+
+        document.getElementById('strategySelect').addEventListener('change', generatePreview);
+        document.getElementById('startDate').addEventListener('change', generatePreview);
+        document.getElementById('cycleDays').addEventListener('change', generatePreview);
+
+        function formatICSDate(date) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${y}${m}${d}`;
+        }
+
+        // GENERATES A NATIVE GOOGLE CALENDAR WEB LINK
+        function getGCalLink(title, date, desc) {
+            const d1 = formatICSDate(date);
+            const nextDay = new Date(date);
+            nextDay.setDate(nextDay.getDate() + 1);
+            const d2 = formatICSDate(nextDay);
+            return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${d1}/${d2}&details=${encodeURIComponent(desc)}`;
+        }
+
+        // GENERATES A NATIVE APPLE CALENDAR DATA-URI (Slides up on iOS instantly)
+        function getAppleCalLink(title, date, desc) {
+            const d1 = formatICSDate(date);
+            const nextDay = new Date(date);
+            nextDay.setDate(nextDay.getDate() + 1);
+            const d2 = formatICSDate(nextDay);
+            
+            let ics = "BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\n";
+            ics += `DTSTART;VALUE=DATE:${d1}\nDTEND;VALUE=DATE:${d2}\n`;
+            ics += `SUMMARY:${title}\nDESCRIPTION:${desc}\n`;
+            ics += "BEGIN:VALARM\nTRIGGER:-PT9H\nACTION:DISPLAY\nDESCRIPTION:Reminder\nEND:VALARM\n";
+            ics += "END:VEVENT\nEND:VCALENDAR";
+            
+            return `data:text/calendar;charset=utf8,${encodeURIComponent(ics)}`;
+        }
+
+        function generatePreview() {
+            const stratKey = document.getElementById('strategySelect').value;
+            const strat = strategies[stratKey];
+            const startDateInput = document.getElementById('startDate').value;
+            const cycleLength = parseInt(document.getElementById('cycleDays').value);
+            const container = document.getElementById('timelineContainer');
+            
+            container.innerHTML = '';
+
+            if (!startDateInput) return;
+            const baseDate = new Date(startDateInput);
+
+            // Clone the events array and add the dynamic cycle end date
+            let cycleEvents = [...strat.events];
+            cycleEvents.push({
+                day: cycleLength,
+                amount: "♻️",
+                desc: currentLang === 'zh' ? "周期结束 / 重新开始" : "Cycle Complete / Restart"
+            });
+
+            cycleEvents.forEach(evt => {
+                const eventDate = new Date(baseDate);
+                eventDate.setDate(baseDate.getDate() + evt.day);
+                
+                const dateString = eventDate.toLocaleDateString(currentLang === 'zh' ? 'zh-CN' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                const isRestart = typeof evt.amount === 'string';
+                
+                const displayDesc = isRestart ? evt.desc : (currentLang === 'zh' ? '复投' : 'Restake');
+                const titleStr = isRestart ? `TET ${evt.desc}` : `TET ${displayDesc}: ${evt.amount}T`;
+                const descStr = `Log into your DrixPay/Fusion app. Day ${evt.day} of cycle.`;
+                
+                const gcalLink = getGCalLink(titleStr, eventDate, descStr);
+                const appleLink = getAppleCalLink(titleStr, eventDate, descStr);
+
+                const colorClass = isRestart ? 'text-emerald-600' : 'text-slate-700';
+                const dotColor = isRestart ? 'bg-emerald-500 border-emerald-200' : 'bg-slate-400 border-slate-200';
+                const amtDisplay = isRestart ? evt.amount : `${evt.amount} TET`;
+                
+                const card = document.createElement('div');
+                card.className = "relative z-10 bg-white p-3 rounded-xl border border-slate-100 shadow-sm flex flex-col gap-3";
+                card.innerHTML = `
+                    <div class="absolute -left-[27px] top-6 w-4 h-4 rounded-full border-4 ${dotColor}"></div>
+                    
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-0.5">${dateString} (Day ${evt.day})</div>
+                            <div class="text-sm font-black ${colorClass}">${amtDisplay}</div>
+                        </div>
+                        <div class="text-[11px] font-bold bg-slate-50 px-2 py-1 rounded text-slate-500">${displayDesc}</div>
+                    </div>
+                    
+                    <div class="flex gap-2 border-t border-slate-50 pt-3">
+                        <a href="${appleLink}" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold py-2 rounded-lg transition text-center flex items-center justify-center gap-1 active:scale-95">
+                            🍏 Apple
+                        </a>
+                        <a href="${gcalLink}" target="_blank" class="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-600 text-[11px] font-bold py-2 rounded-lg transition text-center flex items-center justify-center gap-1 active:scale-95">
+                            🔵 Google
+                        </a>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+
+            document.getElementById('eventCountBadge').innerText = `${cycleEvents.length} ${t('evtTxt')}`;
+        }
+
+        window.onload = () => {
+            applyLanguage();
+            generatePreview();
+        };
+    </script>
+</body>
+</html>

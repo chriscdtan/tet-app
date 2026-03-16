@@ -1,0 +1,1930 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TET 战略布局图</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Roboto', 'PingFang SC', 'Microsoft YaHei', sans-serif; -webkit-tap-highlight-color: transparent; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+        .tree { margin: 0; min-width: max-content; --branch-color: #cbd5e1; }
+        .tree ul { padding-top: 25px; position: relative; transition: all 0.3s; display: flex; justify-content: center; padding-left: 0; margin: 0; }
+        .tree li { text-align: center; list-style-type: none; position: relative; padding: 25px 12px 0 12px; transition: all 0.3s; }
+        
+        .tree li::before, .tree li::after { 
+            content: ''; position: absolute; top: 0; right: 50%; 
+            border-top: 3px solid var(--branch-color); width: 50%; height: 25px; z-index: 1;
+            transition: border-color 0.3s;
+        }
+        .tree li::after { right: auto; left: 50%; border-left: 3px solid var(--branch-color); }
+        .tree li:only-child::after, .tree li:only-child::before { display: none; }
+        .tree li:only-child { padding-top: 0; }
+        .tree li:first-child::before, .tree li:last-child::after { border: 0 none; }
+        .tree li:last-child::before { border-right: 3px solid var(--branch-color); border-radius: 0 6px 0 0; }
+        .tree li:first-child::after { border-radius: 6px 0 0 0; }
+        
+        .tree ul::before { 
+            content: ''; position: absolute; top: 0; left: calc(50% - 1.5px); 
+            border-left: 3px solid var(--branch-color); width: 0; height: 25px; z-index: 1;
+            transition: border-color 0.3s;
+        }
+        .tree ul:empty::before { display: none; }
+
+        .drop-zone { min-height: 20px; transition: 0.2s; }
+        
+        .node-card {
+            border-radius: 12px; padding: 20px 16px 16px 16px; color: white; display: inline-block;
+            min-width: 140px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); 
+            position: relative; transition: all 0.2s;
+            border-bottom: 5px solid var(--branch-color);
+        }
+        #main-tree-zone > li > .node-card { border-bottom-color: #94a3b8; }
+
+        .node-content { cursor: pointer; -webkit-touch-callout: none; user-select: none; }
+        
+        .node-team-total {
+            margin-top: 10px; padding-top: 8px;
+            border-top: 1px dashed rgba(255,255,255,0.4);
+            font-size: 11px; font-weight: 700; color: #ffffff;
+            letter-spacing: 0.5px;
+            white-space: nowrap; 
+            overflow: hidden; text-overflow: ellipsis;
+        }
+
+        .node-actions { display: flex; position: absolute; top: -18px; right: -12px; gap: 4px; z-index: 20; }
+        .btn-action {
+            width: 28px; height: 28px; border-radius: 50%; display: flex; justify-content: center; align-items: center;
+            font-size: 14px; font-weight: bold; cursor: pointer; color: white; box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            transition: transform 0.1s;
+        }
+        .btn-action:active { transform: scale(0.9); }
+        .btn-delete { background: #ef4444; }
+        .btn-move { background: #3b82f6; font-size: 16px; }
+        .btn-copy { background: #10b981; font-size: 15px; }
+
+        .node-name { font-weight: 900; font-size: 15px; margin-bottom: 6px; pointer-events: none;}
+        .node-qty { font-size: 13px; font-weight: 700; background: rgba(0,0,0,0.25); padding: 4px 10px; border-radius: 6px; pointer-events: none;}
+        
+        .place-zone { display: none; margin-top: 10px; position: relative; z-index: 30; }
+        body.is-placing .place-zone { display: block; animation: pulse 2s infinite; }
+        body.is-placing .node-actions { display: none; } 
+        
+        .node-card.is-selected { box-shadow: 0 0 0 4px #fbbf24, 0 10px 25px rgba(0,0,0,0.2); transform: scale(1.05); z-index: 50; }
+
+        /* V4.15.0: THICKER GLOW WEIGHTS & DARK STEEL V1 */
+        .v-badge-wrap { position: absolute; z-index: 25; display: flex; align-items: center; justify-content: center; pointer-events: none; transition: all 0.3s ease; }
+        .v-badge-wrap-1 { top: -12px; left: -12px; width: 28px; height: 28px; }
+        .v-badge-wrap-2 { top: -14px; left: -14px; width: 30px; height: 30px; }
+        .v-badge-wrap-3 { top: -14px; left: -14px; width: 32px; height: 32px; }
+        .v-badge-wrap-4 { top: -16px; left: -16px; width: 35px; height: 35px; }
+        .v-badge-wrap-5 { top: -18px; left: -18px; width: 38px; height: 38px; }
+
+        .v-badge { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-family: 'Georgia', 'Times New Roman', serif; font-style: italic; border-radius: 50%; position: relative; z-index: 2; overflow: hidden; }
+        
+        .v-badge-1 { font-size: 12px; color: #ffffff; background: linear-gradient(135deg, #94a3b8, #334155); border: 2px solid #e2e8f0; box-shadow: 0 4px 6px rgba(0,0,0,0.3), 0 0 18px 5px rgba(100, 116, 139, 0.6); }
+        .v-badge-2 { font-size: 13px; color: #451a03; background: linear-gradient(135deg, #fef08a, #d97706); border: 2px solid #fef9c3; box-shadow: 0 4px 6px rgba(0,0,0,0.3), 0 0 20px 6px rgba(217, 119, 6, 0.6); }
+        .v-badge-3 { font-size: 14px; color: white; background: linear-gradient(135deg, #6ee7b7, #047857); border: 2px solid #ecfdf5; overflow: visible; box-shadow: 0 4px 6px rgba(0,0,0,0.3), 0 0 22px 7px rgba(4, 120, 87, 0.6); }
+        .v-badge-4 { font-size: 15px; color: white; background: linear-gradient(135deg, #93c5fd, #1d4ed8); border: 2px solid #eff6ff; overflow: visible; box-shadow: 0 4px 6px rgba(0,0,0,0.3), 0 0 25px 8px rgba(29, 78, 216, 0.7); }
+        .v-badge-5 { font-size: 17px; background: linear-gradient(135deg, #f9a8d4, #be185d, #6d28d9); color: #ffffff; text-shadow: 1px 1px 3px rgba(0,0,0,0.5); border: 2px solid #fdf2f8; overflow: visible; box-shadow: 0 4px 6px rgba(0,0,0,0.3), 0 0 30px 10px rgba(190, 24, 93, 0.8); }
+
+        .v-shimmer { position: absolute; top: 0; left: -100%; width: 50%; height: 100%; background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.8) 50%, rgba(255,255,255,0) 100%); transform: skewX(-25deg); animation: shimmer-sweep 3s infinite; z-index: 10; pointer-events: none; }
+        @keyframes shimmer-sweep { 0% { left: -100%; } 20% { left: 200%; } 100% { left: 200%; } }
+
+        .v-aura-2 { position: absolute; inset: -3px; border-radius: 50%; background: conic-gradient(from 0deg, transparent 0deg, #fef08a 90deg, transparent 180deg, #f59e0b 270deg, transparent 360deg); animation: spin-slow 3s linear infinite; z-index: 0; opacity: 0.7; filter: blur(2px); pointer-events: none; }
+
+        .v-orbit { position: absolute; border-radius: 50%; pointer-events: none; z-index: 1; }
+        .v-orbit-3 { inset: -6px; border: 3px dashed #34d399; filter: drop-shadow(0 0 4px rgba(52,211,153,0.8)); opacity: 0.9; animation: spin-slow 4s linear infinite; }
+        .v-orbit-4 { inset: -7px; border: 3px dashed #60a5fa; filter: drop-shadow(0 0 5px rgba(96,165,250,0.9)); opacity: 0.95; animation: spin-slow 4s linear infinite; }
+        .v-orbit-5 { inset: -8px; border: 2px solid rgba(255,255,255,0.1); border-top: 4px solid #f472b6; border-bottom: 4px solid #c084fc; filter: drop-shadow(0 0 6px rgba(244,114,182,0.9)); animation: spin-slow 2s linear infinite; }
+
+        .v-crown { position: absolute; top: -17px; left: 50%; transform: translateX(-50%); font-size: 18px; color: #facc15; text-shadow: 0 2px 4px rgba(0,0,0,0.6); font-style: normal; z-index: 30; line-height: 1; display: block; overflow: visible; }
+
+        .node-glow-1 { box-shadow: 0 0 22px 6px rgba(100, 116, 139, 0.5) !important; border-bottom-color: #64748b !important; }
+        .node-glow-2 { box-shadow: 0 0 24px 7px rgba(217, 119, 6, 0.55) !important; border-bottom-color: #f59e0b !important; }
+        .node-glow-3 { box-shadow: 0 0 26px 8px rgba(4, 120, 87, 0.6) !important; border-bottom-color: #10b981 !important; }
+        .node-glow-4 { box-shadow: 0 0 28px 9px rgba(29, 78, 216, 0.65) !important; border-bottom-color: #3b82f6 !important; }
+        .node-glow-5 { box-shadow: 0 0 32px 10px rgba(190, 24, 93, 0.7), inset 0 0 15px rgba(190, 24, 93, 0.4) !important; border-bottom-color: #db2777 !important; }
+
+        @keyframes spin-slow { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .celebrate-in { opacity: 1 !important; transform: scale(1) !important; }
+
+        #holding-pool { padding-top: 10px; padding-bottom: 10px; }
+        #holding-pool .node-card { background-color: #64748b !important; width: 100%; box-sizing: border-box; margin-top: 10px; border-bottom-color: transparent; }
+        #holding-pool .place-zone { display: none !important; } 
+        #holding-pool .node-glow-1, #holding-pool .node-glow-2, #holding-pool .node-glow-3, #holding-pool .node-glow-4, #holding-pool .node-glow-5 { box-shadow: none !important; animation: none !important; border-bottom-color: transparent !important; }
+
+        .export-mode {
+            background: linear-gradient(135deg, #f8fafc 0%, #e0e7ff 100%) !important;
+            padding: 80px 100px !important; border-radius: 0 !important; width: max-content !important;
+            text-rendering: optimizeLegibility !important; -webkit-font-smoothing: antialiased !important;
+        }
+        .export-mode * { animation: none !important; } 
+        
+        .export-mode .v-badge-1 { box-shadow: 0 4px 6px rgba(0,0,0,0.3), 0 0 20px 6px rgba(100, 116, 139, 0.6) !important; }
+        .export-mode .v-badge-2 { box-shadow: 0 4px 6px rgba(0,0,0,0.3), 0 0 22px 7px rgba(217, 119, 6, 0.6) !important; }
+        .export-mode .v-badge-3 { box-shadow: 0 4px 6px rgba(0,0,0,0.3), 0 0 25px 8px rgba(4, 120, 87, 0.6) !important; }
+        .export-mode .v-badge-4 { box-shadow: 0 4px 6px rgba(0,0,0,0.3), 0 0 28px 9px rgba(29, 78, 216, 0.7) !important; }
+        .export-mode .v-badge-5 { box-shadow: 0 4px 6px rgba(0,0,0,0.3), 0 0 32px 10px rgba(190, 24, 93, 0.7) !important; }
+        .export-mode .v-orbit, .export-mode .v-aura-2 { transform: rotate(45deg); animation: none !important; }
+        .export-mode .v-shimmer { display: none !important; }
+        
+        .export-mode .node-glow-1 { box-shadow: 0 0 25px 8px rgba(100, 116, 139, 0.7) !important; border-bottom-color: #64748b !important; }
+        .export-mode .node-glow-2 { box-shadow: 0 0 28px 9px rgba(217, 119, 6, 0.75) !important; border-bottom-color: #f59e0b !important; }
+        .export-mode .node-glow-3 { box-shadow: 0 0 32px 10px rgba(4, 120, 87, 0.8) !important; border-bottom-color: #10b981 !important; }
+        .export-mode .node-glow-4 { box-shadow: 0 0 35px 11px rgba(29, 78, 216, 0.85) !important; border-bottom-color: #3b82f6 !important; }
+        .export-mode .node-glow-5 { box-shadow: 0 0 40px 12px rgba(190, 24, 93, 0.9) !important; border-bottom-color: #db2777 !important; }
+
+        .export-mode .export-header { display: block !important; }
+        .export-mode .export-footer { display: block !important; }
+        .export-mode .node-actions { display: none !important; }
+        .export-mode .place-zone { display: none !important; }
+
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+
+        .toast {
+            background-color: #0f172a; color: white; padding: 12px 24px; border-radius: 9999px;
+            font-size: 14px; font-weight: bold; box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.1); transform: translateY(-20px); opacity: 0;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); pointer-events: auto;
+            text-align: center; line-height: 1.5;
+        }
+        .toast.show { transform: translateY(0); opacity: 1; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 flex flex-col h-[100dvh] overflow-hidden">
+
+    <div id="toast-overlay" onclick="dismissAllToasts()" class="fixed inset-0 bg-black/10 z-[9998] hidden backdrop-blur-[1px] transition-all"></div>
+    <div id="toast-container" class="fixed top-5 left-1/2 -translate-x-1/2 z-[9999] w-[90%] max-w-[400px] flex flex-col items-center pointer-events-none gap-2"></div>
+
+    <div id="export-loading" class="fixed inset-0 bg-black/70 z-[1000] flex flex-col items-center justify-center hidden backdrop-blur-sm transition-opacity">
+        <div class="bg-slate-900 p-8 rounded-3xl flex flex-col items-center gap-4 text-center border border-white/10 shadow-2xl">
+            <svg class="animate-spin h-10 w-10 text-indigo-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <p id="txtExporting" class="text-xs font-black text-indigo-300 uppercase tracking-widest mt-2">Rendering Anti-Blur Image...</p>
+            <p id="txtExportDesc" class="text-sm font-medium text-slate-300 max-w-[240px]">Calculating browser canvas limits to ensure perfect crispness. Please wait...</p>
+        </div>
+    </div>
+
+    <!-- Gamified Level Up Banner -->
+    <div id="levelUpOverlay" class="fixed inset-0 z-[99999] pointer-events-none hidden flex-col items-center justify-center bg-black/50 backdrop-blur-sm transition-opacity duration-300 opacity-0">
+        <div id="levelUpBanner" class="transform scale-50 opacity-0 transition-all duration-500 cubic-bezier(0.34, 1.56, 0.64, 1) flex flex-col items-center text-center">
+            <div id="levelUpBadgeContainer" class="relative flex justify-center items-center mt-12 mb-8 transform scale-[2] md:scale-[2.5]"></div>
+            <h1 id="levelUpTitle" class="text-5xl md:text-6xl font-black italic tracking-wider drop-shadow-xl mb-2" style="font-family: 'Georgia', serif;">LEVEL UP!</h1>
+            <div class="bg-gradient-to-r from-transparent via-white/40 to-transparent h-px w-full my-4"></div>
+            <p id="levelUpDesc" class="text-xl md:text-2xl font-bold text-white shadow-lg bg-black/40 px-6 py-3 rounded-full border border-white/20 backdrop-blur-md"></p>
+        </div>
+    </div>
+
+    <div class="max-w-[1400px] w-full mx-auto flex flex-col flex-1 overflow-hidden h-[100dvh]">
+        
+        <div class="flex flex-col md:flex-row justify-between md:items-end gap-2 shrink-0 no-print p-2 md:p-4 lg:p-6 pb-2 md:pb-3">
+            <div class="flex flex-col">
+                <h1 class="text-2xl md:text-3xl font-black text-slate-800 tracking-tight">TET <span class="text-indigo-600" id="appTitleHighlight">战略布局图</span></h1>
+                <div class="flex items-center gap-2 mt-1">
+                    <p class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase">V5.0.0 - RADAR HUB</p>
+                    
+                    <!-- Cloud Sync Indicator UI -->
+                    <div class="group relative flex items-center">
+                        <span id="cloudSyncIndicator" class="text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-widest shadow-sm transition-all flex items-center gap-1 text-slate-500 bg-slate-100">
+                            <span>⚪</span> <span id="syncText">Local (Free)</span>
+                        </span>
+                        
+                        <!-- NEW BULB ICON -->
+                        <div class="ml-1 flex items-center justify-center cursor-help transition hover:scale-110 text-sm opacity-80 hover:opacity-100">💡</div>
+                        
+                        <!-- TOOLTIP CONTENT (Injected by JS) -->
+                        <div id="syncTooltipContent" class="absolute left-full ml-2 top-1/2 -translate-y-1/2 w-[220px] bg-slate-800 text-white text-[10px] leading-relaxed p-2.5 rounded shadow-xl opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- CHANGED: Added py-2 (padding top & bottom) inside the scrollview to ensure absolute badges are never cut off. -->
+            <div class="flex gap-2 overflow-x-auto scrollbar-hide w-full md:w-auto py-2 mt-1 md:mt-0 items-center">
+                <button onclick="toggleLanguage()" id="btnToggleLang" class="shrink-0 bg-white border border-slate-300 shadow-sm text-slate-700 font-bold text-xs px-4 py-2 md:py-2.5 rounded-full hover:bg-slate-50 transition active:scale-95">🌐 EN</button>
+                <button onclick="showModal('catalogModal')" id="btnCatalog" class="shrink-0 bg-gradient-to-r from-amber-400 to-amber-500 border border-amber-600 shadow-md text-amber-950 font-black text-xs px-4 py-2 md:py-2.5 rounded-full hover:scale-105 transition active:scale-95 flex items-center gap-1">👑 VIP Lineup</button>
+                
+                <!-- NEW VIP ADVISOR BUTTON -->
+                <button onclick="openAdvisorModal()" id="btnAdvisor" class="shrink-0 relative bg-gradient-to-r from-emerald-400 to-teal-500 border border-teal-600 shadow-md text-teal-950 font-black text-xs px-4 py-2 md:py-2.5 rounded-full hover:scale-105 transition active:scale-95 flex items-center gap-1">
+                    🎯 <span id="btnAdvisorText">VIP Radar</span>
+                    <!-- CHANGED: Re-positioned, made wider/pill shaped for readability, added border thickness -->
+                    <span id="advisorBadge" class="hidden absolute -top-1.5 -right-1 bg-red-500 text-white text-[10px] font-black px-1.5 min-w-[20px] h-5 rounded-full flex items-center justify-center border-2 border-white shadow-md z-10">0</span>
+                </button>
+
+                <button onclick="saveToImage()" id="btnCopyImg" class="shrink-0 bg-indigo-50 border border-indigo-200 shadow-sm text-indigo-600 font-bold text-xs px-4 py-2 md:py-2.5 rounded-full hover:bg-indigo-100 transition active:scale-95">📤 分享图片</button>
+                <button onclick="openSaveModal()" id="btnSaveProf" class="shrink-0 bg-white border border-slate-300 shadow-sm text-slate-700 font-bold text-xs px-4 py-2 md:py-2.5 rounded-full hover:bg-slate-50 transition active:scale-95">💾 另存为/分享</button>
+                <button onclick="openLoadModal()" id="btnLoadProf" class="shrink-0 bg-white border border-slate-300 shadow-sm text-slate-700 font-bold text-xs px-4 py-2 md:py-2.5 rounded-full hover:bg-slate-50 transition active:scale-95">📂 加载档案</button>
+            </div>
+        </div>
+
+        <div class="flex flex-col lg:flex-row gap-2 lg:gap-4 flex-1 overflow-hidden px-2 md:px-4 lg:px-6 pb-2 md:pb-4 lg:pb-6">
+            
+            <div class="w-full lg:w-72 shrink-0 flex flex-col h-auto lg:h-full">
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-3 lg:p-5 flex flex-col flex-1 max-h-[145px] lg:max-h-full relative z-20 shrink-0">
+                    <div class="flex justify-between items-center mb-1 lg:mb-2 shrink-0">
+                        <h3 class="font-bold text-slate-800 text-sm uppercase tracking-wider" id="txtHoldingPool">待分配区</h3>
+                        <button onclick="addFloatingMember()" id="btnAddMem" class="bg-indigo-50 text-indigo-600 hover:bg-indigo-100 text-[11px] md:text-xs font-bold px-3 py-1.5 rounded-lg transition active:scale-95">➕ Add</button>
+                    </div>
+                    <p class="text-[10px] md:text-[11px] text-slate-400 font-medium mb-1 shrink-0 leading-tight hidden sm:block" id="txtHoldingDesc">点击成员右上角的 ✥，然后点击主图中的位置进行放置。</p>
+                    
+                    <ul id="holding-pool" class="flex lg:flex-col overflow-x-auto lg:overflow-x-visible overflow-y-hidden lg:overflow-y-auto gap-2 lg:gap-3 pb-2 lg:pb-0 scrollbar-hide items-start lg:items-stretch flex-1"></ul>
+                </div>
+            </div>
+
+            <div class="flex-1 bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col overflow-hidden relative">
+                
+                <div id="placingBanner" class="absolute top-0 left-0 w-full bg-amber-400 text-amber-900 font-bold text-xs px-4 py-2 md:py-3 flex justify-between items-center z-50 transform -translate-y-full transition-transform duration-300 shadow-md">
+                    <span id="txtPlacingMode">🎯 请点击主图中的 '放置于此'。</span>
+                    <button onclick="cancelPlacement()" class="bg-amber-900/20 hover:bg-amber-900/30 text-amber-900 px-3 py-1 rounded-full transition active:scale-95" id="btnCancelPlacing">取消 Cancel</button>
+                </div>
+
+                <div class="bg-slate-50 border-b border-slate-100 p-2 flex flex-nowrap justify-between items-center z-10 shrink-0 w-full overflow-hidden">
+                    
+                    <div class="flex items-center gap-2 overflow-hidden min-w-0">
+                        <button onclick="resetDraft()" id="btnReset" class="shrink-0 text-[11px] md:text-xs font-bold text-slate-500 hover:text-red-500 transition px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg shadow-sm active:scale-95">🔄 重置</button>
+                        
+                        <div id="activeProfileContainer" class="hidden items-center bg-indigo-50 border border-indigo-200 px-2 py-1.5 rounded-lg shadow-sm min-w-0 transition-all">
+                            <span class="text-[10px] font-black text-indigo-800 uppercase shrink-0 hidden sm:block mr-1.5" id="lblActiveProfile">PROFILE:</span>
+                            <span class="text-[11px] md:text-xs font-bold text-indigo-700 truncate min-w-0" id="activeProfileName"></span>
+                            <div class="w-[1px] h-3 bg-indigo-200 mx-1.5 shrink-0"></div>
+                            <button onclick="quickSave()" class="text-indigo-500 hover:text-indigo-800 hover:scale-110 active:scale-95 transition shrink-0 flex items-center justify-center" title="Quick Save">💾</button>
+                        </div>
+                    </div>
+                    
+                    <div class="flex gap-1 bg-white border border-slate-200 p-1 rounded-xl shadow-sm shrink-0 ml-2">
+                         <button onclick="adjustZoom(-0.1)" class="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center rounded-lg font-bold text-slate-500 hover:bg-slate-100 hover:text-indigo-600 transition active:scale-95 text-lg">-</button>
+                         <button onclick="resetZoom()" class="px-2 h-7 md:h-8 flex items-center justify-center rounded-lg font-bold text-[11px] md:text-xs text-slate-500 hover:bg-slate-100 transition active:scale-95 tracking-wider">1x</button>
+                         <button onclick="adjustZoom(0.1)" class="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center rounded-lg font-bold text-slate-500 hover:bg-slate-100 hover:text-indigo-600 transition active:scale-95 text-lg">+</button>
+                    </div>
+                </div>
+
+                <div class="flex-1 overflow-auto bg-slate-100/30 pb-20 pt-6 px-6" id="main-canvas">
+                    <div id="canvas-bounds" class="mx-auto relative transition-all duration-200" style="width: 0px; height: 0px;">
+                        
+                        <div id="scale-wrapper" class="absolute top-0 left-0 origin-top-left transition-transform duration-200">
+                            
+                            <div id="capture-wrapper" class="p-4 md:p-8 w-max h-max inline-block relative">
+                                <div class="export-header hidden mb-12 pl-6">
+                                    <h2 class="text-4xl font-black tracking-widest text-slate-800" id="exportTitleText">TET STRATEGY PLOTTER</h2>
+                                    <div class="h-1.5 w-24 bg-indigo-500 rounded-full mt-3"></div>
+                                </div>
+
+                                <div class="tree">
+                                    <ul id="main-tree-zone">
+                                    </ul>
+                                </div>
+
+                                <div class="export-footer hidden mt-16 text-right pr-6">
+                                    <p class="text-sm font-bold text-slate-400 uppercase tracking-widest" id="exportFooterText">Generated by TET 管家</p>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- MODALS OVERLAY SYSTEM -->
+    <div id="modalsWrapper" class="fixed inset-0 z-[100] hidden">
+        <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" onclick="closeAllModals()"></div>
+        <div class="absolute inset-0 flex items-center justify-center p-4 pointer-events-none">
+            
+            <!-- ADVISOR MODAL -->
+            <div id="advisorModal" class="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden hidden flex-col pointer-events-auto transform transition-all scale-95 opacity-0 duration-200">
+                <div class="bg-gradient-to-r from-emerald-600 to-teal-700 p-5 text-center">
+                    <h3 class="font-black text-white tracking-wide flex justify-center items-center gap-2" id="modAdvTitle">
+                        <span class="text-emerald-300">🎯</span> VIP Rank-Up Radar
+                    </h3>
+                </div>
+                <div class="p-5 bg-slate-50 flex flex-col overflow-y-auto max-h-[60vh] custom-scrollbar">
+                    <p id="modAdvDesc" class="text-xs text-slate-500 font-bold text-center mb-4">These members are exactly ONE leg away from ranking up! Help them push to the next level.</p>
+                    
+                    <div id="advisorList" class="flex flex-col gap-3">
+                        <!-- Populated dynamically via JS -->
+                    </div>
+                </div>
+                <div class="p-4 bg-white border-t border-slate-100">
+                    <button onclick="closeAllModals()" id="btnAdvClose" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 rounded-xl active:scale-95 transition">Close Radar</button>
+                </div>
+            </div>
+
+            <!-- CATALOG MODAL -->
+            <div id="catalogModal" class="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden hidden flex-col pointer-events-auto transform transition-all scale-95 opacity-0 duration-200">
+                <div class="bg-gradient-to-r from-slate-900 to-slate-800 p-5 text-center">
+                    <h3 class="font-black text-white tracking-wide flex justify-center items-center gap-2" id="modCatTitle">
+                        <span class="text-amber-400">👑</span> VIP Level Showcase
+                    </h3>
+                </div>
+                <div class="p-6 bg-slate-50 flex flex-col overflow-y-auto max-h-[60vh] custom-scrollbar">
+                    <p id="modCatDesc" class="text-xs text-slate-500 font-bold text-center mb-4">Below is the progression path of the VIP badges (V1 to V5).</p>
+                    <div class="flex flex-col items-center justify-center gap-10 relative pt-6 pb-6 w-full">
+                        <div class="absolute top-10 bottom-10 w-1 bg-gradient-to-b from-rose-500 via-amber-400 to-slate-300 z-0 opacity-50 rounded-full"></div>
+                        <div class="relative z-10 flex flex-col items-center gap-3 bg-slate-50 px-4 py-2 rounded-full node-glow-5 mt-2">
+                            <div class="relative flex justify-center items-center w-12 h-12">
+                                <div class="v-badge-wrap v-badge-wrap-5 !relative !top-0 !left-0 transform scale-[1.3]">
+                                    <div class="v-badge v-badge-5 shadow-lg">V5</div>
+                                    <div class="v-orbit v-orbit-5"></div>
+                                    <div class="v-crown">♛</div>
+                                </div>
+                            </div>
+                            <div class="font-black text-slate-800 text-lg uppercase tracking-widest">V5</div>
+                        </div>
+                        <div class="relative z-10 flex flex-col items-center gap-3 bg-slate-50 px-4 py-2 rounded-full node-glow-4">
+                            <div class="relative flex justify-center items-center w-12 h-12">
+                                <div class="v-badge-wrap v-badge-wrap-4 !relative !top-0 !left-0 transform scale-125"><div class="v-badge v-badge-4">V4</div><div class="v-orbit v-orbit-4"></div></div>
+                            </div>
+                            <div class="font-black text-slate-700 text-base">V4</div>
+                        </div>
+                        <div class="relative z-10 flex flex-col items-center gap-3 bg-slate-50 px-4 py-2 rounded-full node-glow-3">
+                            <div class="relative flex justify-center items-center w-12 h-12">
+                                <div class="v-badge-wrap v-badge-wrap-3 !relative !top-0 !left-0 transform scale-125"><div class="v-badge v-badge-3">V3</div><div class="v-orbit v-orbit-3"></div></div>
+                            </div>
+                            <div class="font-black text-slate-700 text-base">V3</div>
+                        </div>
+                        <div class="relative z-10 flex flex-col items-center gap-3 bg-slate-50 px-4 py-2 rounded-full node-glow-2">
+                            <div class="relative flex justify-center items-center w-12 h-12">
+                                <div class="v-badge-wrap v-badge-wrap-2 !relative !top-0 !left-0 transform scale-125"><div class="v-aura-2"></div><div class="v-badge v-badge-2">V2<div class="v-shimmer"></div></div></div>
+                            </div>
+                            <div class="font-black text-slate-600 text-base">V2</div>
+                        </div>
+                        <div class="relative z-10 flex flex-col items-center gap-3 bg-slate-50 px-4 py-2 rounded-full node-glow-1">
+                            <div class="relative flex justify-center items-center w-12 h-12">
+                                <div class="v-badge-wrap v-badge-wrap-1 !relative !top-0 !left-0 transform scale-125"><div class="v-badge v-badge-1">V1<div class="v-shimmer"></div></div></div>
+                            </div>
+                            <div class="font-black text-slate-500 text-base">V1</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-4 bg-white border-t border-slate-100">
+                    <button onclick="closeAllModals()" id="btnCatClose" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 rounded-xl active:scale-95 transition">Close Lineup</button>
+                </div>
+            </div>
+
+            <!-- EDIT MODAL -->
+            <div id="editModal" class="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden hidden flex-col pointer-events-auto transform transition-all scale-95 opacity-0 duration-200">
+                <div class="bg-indigo-600 p-5 text-center"><h3 class="font-black text-white tracking-wide" id="modEditTitle">编辑成员</h3></div>
+                <div class="p-6 space-y-4">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1.5 ml-1" id="lblEditName">名字</label>
+                        <input type="text" id="editName" class="w-full text-sm font-bold text-slate-700 p-3 rounded-xl border-2 border-slate-100 outline-none focus:border-indigo-500 transition">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1.5 ml-1" id="lblEditQty">节点数量（T）</label>
+                        <input type="number" id="editQty" class="w-full text-sm font-bold text-slate-700 p-3 rounded-xl border-2 border-slate-100 outline-none focus:border-indigo-500 transition">
+                    </div>
+                </div>
+                <div class="p-4 bg-slate-50 flex gap-3">
+                    <button onclick="closeAllModals()" id="btnCancelEdit" class="flex-1 bg-white border-2 border-slate-200 text-slate-500 font-bold py-3 rounded-xl active:scale-95 transition">取消</button>
+                    <button onclick="saveEdit()" id="btnSaveEdit" class="flex-1 bg-indigo-600 text-white font-bold py-3 rounded-xl shadow-lg shadow-indigo-200 active:scale-95 transition">保存</button>
+                </div>
+            </div>
+
+            <!-- SAVE MODAL -->
+            <div id="saveModal" class="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden hidden flex-col pointer-events-auto transform transition-all scale-95 opacity-0 duration-200">
+                <div class="bg-slate-800 p-5 text-center"><h3 class="font-black text-white tracking-wide" id="modSaveTitle">保存 / 分享档案</h3></div>
+                <div class="p-6">
+                    <p id="txtSaveDesc" class="text-xs text-slate-500 font-medium mb-4">覆盖现有的档案并分享，或创建一个新档案。</p>
+                    <div class="profile-list flex flex-col gap-2 max-h-[30vh] overflow-y-auto mb-4 custom-scrollbar pr-2" id="saveProfileList"></div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1.5 ml-1" id="lblNewProf">新档案名称</label>
+                        <input type="text" id="newProfileName" class="w-full text-sm font-bold text-slate-700 p-3 rounded-xl border-2 border-slate-100 outline-none focus:border-indigo-500 transition">
+                    </div>
+                </div>
+                <div class="p-4 bg-slate-50 flex gap-3">
+                    <button onclick="closeAllModals()" id="btnCancelSave" class="flex-1 bg-white border-2 border-slate-200 text-slate-500 font-bold py-3 rounded-xl active:scale-95 transition">取消</button>
+                    <button onclick="executeSave()" id="btnExecSave" class="flex-1 bg-slate-800 text-white font-bold py-3 rounded-xl shadow-lg active:scale-95 transition">保存</button>
+                </div>
+            </div>
+
+            <!-- LOAD MODAL -->
+            <div id="loadModal" class="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden hidden flex-col pointer-events-auto transform transition-all scale-95 opacity-0 duration-200">
+                <div class="bg-slate-100 border-b border-slate-200 p-5 text-center"><h3 class="font-black text-slate-800 tracking-wide" id="modLoadTitle">加载 / 导入档案</h3></div>
+                <div class="p-6">
+                    <div class="bg-indigo-50 p-4 rounded-2xl border-2 border-dashed border-indigo-200 mb-5">
+                        <label id="lblImportTitle" class="block text-[10px] font-bold text-indigo-800 uppercase mb-2 ml-1">导入分享档案</label>
+                        <div class="flex flex-col gap-2">
+                            <textarea id="importCodeInput" rows="3" class="w-full text-[10px] font-mono p-2 rounded-lg border border-indigo-100 outline-none focus:border-indigo-400 resize-none scrollbar-hide shadow-inner" placeholder="Paste code here..."></textarea>
+                            <button onclick="importSharedProfile()" id="btnImportAction" class="w-full bg-indigo-600 text-white font-bold text-xs py-2 rounded-lg shadow-sm active:scale-95 transition">导入</button>
+                        </div>
+                    </div>
+                    <div class="profile-list flex flex-col gap-2 max-h-[30vh] overflow-y-auto custom-scrollbar pr-2" id="loadProfileList"></div>
+                </div>
+                <div class="p-4 bg-slate-50">
+                    <button onclick="closeAllModals()" id="btnCloseLoad" class="w-full bg-white border-2 border-slate-200 text-slate-500 font-bold py-3 rounded-xl active:scale-95 transition">关闭面板</button>
+                </div>
+            </div>
+
+            <!-- IMPORT ACTION MODAL -->
+            <div id="importActionModal" class="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden hidden flex-col pointer-events-auto transform transition-all scale-95 opacity-0 duration-200">
+                <div class="bg-indigo-600 p-5 text-center"><h3 class="font-black text-white tracking-wide" id="modImportActTitle">导入选项</h3></div>
+                <div class="p-6">
+                    <p class="text-xs text-slate-500 font-medium mb-6 text-center" id="modImportActDesc">检测到档案！您希望如何处理此档案？</p>
+                    <div class="flex flex-col gap-3">
+                        <button onclick="importAsOverwrite()" class="w-full bg-red-50 text-red-600 border border-red-200 shadow-sm font-bold py-3 rounded-xl hover:bg-red-100 active:scale-95 transition" id="btnImportOverwrite">覆盖当前画布</button>
+                        <button onclick="importAsPlugIn()" class="w-full bg-indigo-50 text-indigo-600 border border-indigo-200 shadow-sm font-bold py-3 rounded-xl hover:bg-indigo-100 active:scale-95 transition" id="btnImportPlugIn">插入到现有成员下</button>
+                    </div>
+                </div>
+                <div class="p-4 bg-slate-50">
+                    <button onclick="closeAllModals()" class="w-full bg-white border-2 border-slate-200 text-slate-500 font-bold py-3 rounded-xl active:scale-95 transition" id="btnCancelImportAct">取消</button>
+                </div>
+            </div>
+
+            <!-- POSITION MODAL -->
+            <div id="positionModal" class="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden hidden flex-col pointer-events-auto transform transition-all scale-95 opacity-0 duration-200">
+                <div class="bg-amber-500 p-5 text-center"><h3 class="font-black text-white tracking-wide" id="modPosTitle">选择放置位置</h3></div>
+                <div class="p-4 bg-amber-50 border-b border-amber-100">
+                    <p class="text-xs text-amber-800 font-medium text-center" id="modPosDesc">该节点已有下级成员。请选择您要插入的位置：</p>
+                </div>
+                <div class="p-4 overflow-y-auto max-h-[40vh] custom-scrollbar" id="positionMemberList"></div>
+                <div class="p-4 bg-slate-50">
+                    <button onclick="closeAllModals(); cancelPlacement();" id="btnCancelPos" class="w-full bg-white border-2 border-slate-200 text-slate-500 font-bold py-3 rounded-xl active:scale-95 transition">取消</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const DEVICE_ID_KEY = 'tet_ecosystem_id';
+        const CLOUD_SYNC_URL = "/api/cloud-sync?app=strategy";
+
+        window.vipOpportunities = []; // Global state for VIP radar
+
+        const i18n = {
+            en: {
+                titleHighlight: "Strategy Plotter", langToggle: "🌐 中文", resetApp: "🔄 Reset",
+                shareImg: "📤 Share Image", saveProf: "💾 Save / Share", loadProf: "📂 Load / Import", addMem: "➕ Add",
+                holding: "Holding Pool", holdingDesc: "Tap ✥ on a member, then tap the canvas to place it.",
+                editMem: "Edit Member", nameLabel: "Name", qtyLabel: "Node Quantity (T)",
+                saveBtn: "Save", cancelBtn: "Cancel", namePlaceholder: "Enter Member Name",
+                saveModTitle: "Save / Share Profile", saveModDesc: "Overwrite an existing profile or create a new one.",
+                newProfName: "New Profile Name", newProfPlaceholder: "E.g., Phase 1", saveStratBtn: "Save",
+                loadModTitle: "Load / Import Profile", closePanel: "Close",
+                newMemDef: "New Member", teamTotal: "Team Total",
+                msgEmptyProfiles: "No saved profiles yet.", msgOverwrite: "Overwrite",
+                msgAlertSave: "Please enter a profile name!", msgAlertDel: "Delete strategy profile",
+                msgAlertCopy: "✅ Image copied!", msgAlertDown: "📷 Image downloaded!",
+                btnShareText: "📤 Share Code", btnDelText: "Delete",
+                lblImportTitle: "Import Shared Code", importPlaceholder: "Paste shared code here...",
+                btnImportText: "Import", codeCopied: "✅ Code copied to clipboard!",
+                importFail: "❌ Invalid or broken share code!", importSuccess: "✅ Profile imported!",
+                saveAsMsg: "Enter a name to save this imported profile:", msgConfirmReset: "Reset the canvas?",
+                msgConfirmDeleteNode: "Delete this member?", placeHere: "⬇️ Place Here", 
+                msgPlacingMode: "🎯 Tap 'Place Here' on the canvas to place member.", msgInvalidMove: "❌ Cannot place a member inside itself!",
+                toastSaved: "✅ Profile Saved Locally!", toastLoaded: "📂 Profile Loaded!", toastOverwritten: "✅ Profile Overwritten Locally!",
+                placeFirst: "🥇 First Position", placeAfter: "↳ Place after", posTitle: "Select Position", posDesc: "This node already has members. Where would you like to place it?",
+                exportTitle: "TET STRATEGY PLOTTER", exportFooter: "Generated by TET 管家",
+                importOptTitle: "Import Options", importOptDesc: "Profile detected! How would you like to handle this data?",
+                btnImportOver: "Overwrite Canvas", btnImportPlug: "Plug into Member",
+                msgImportPlacing: "🎯 Tap 'Place Here' on a member to plug in the imported profile.",
+                msgConfirmPlugIn: "Plug the imported profile into '{name}'?",
+                msgConfirmOverwrite: "Overwrite the existing profile '{name}'?",
+                msgConfirmLoadSave: "Loading a profile will overwrite your current canvas. Ensure you have saved your work. Continue loading?",
+                toastQuickSaved: "✅ Quick saved locally to '{name}'!",
+                toastGenerating: "Rendering Anti-Blur Image...", toastGeneratingDesc: "Calculating browser limits for perfect crispness. Please wait...",
+                btnCatalog: "VIP Lineup", modCatTitle: "VIP Level Showcase", modCatDesc: "Below is the progression path of the VIP badges (V1 to V5).", btnCatClose: "Close Lineup",
+                lvlUpTitle: "LEVEL UP!", lvlUpDesc: "Congratulations! {name} has reached VIP {level}!",
+                syncTipFreeLabel: "Free Users: ", syncTipFreeDesc: "Data saves locally to this browser. Clearing your cache will delete your profiles.",
+                syncTipProLabel: "Pro Users: ", syncTipProDesc: "Data automatically syncs to the cloud securely across all your devices.",
+                
+                // VIP Advisor i18n
+                btnAdvisor: "Radar",
+                modAdvTitle: "VIP Rank-Up Radar",
+                modAdvDesc: "These members are exactly ONE leg away from ranking up! Help them push to the next level.",
+                advEmpty: "No members are currently 1 leg away from ranking up.",
+                advNeedV1: "Has 2/3 10k legs. Best 3rd leg: {best} T (Short: {short} T)",
+                advNeedV: "Has 2/3 V{req} legs. Needs 1 more V{req} leg.",
+                btnAdvClose: "Close Radar",
+                lblCurrent: "Current"
+            },
+            zh: {
+                titleHighlight: "战略布局图", langToggle: "🌐 EN", resetApp: "🔄 重置",
+                shareImg: "📤 分享图片", saveProf: "💾 另存为/分享", loadProf: "📂 加载 / 导入", addMem: "➕ 添加",
+                holding: "待分配区", holdingDesc: "点击成员的 ✥ 图标，然后点击主图中的位置进行放置。",
+                editMem: "编辑成员", nameLabel: "名字", qtyLabel: "节点数量（T）",
+                saveBtn: "保存", cancelBtn: "取消", namePlaceholder: "输入成员名字",
+                saveModTitle: "保存 / 分享档案", saveModDesc: "覆盖现有档案或创建一个新档案。",
+                newProfName: "新档案名称", newProfPlaceholder: "例如：第一阶段", saveStratBtn: "保存",
+                loadModTitle: "加载 / 导入档案", closePanel: "关闭",
+                newMemDef: "新成员", teamTotal: "团队总计",
+                msgEmptyProfiles: "暂无保存的档案。", msgOverwrite: "覆盖",
+                msgAlertSave: "请输入档案名称！", msgAlertDel: "确定要删除策略档案",
+                msgAlertCopy: "✅ 图片已复制！", msgAlertDown: "📷 图片已下载！",
+                btnShareText: "📤 分享代码", btnDelText: "删除",
+                lblImportTitle: "导入分享档案", importPlaceholder: "粘贴分享代码...",
+                btnImportText: "导入", codeCopied: "✅ 分享代码已复制到剪贴板！",
+                importFail: "❌ 分享代码无效！", importSuccess: "✅ 档案导入成功！",
+                saveAsMsg: "请为导入的档案命名：", msgConfirmReset: "确定要重置画布吗？",
+                msgConfirmDeleteNode: "确定要删除此成员吗？", placeHere: "⬇️ 放置于此", 
+                msgPlacingMode: "🎯 请点击主图中的 '放置于此'。", msgInvalidMove: "❌ 无法将成员放置在其自身的下级！",
+                toastSaved: "✅ 档案已保存至本地！", toastLoaded: "📂 档案已加载！", toastOverwritten: "✅ 档案已在本地覆盖！",
+                placeFirst: "🥇 首位 (最左侧)", placeAfter: "↳ 放在此成员之后：", posTitle: "选择放置位置", posDesc: "该节点已有下级成员。请选择您要插入的位置：",
+                exportTitle: "TET 战略布局图", exportFooter: "Generated by TET 管家",
+                importOptTitle: "导入选项", importOptDesc: "检测到档案！您希望如何处理此档案？",
+                btnImportOver: "覆盖当前画布", btnImportPlug: "插入到现有成员下",
+                msgImportPlacing: "🎯 请点击主图中的 '放置于此' 将档案插入该成员。",
+                msgConfirmPlugIn: "确定要将导入的档案插入到 '{name}' 之下吗？",
+                msgConfirmOverwrite: "确定要覆盖现有的档案 '{name}' 吗？",
+                msgConfirmLoadSave: "加载新档案将覆盖当前画布。请确保您已保存当前进度。要继续加载吗？",
+                toastQuickSaved: "✅ 已快速保存至本地 '{name}'！",
+                toastGenerating: "生成超清防糊图片中...", toastGeneratingDesc: "正在计算浏览器极限画质，确保文字清晰。请稍候...",
+                btnCatalog: "VIP 阵容", modCatTitle: "VIP 等级展示", modCatDesc: "以下是系统内不同 VIP 等级（V1 至 V5）的徽章视觉效果升级路径。", btnCatClose: "关闭展示",
+                lvlUpTitle: "等级提升！", lvlUpDesc: "恭喜！{name} 成功晋级 VIP {level}！",
+                syncTipFreeLabel: "免费用户：", syncTipFreeDesc: "数据保存在当前浏览器本地。清除缓存将导致档案丢失。",
+                syncTipProLabel: "专业版用户：", syncTipProDesc: "数据自动安全地同步到云端，跨设备无缝使用。",
+                
+                // VIP Advisor i18n
+                btnAdvisor: "晋级雷达",
+                modAdvTitle: "VIP 晋级雷达",
+                modAdvDesc: "以下成员只差一条线即可晋级！帮他们规划冲刺，冲击下一个等级。",
+                advEmpty: "当前没有即将晋级的成员。",
+                advNeedV1: "已有 2 条万T线。第3大线: {best} T (缺口: {short} T)",
+                advNeedV: "已有 2 条 V{req} 线。还差 1 条 V{req} 线。",
+                btnAdvClose: "关闭雷达",
+                lblCurrent: "当前"
+            }
+        };
+
+        let currentLang = localStorage.getItem('tet_strategy_lang') || 'zh';
+        let pendingImportTree = null;
+        let pendingImportPool = null;
+        let isImportPlacing = false;
+        let activeProfile = localStorage.getItem('tet_strategy_active_profile') || null;
+        let isAppReady = false;
+        
+        let isProUser = false; 
+
+        let toastTimeout;
+        function showToast(msg) {
+            const container = document.getElementById('toast-container');
+            const overlay = document.getElementById('toast-overlay');
+            if (toastTimeout) clearTimeout(toastTimeout);
+            
+            container.innerHTML = '';
+            const el = document.createElement('div');
+            el.className = 'toast';
+            el.innerText = msg;
+            
+            container.appendChild(el);
+            overlay.classList.remove('hidden');
+            setTimeout(() => { el.classList.add('show'); }, 10);
+            
+            toastTimeout = setTimeout(dismissAllToasts, 3000); 
+        }
+
+        function dismissAllToasts() {
+            const container = document.getElementById('toast-container');
+            const overlay = document.getElementById('toast-overlay');
+            const toasts = container.querySelectorAll('.toast');
+            toasts.forEach(t => t.classList.remove('show'));
+            setTimeout(() => {
+                container.innerHTML = '';
+                overlay.classList.add('hidden');
+            }, 300);
+        }
+
+        // --- CLOUD SYNC LOGIC ---
+        
+        const SYNC_STATE = {
+            OFFLINE: { color: 'text-red-500', bg: 'bg-red-50', icon: '🔴', text: 'Sync Error' },
+            SYNCING: { color: 'text-yellow-600', bg: 'bg-yellow-50', icon: '🟡', text: 'Syncing...' },
+            SYNCED:  { color: 'text-emerald-600', bg: 'bg-emerald-50', icon: '🟢', text: 'Cloud Synced' },
+            FREE:    { color: 'text-slate-500', bg: 'bg-slate-100', icon: '⚪', text: 'Local (Free)' }
+        };
+
+        function setSyncUI(stateKey) {
+            const ind = document.getElementById('cloudSyncIndicator');
+            const txt = document.getElementById('syncText');
+            if (!ind || !txt) return;
+            const state = SYNC_STATE[stateKey];
+            ind.className = `text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-widest shadow-sm transition-all flex items-center gap-1 ${state.color} ${state.bg}`;
+            ind.children[0].innerText = state.icon;
+            txt.innerText = state.text;
+        }
+
+        function smartMergeProfiles(cloudProfiles) {
+            let localProfiles = JSON.parse(localStorage.getItem('tetProfiles') || '{}');
+            let hasChanges = false;
+            
+            for (let key in cloudProfiles) {
+                cloudProfiles[key].synced = true; 
+                
+                if (!localProfiles[key]) {
+                    localProfiles[key] = cloudProfiles[key];
+                    hasChanges = true;
+                } else {
+                    const localStr = JSON.stringify(localProfiles[key]);
+                    const cloudStr = JSON.stringify(cloudProfiles[key]);
+                    if (localStr !== cloudStr) {
+                        localProfiles[`${key} (Cloud Restore)`] = cloudProfiles[key];
+                        hasChanges = true;
+                    }
+                }
+            }
+            
+            if (hasChanges) {
+                localStorage.setItem('tetProfiles', JSON.stringify(localProfiles));
+                return true; 
+            }
+            return false;
+        }
+
+        async function autoRestoreProfiles() {
+            const deviceId = localStorage.getItem(DEVICE_ID_KEY);
+            if (!deviceId) return;
+
+            try {
+                const res = await fetch(`${CLOUD_SYNC_URL}&deviceId=${deviceId}`);
+                
+                if (res.status === 401 || res.status === 403) {
+                    isProUser = false;
+                    setSyncUI('FREE');
+                    return;
+                }
+                
+                if (res.status !== 200) { setSyncUI('OFFLINE'); return; }
+
+                const data = await res.json();
+                if (data.success) {
+                    isProUser = true; 
+                    
+                    if (data.data) {
+                        let cloudData = typeof data.data === 'string' ? JSON.parse(data.data) : data.data;
+                        const didUpdate = smartMergeProfiles(cloudData);
+                        if (didUpdate && !document.getElementById('loadModal').classList.contains('hidden')) {
+                            openLoadModal(); 
+                        }
+                    }
+                    setSyncUI('SYNCED');
+                    autoBackupProfiles(true); 
+                }
+            } catch (err) { 
+                console.error("Auto-restore failed:", err);
+                if (isProUser) setSyncUI('OFFLINE'); 
+            }
+        }
+
+        async function autoBackupProfiles(isSilentBackground = false) {
+            if (!isProUser) return; 
+
+            const deviceId = localStorage.getItem(DEVICE_ID_KEY);
+            if (!deviceId) return;
+            
+            if (!isSilentBackground) setSyncUI('SYNCING');
+            
+            try {
+                const profiles = JSON.parse(localStorage.getItem('tetProfiles') || "{}");
+                
+                const res = await fetch(`${CLOUD_SYNC_URL}&deviceId=${deviceId}`, {
+                    method: 'POST',
+                    keepalive: true, 
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ profiles: profiles })
+                });
+
+                if (res.status === 200) {
+                    setSyncUI('SYNCED');
+                    let currentProfiles = JSON.parse(localStorage.getItem('tetProfiles') || "{}");
+                    for (let k in currentProfiles) { currentProfiles[k].synced = true; }
+                    localStorage.setItem('tetProfiles', JSON.stringify(currentProfiles));
+                    
+                    if (!document.getElementById('saveModal').classList.contains('hidden')) openSaveModal();
+                    if (!document.getElementById('loadModal').classList.contains('hidden')) openLoadModal();
+                } else {
+                    setSyncUI('OFFLINE');
+                }
+            } catch (err) {
+                console.error("Auto-backup failed:", err);
+                setSyncUI('OFFLINE');
+            }
+        }
+
+        // --- APP LOGIC ---
+
+        function toggleLanguage() {
+            currentLang = currentLang === 'en' ? 'zh' : 'en';
+            localStorage.setItem('tet_strategy_lang', currentLang);
+            applyTranslations();
+            updateDynamicText();
+        }
+
+        function applyTranslations() {
+            const t = i18n[currentLang];
+            document.getElementById('appTitleHighlight').innerText = t.titleHighlight;
+            document.getElementById('btnToggleLang').innerText = t.langToggle;
+            document.getElementById('btnCopyImg').innerText = t.shareImg;
+            document.getElementById('btnSaveProf').innerText = t.saveProf;
+            document.getElementById('btnLoadProf').innerText = t.loadProf;
+            document.getElementById('btnAddMem').innerText = t.addMem;
+            document.getElementById('btnReset').innerText = t.resetApp;
+            document.getElementById('txtHoldingPool').innerText = t.holding;
+            document.getElementById('txtHoldingDesc').innerText = t.holdingDesc;
+            
+            if (!isImportPlacing) document.getElementById('txtPlacingMode').innerText = t.msgPlacingMode;
+            else document.getElementById('txtPlacingMode').innerText = t.msgImportPlacing;
+            
+            document.getElementById('modEditTitle').innerText = t.editMem;
+            document.getElementById('lblEditName').innerText = t.nameLabel;
+            document.getElementById('lblEditQty').innerText = t.qtyLabel;
+            document.getElementById('btnSaveEdit').innerText = t.saveBtn;
+            document.getElementById('btnCancelEdit').innerText = t.cancelBtn;
+            document.getElementById('editName').placeholder = t.namePlaceholder;
+            
+            document.getElementById('modSaveTitle').innerText = t.saveModTitle;
+            document.getElementById('txtSaveDesc').innerText = t.saveModDesc;
+            document.getElementById('lblNewProf').innerText = t.newProfName;
+            document.getElementById('newProfileName').placeholder = t.newProfPlaceholder;
+            document.getElementById('btnExecSave').innerText = t.saveStratBtn;
+            document.getElementById('btnCancelSave').innerText = t.cancelBtn;
+            
+            document.getElementById('modLoadTitle').innerText = t.loadModTitle;
+            document.getElementById('btnCloseLoad').innerText = t.closePanel;
+            document.getElementById('lblImportTitle').innerText = t.lblImportTitle;
+            document.getElementById('importCodeInput').placeholder = t.importPlaceholder;
+            document.getElementById('btnImportAction').innerText = t.btnImportText;
+
+            document.getElementById('modPosTitle').innerText = t.posTitle;
+            document.getElementById('modPosDesc').innerText = t.posDesc;
+            document.getElementById('btnCancelPos').innerText = t.cancelBtn;
+            document.getElementById('btnCancelPlacing').innerText = t.cancelBtn;
+            
+            document.getElementById('exportTitleText').innerText = t.exportTitle;
+            document.getElementById('exportFooterText').innerText = t.exportFooter;
+
+            document.getElementById('modImportActTitle').innerText = t.importOptTitle;
+            document.getElementById('modImportActDesc').innerText = t.importOptDesc;
+            document.getElementById('btnImportOverwrite').innerText = t.btnImportOver;
+            document.getElementById('btnImportPlugIn').innerText = t.btnImportPlug;
+            document.getElementById('btnCancelImportAct').innerText = t.cancelBtn;
+
+            document.getElementById('txtExporting').innerText = t.toastGenerating;
+            document.getElementById('txtExportDesc').innerText = t.toastGeneratingDesc;
+
+            document.getElementById('btnCatalog').innerHTML = `<span class="mr-1">👑</span> ` + t.btnCatalog;
+            document.getElementById('modCatTitle').innerHTML = `<span class="text-amber-400">👑</span> ` + t.modCatTitle;
+            document.getElementById('modCatDesc').innerText = t.modCatDesc;
+            document.getElementById('btnCatClose').innerText = t.btnCatClose;
+            
+            // ADVISOR I18N
+            document.getElementById('btnAdvisorText').innerText = t.btnAdvisor;
+            document.getElementById('modAdvTitle').innerHTML = `<span class="text-emerald-300">🎯</span> ` + t.modAdvTitle;
+            document.getElementById('modAdvDesc').innerText = t.modAdvDesc;
+            document.getElementById('btnAdvClose').innerText = t.btnAdvClose;
+
+            document.getElementById('syncTooltipContent').innerHTML = `
+                <span class="font-bold text-amber-300">${t.syncTipFreeLabel}</span> ${t.syncTipFreeDesc} <br><br>
+                <span class="font-bold text-emerald-300">${t.syncTipProLabel}</span> ${t.syncTipProDesc}
+            `;
+
+            calculateDownlineTotals(); 
+        }
+
+        function updateDynamicText() {
+            document.querySelectorAll('.btn-place-text').forEach(el => el.innerText = i18n[currentLang].placeHere);
+        }
+
+        function setActiveProfile(name) {
+            activeProfile = name;
+            const container = document.getElementById('activeProfileContainer');
+            const nameSpan = document.getElementById('activeProfileName');
+            
+            if (name) {
+                localStorage.setItem('tet_strategy_active_profile', name);
+                nameSpan.innerText = name;
+                container.classList.remove('hidden');
+                container.classList.add('flex');
+            } else {
+                localStorage.removeItem('tet_strategy_active_profile');
+                container.classList.remove('flex');
+                container.classList.add('hidden');
+            }
+        }
+
+        function quickSave() {
+            if (!activeProfile) return;
+            const profiles = getProfiles();
+            profiles[activeProfile] = { 
+                pool: document.getElementById('holding-pool').innerHTML, 
+                tree: document.getElementById('main-tree-zone').innerHTML,
+                synced: false
+            };
+            localStorage.setItem('tetProfiles', JSON.stringify(profiles));
+            showToast(i18n[currentLang].toastQuickSaved.replace('{name}', activeProfile));
+            
+            autoBackupProfiles();
+        }
+
+        let nodeToMove = null;
+        let pendingTargetUl = null;
+
+        function selectForPlacement(btn, event) {
+            event.stopPropagation();
+            if (nodeToMove && nodeToMove !== "IMPORT") { nodeToMove.querySelector('.node-card').classList.remove('is-selected'); }
+            
+            nodeToMove = btn.closest('li');
+            nodeToMove.querySelector('.node-card').classList.add('is-selected');
+            document.body.classList.add('is-placing');
+            
+            document.getElementById('placingBanner').classList.remove('-translate-y-full');
+        }
+
+        function cancelPlacement() {
+            if (nodeToMove && nodeToMove !== "IMPORT") {
+                nodeToMove.querySelector('.node-card').classList.remove('is-selected');
+            }
+            nodeToMove = null;
+            pendingTargetUl = null;
+            isImportPlacing = false;
+            pendingImportTree = null;
+            pendingImportPool = null;
+            
+            document.body.classList.remove('is-placing');
+            document.getElementById('placingBanner').classList.add('-translate-y-full');
+            
+            setTimeout(() => { document.getElementById('txtPlacingMode').innerText = i18n[currentLang].msgPlacingMode; }, 300);
+        }
+
+        function placeNodeHere(btn, event) {
+            event.stopPropagation();
+            
+            if (isImportPlacing && pendingImportTree) {
+                const targetLi = btn.closest('li');
+                const targetName = targetLi.querySelector('.node-name').innerText;
+                const confirmMsg = i18n[currentLang].msgConfirmPlugIn.replace('{name}', targetName);
+                
+                if (confirm(confirmMsg)) {
+                    const targetUl = targetLi.querySelector(':scope > ul.drop-zone');
+                    if (targetUl.children.length > 0) {
+                        nodeToMove = "IMPORT";
+                        showPositionModal(targetUl);
+                    } else {
+                        executeImportPlugIn(targetUl, null);
+                    }
+                }
+                return;
+            }
+
+            if (!nodeToMove) return;
+            const targetLi = btn.closest('li');
+            const targetUl = targetLi.querySelector(':scope > ul.drop-zone');
+
+            if (nodeToMove.contains(targetUl)) {
+                showToast(i18n[currentLang].msgInvalidMove);
+                return;
+            }
+
+            if (targetUl.children.length > 0) {
+                showPositionModal(targetUl);
+                return;
+            }
+
+            targetUl.appendChild(nodeToMove);
+            cancelPlacement();
+            calculateDownlineTotals();
+            saveDraft();
+        }
+
+        function showPositionModal(ul) {
+            pendingTargetUl = ul;
+            const list = document.getElementById('positionMemberList');
+            list.innerHTML = '';
+            
+            list.innerHTML += `<button onclick="executePlacement(0)" class="w-full text-left p-3 bg-white hover:bg-amber-50 border-2 border-amber-200 rounded-xl mb-2 font-bold text-amber-700 shadow-sm transition active:scale-95">${i18n[currentLang].placeFirst}</button>`;
+            
+            Array.from(ul.children).forEach((child, index) => {
+                const name = child.querySelector('.node-name').innerText;
+                const qty = child.querySelector('.node-qty').innerText;
+                list.innerHTML += `
+                    <button onclick="executePlacement(${index + 1})" class="w-full text-left p-3 bg-slate-50 hover:bg-indigo-50 border border-slate-200 rounded-xl mb-2 text-sm text-slate-700 transition active:scale-95 shadow-sm">
+                        <span class="text-indigo-500 font-black mr-1">↳</span> ${i18n[currentLang].placeAfter} <span class="font-bold text-slate-900">${name}</span> <span class="text-[10px] text-slate-500 bg-slate-200 px-1.5 py-0.5 rounded ml-1">${qty}</span>
+                    </button>`;
+            });
+
+            showModal('positionModal');
+        }
+
+        function executePlacement(index) {
+            if (nodeToMove === "IMPORT") {
+                executeImportPlugIn(pendingTargetUl, index);
+                closeAllModals();
+                return;
+            }
+
+            if (!nodeToMove || !pendingTargetUl) { closeAllModals(); return; }
+            
+            if (index === 0) {
+                pendingTargetUl.insertBefore(nodeToMove, pendingTargetUl.firstChild);
+            } else {
+                const referenceNode = pendingTargetUl.children[index - 1]; 
+                if (referenceNode.nextSibling) {
+                    pendingTargetUl.insertBefore(nodeToMove, referenceNode.nextSibling);
+                } else {
+                    pendingTargetUl.appendChild(nodeToMove);
+                }
+            }
+            
+            closeAllModals();
+            cancelPlacement();
+            calculateDownlineTotals();
+            saveDraft();
+        }
+
+        function executeImportPlugIn(targetUl, index) {
+            isAppReady = false; 
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = pendingImportTree;
+            const importedNodes = Array.from(tempDiv.children); 
+            
+            importedNodes.forEach(node => {
+                if (index === null || index >= targetUl.children.length) { targetUl.appendChild(node); } 
+                else if (index === 0) { targetUl.insertBefore(node, targetUl.firstChild); } 
+                else { targetUl.insertBefore(node, targetUl.children[index]); }
+            });
+
+            if (pendingImportPool) {
+                document.getElementById('holding-pool').insertAdjacentHTML('beforeend', pendingImportPool);
+            }
+            
+            patchLegacyHTML();
+            calculateDownlineTotals();
+            saveDraft();
+            cancelPlacement();
+            showToast(i18n[currentLang].importSuccess);
+            setTimeout(() => { isAppReady = true; }, 100);
+        }
+
+        document.getElementById('main-canvas').addEventListener('click', function(e) {
+            if (document.body.classList.contains('is-placing')) {
+                if (!e.target.closest('.place-zone')) { cancelPlacement(); }
+            }
+        });
+
+        function duplicateNode(btn, event) {
+            event.stopPropagation();
+            const card = btn.closest('.node-card');
+            const name = card.querySelector('.node-name').innerText;
+            const qty = card.querySelector('.node-qty').innerText; 
+            
+            let li = document.createElement('li');
+            li.className = "flex-shrink-0 p-2"; 
+            li.innerHTML = getNodeHTML(name, qty, false);
+            
+            document.getElementById('holding-pool').appendChild(li);
+            document.getElementById('holding-pool').scrollTo({ left: document.getElementById('holding-pool').scrollWidth, behavior: 'smooth' });
+            saveDraft();
+        }
+
+        function getNodeHTML(name, qty, isMain = false) {
+            const deleteBtn = isMain ? '' : `<button class="btn-action btn-delete" onclick="removeNodeFromPool(this, event)">✕</button>`;
+            const moveBtn = isMain ? '' : `<button class="btn-action btn-move" onclick="selectForPlacement(this, event)">✥</button>`;
+            const copyBtn = isMain ? '' : `<button class="btn-action btn-copy" onclick="duplicateNode(this, event)">⧉</button>`;
+            
+            return `
+                <div class="node-card" data-v-level="0">
+                    ${isMain ? '' : `<div class="node-actions">${moveBtn}${copyBtn}${deleteBtn}</div>`}
+                    <div class="node-content" onclick="openEditModal(this.parentElement)">
+                        <div class="node-name">${name}</div>
+                        <div class="node-qty">${qty}</div>
+                    </div>
+                </div>
+                <div class="place-zone">
+                    <button class="bg-amber-400 text-amber-900 text-xs font-bold px-4 py-2 rounded-full shadow-lg border-2 border-white" onclick="placeNodeHere(this, event)">
+                        <span class="btn-place-text">${i18n[currentLang].placeHere}</span>
+                    </button>
+                </div>
+                <ul class="drop-zone flex"></ul>
+            `;
+        }
+
+        function patchLegacyHTML() {
+            const treeZone = document.getElementById('main-tree-zone');
+            const poolZone = document.getElementById('holding-pool');
+            if(treeZone) treeZone.innerHTML = treeZone.innerHTML.replace(/⠿/g, '');
+            if(poolZone) poolZone.innerHTML = poolZone.innerHTML.replace(/⠿/g, '');
+            document.querySelectorAll('.drag-handle').forEach(el => el.remove());
+
+            document.querySelectorAll('#main-tree-zone li, #holding-pool li').forEach(li => {
+                const card = li.querySelector(':scope > .node-card');
+                if (card) {
+                    const nameEl = card.querySelector('.node-name');
+                    const qtyEl = card.querySelector('.node-qty');
+                    
+                    const name = nameEl ? nameEl.innerText.trim() : i18n[currentLang].newMemDef;
+                    const qty = qtyEl ? qtyEl.innerText.trim() : "0 T";
+                    
+                    const isRoot = (li.parentElement && li.parentElement.id === 'main-tree-zone');
+                    
+                    const deleteBtn = isRoot ? '' : `<button class="btn-action btn-delete" onclick="removeNodeFromPool(this, event)">✕</button>`;
+                    const moveBtn = isRoot ? '' : `<button class="btn-action btn-move" onclick="selectForPlacement(this, event)">✥</button>`;
+                    const copyBtn = isRoot ? '' : `<button class="btn-action btn-copy" onclick="duplicateNode(this, event)">⧉</button>`;
+                    
+                    const legacyBadgeWrap = card.querySelector('.v-badge-wrap');
+                    if (legacyBadgeWrap) legacyBadgeWrap.remove();
+                    const legacyBadge = card.querySelector('.v-badge');
+                    if (legacyBadge) legacyBadge.remove();
+
+                    card.innerHTML = `
+                        ${isRoot ? '' : `<div class="node-actions">${moveBtn}${copyBtn}${deleteBtn}</div>`}
+                        <div class="node-content" onclick="openEditModal(this.parentElement)">
+                            <div class="node-name">${name}</div>
+                            <div class="node-qty">${qty}</div>
+                        </div>
+                    `;
+                }
+
+                if (!li.querySelector(':scope > .place-zone')) {
+                    const placeZoneHtml = `
+                        <div class="place-zone">
+                            <button class="bg-amber-400 text-amber-900 text-xs font-bold px-4 py-2 rounded-full shadow-lg border-2 border-white" onclick="placeNodeHere(this, event)">
+                                <span class="btn-place-text">${i18n[currentLang].placeHere}</span>
+                            </button>
+                        </div>
+                    `;
+                    const dropZone = li.querySelector(':scope > ul.drop-zone');
+                    if(dropZone) dropZone.insertAdjacentHTML('beforebegin', placeZoneHtml);
+                }
+            });
+
+            document.querySelectorAll('#holding-pool > li').forEach(li => { li.classList.add('flex-shrink-0', 'p-2'); });
+        }
+
+        function saveDraft() {
+            const draft = { pool: document.getElementById('holding-pool').innerHTML, tree: document.getElementById('main-tree-zone').innerHTML };
+            localStorage.setItem('tet_strategy_draft', JSON.stringify(draft));
+        }
+
+        function loadDraft() {
+            isAppReady = false;
+            const draftData = localStorage.getItem('tet_strategy_draft');
+            if(draftData) {
+                try {
+                    const draft = JSON.parse(draftData);
+                    document.getElementById('holding-pool').innerHTML = draft.pool;
+                    document.getElementById('main-tree-zone').innerHTML = draft.tree;
+                    patchLegacyHTML(); 
+                } catch(e) {}
+            } else {
+                document.getElementById('main-tree-zone').innerHTML = `<li>${getNodeHTML("Main Account", "5000 T", true)}</li>`;
+            }
+            calculateDownlineTotals();
+            updateDynamicText();
+            setActiveProfile(activeProfile);
+        }
+
+        function resetDraft() {
+            if(confirm(i18n[currentLang].msgConfirmReset)) {
+                isAppReady = false;
+                localStorage.removeItem('tet_strategy_draft');
+                setActiveProfile(null);
+                document.getElementById('holding-pool').innerHTML = '';
+                document.getElementById('main-tree-zone').innerHTML = `<li>${getNodeHTML("Main Account", "5000 T", true)}</li>`;
+                calculateDownlineTotals();
+                saveDraft(); 
+                setTimeout(() => { isAppReady = true; }, 100);
+            }
+        }
+
+        const levelColors = [
+            "#1e293b", "#3b82f6", "#10b981", "#8b5cf6", "#f97316", "#ef4444", 
+            "#14b8a6", "#f59e0b", "#475569", "#d97706", "#a855f7", "#b91c1c", 
+            "#0f766e", "#0369a1", "#4338ca", "#c2410c", "#6d28d9", "#0f766e", 
+            "#b45309", "#7e22ce", "#0f172a"
+        ];
+
+        let dynamicStyles = "";
+        let cssSelector = ".tree > ul > li";
+        for (let i = 0; i <= 20; i++) {
+            dynamicStyles += `${cssSelector} > .node-card { background-color: ${levelColors[i]}; }\n`;
+            cssSelector += " > ul > li";
+        }
+        let styleTag = document.createElement("style");
+        styleTag.innerHTML = dynamicStyles;
+        document.head.appendChild(styleTag);
+
+        let levelUpQueue = [];
+        let isLevelUpPlaying = false;
+
+        function triggerLevelUp(name, level) {
+            levelUpQueue.push({name, level});
+            if (!isLevelUpPlaying) playNextLevelUp();
+        }
+
+        function playNextLevelUp() {
+            if (levelUpQueue.length === 0) {
+                isLevelUpPlaying = false;
+                return;
+            }
+            isLevelUpPlaying = true;
+            const item = levelUpQueue.shift();
+            
+            const overlay = document.getElementById('levelUpOverlay');
+            const banner = document.getElementById('levelUpBanner');
+            const title = document.getElementById('levelUpTitle');
+            const desc = document.getElementById('levelUpDesc');
+            const badgeContainer = document.getElementById('levelUpBadgeContainer');
+            
+            const styles = {
+                1: { c: '#64748b' }, 
+                2: { c: '#eab308' }, 
+                3: { c: '#10b981' }, 
+                4: { c: '#3b82f6' }, 
+                5: { c: '#ec4899' }  
+            };
+            const style = styles[item.level] || styles[1];
+            
+            let badgeHTML = `<div class="v-badge-wrap v-badge-wrap-${item.level} !relative !top-0 !left-0 shadow-2xl">`;
+            if (item.level === 2) badgeHTML += `<div class="v-aura-2"></div>`;
+            badgeHTML += `<div class="v-badge v-badge-${item.level}">V${item.level}`;
+            if (item.level <= 2) badgeHTML += `<div class="v-shimmer"></div>`;
+            badgeHTML += `</div>`;
+            if (item.level >= 3) badgeHTML += `<div class="v-orbit v-orbit-${item.level}"></div>`;
+            if (item.level === 5) badgeHTML += `<div class="v-crown">♛</div>`;
+            badgeHTML += `</div>`;
+            
+            badgeContainer.innerHTML = badgeHTML;
+            
+            title.style.color = style.c;
+            title.innerText = i18n[currentLang].lvlUpTitle;
+            desc.innerText = i18n[currentLang].lvlUpDesc.replace('{name}', item.name).replace('{level}', item.level);
+            
+            overlay.classList.remove('hidden');
+            
+            setTimeout(() => {
+                overlay.classList.remove('opacity-0');
+                banner.classList.add('celebrate-in');
+            }, 50);
+            
+            setTimeout(() => {
+                overlay.classList.add('opacity-0');
+                banner.classList.remove('celebrate-in');
+                setTimeout(() => {
+                    overlay.classList.add('hidden');
+                    playNextLevelUp();
+                }, 3000); 
+            }, 3500); 
+        }
+
+        function processNode(li) {
+            const isMainTree = !!li.closest('#main-tree-zone');
+            const card = li.querySelector(':scope > .node-card');
+            if (!card) return { teamTotal: 0, vLevel: 0, maxVInBranch: 0 };
+
+            const qtyText = card.querySelector('.node-qty').innerText.replace(' T', '');
+            let ownQty = parseFloat(qtyText) || 0;
+            let teamTotal = ownQty;
+            
+            const childLis = Array.from(li.querySelectorAll(':scope > ul.drop-zone > li'));
+            let childTeamTotals = [];
+            let childMaxVs = [];
+
+            childLis.forEach(childLi => {
+                const childData = processNode(childLi);
+                teamTotal += childData.teamTotal;
+                childTeamTotals.push(childData.teamTotal);
+                childMaxVs.push(childData.maxVInBranch); 
+            });
+
+            const oldTotal = card.querySelector('.node-team-total');
+            if (oldTotal) oldTotal.remove();
+            
+            const oldBadgeWrap = card.querySelector('.v-badge-wrap');
+            if (oldBadgeWrap) oldBadgeWrap.remove();
+            const legacyBadge = card.querySelector('.v-badge');
+            if (legacyBadge && !legacyBadge.parentElement.classList.contains('v-badge-wrap')) legacyBadge.remove();
+
+            if (childLis.length > 0) {
+                const teamTotalDiv = document.createElement('div');
+                teamTotalDiv.className = 'node-team-total';
+                teamTotalDiv.innerText = `${i18n[currentLang].teamTotal}: ${teamTotal.toLocaleString()} T`;
+                card.querySelector('.node-content').appendChild(teamTotalDiv);
+            }
+
+            let vLevel = 0;
+            let qualifiedForV1 = childTeamTotals.filter(t => t >= 10000).length;
+            if (qualifiedForV1 >= 3) vLevel = 1;
+
+            for (let level = 2; level <= 5; level++) {
+                let qualifiedBranches = childMaxVs.filter(maxV => maxV >= level - 1).length;
+                if (qualifiedBranches >= 3) {
+                    vLevel = level;
+                } else {
+                    break;
+                }
+            }
+
+            // --- OPPORTUNITY RADAR LOGIC ---
+            if (isMainTree && window.vipOpportunities) {
+                let nextLevel = vLevel + 1;
+                if (nextLevel <= 5) {
+                    let isOpp = false;
+                    let shortMsg = '';
+                    
+                    if (nextLevel === 1) {
+                        if (qualifiedForV1 === 2) {
+                            isOpp = true;
+                            let nonQual = childTeamTotals.filter(t => t < 10000);
+                            let bestNonQual = nonQual.length > 0 ? Math.max(...nonQual) : 0;
+                            let shortAmt = 10000 - bestNonQual;
+                            shortMsg = i18n[currentLang].advNeedV1.replace('{best}', bestNonQual.toLocaleString()).replace('{short}', shortAmt.toLocaleString());
+                        }
+                    } else {
+                        let reqLevel = nextLevel - 1;
+                        let qualifiedBranches = childMaxVs.filter(maxV => maxV >= reqLevel).length;
+                        if (qualifiedBranches === 2) {
+                            isOpp = true;
+                            shortMsg = i18n[currentLang].advNeedV.replace(/{req}/g, reqLevel);
+                        }
+                    }
+                    
+                    if (isOpp) {
+                        window.vipOpportunities.push({
+                            name: card.querySelector('.node-name').innerText,
+                            current: vLevel,
+                            target: nextLevel,
+                            msg: shortMsg
+                        });
+                    }
+                }
+            }
+
+            let maxVInBranch = vLevel;
+            if (childMaxVs.length > 0) {
+                maxVInBranch = Math.max(vLevel, ...childMaxVs);
+            }
+
+            card.classList.remove('node-glow-1', 'node-glow-2', 'node-glow-3', 'node-glow-4', 'node-glow-5');
+
+            if (vLevel > 0) {
+                const badgeWrap = document.createElement('div');
+                badgeWrap.className = `v-badge-wrap v-badge-wrap-${vLevel}`;
+                let bHtml = '';
+                if (vLevel === 2) bHtml += `<div class="v-aura-2"></div>`;
+                bHtml += `<div class="v-badge v-badge-${vLevel}">V${vLevel}`;
+                if (vLevel <= 2) bHtml += `<div class="v-shimmer"></div>`;
+                bHtml += `</div>`;
+                if (vLevel >= 3) bHtml += `<div class="v-orbit v-orbit-${vLevel}"></div>`;
+                if (vLevel === 5) bHtml += `<div class="v-crown">♛</div>`;
+                
+                badgeWrap.innerHTML = bHtml;
+                card.appendChild(badgeWrap);
+                
+                card.classList.add(`node-glow-${vLevel}`);
+            }
+
+            let oldVLevel = parseInt(card.getAttribute('data-v-level') || '0');
+            const name = card.querySelector('.node-name').innerText;
+            
+            if (isAppReady && vLevel > oldVLevel) {
+                triggerLevelUp(name, vLevel);
+            }
+            card.setAttribute('data-v-level', vLevel);
+
+            return { teamTotal, vLevel, maxVInBranch };
+        }
+
+        let currentZoom = 1;
+        let pinchZoomLevel = 1;
+        let isTicking = false;
+
+        function updateZoomLayout() {
+            const scaleWrapper = document.getElementById('scale-wrapper');
+            const canvasBounds = document.getElementById('canvas-bounds');
+            const captureWrapper = document.getElementById('capture-wrapper');
+            
+            scaleWrapper.style.transform = `scale(${currentZoom})`;
+            
+            requestAnimationFrame(() => {
+                const width = captureWrapper.offsetWidth * currentZoom;
+                const height = captureWrapper.offsetHeight * currentZoom;
+                canvasBounds.style.width = `${width}px`;
+                canvasBounds.style.height = `${height}px`;
+            });
+        }
+
+        function calculateDownlineTotals() {
+            // Reset Opportunities
+            window.vipOpportunities = [];
+            
+            const rootNodes = document.querySelectorAll('#main-tree-zone > li');
+            const branchColors = ['#3b82f6', '#10b981', '#a855f7', '#f59e0b', '#ec4899', '#0ea5e9', '#f43f5e', '#84cc16'];
+            
+            rootNodes.forEach(root => {
+                root.style.setProperty('--branch-color', '#cbd5e1'); 
+                const branchHeads = Array.from(root.querySelectorAll(':scope > ul.drop-zone > li'));
+                branchHeads.forEach((headLi, index) => {
+                    const color = branchColors[index % branchColors.length];
+                    headLi.style.setProperty('--branch-color', color);
+                });
+                processNode(root);
+            });
+            
+            document.querySelectorAll('#holding-pool .node-team-total, #holding-pool .v-badge-wrap, #holding-pool .v-badge').forEach(el => el.remove());
+            
+            updateZoomLayout();
+            updateAdvisorBadge();
+        }
+
+        // --- NEW VIP ADVISOR LOGIC ---
+        function updateAdvisorBadge() {
+            const badge = document.getElementById('advisorBadge');
+            const count = window.vipOpportunities.length;
+            if (count > 0) {
+                badge.innerText = count;
+                badge.classList.remove('hidden');
+                badge.classList.add('flex');
+                document.getElementById('btnAdvisor').classList.add('animate-pulse');
+            } else {
+                badge.classList.add('hidden');
+                badge.classList.remove('flex');
+                document.getElementById('btnAdvisor').classList.remove('animate-pulse');
+            }
+        }
+
+        function openAdvisorModal() {
+            const listContainer = document.getElementById('advisorList');
+            listContainer.innerHTML = '';
+            
+            if (window.vipOpportunities.length === 0) {
+                listContainer.innerHTML = `<p class="text-xs text-slate-400 text-center py-6">${i18n[currentLang].advEmpty}</p>`;
+            } else {
+                // Sort by target level highest first
+                const sortedOpps = [...window.vipOpportunities].sort((a,b) => b.target - a.target);
+                
+                sortedOpps.forEach(opp => {
+                    // Generate mini badge for target
+                    let badgeHTML = `<div class="relative w-10 h-10 flex shrink-0 items-center justify-center transform scale-90">`;
+                    badgeHTML += `<div class="v-badge-wrap v-badge-wrap-${opp.target} !relative !top-0 !left-0 shadow-md">`;
+                    if (opp.target === 2) badgeHTML += `<div class="v-aura-2"></div>`;
+                    badgeHTML += `<div class="v-badge v-badge-${opp.target}">V${opp.target}</div>`;
+                    if (opp.target >= 3) badgeHTML += `<div class="v-orbit v-orbit-${opp.target}"></div>`;
+                    if (opp.target === 5) badgeHTML += `<div class="v-crown !text-sm !-top-3">♛</div>`;
+                    badgeHTML += `</div></div>`;
+
+                    listContainer.innerHTML += `
+                        <div class="bg-white border border-slate-200 p-3 rounded-2xl flex items-center gap-3 shadow-sm hover:shadow-md transition">
+                            ${badgeHTML}
+                            <div class="flex-1 min-w-0">
+                                <div class="font-black text-slate-800 text-sm truncate flex items-center gap-2">
+                                    ${opp.name} 
+                                    <span class="text-[9px] font-bold bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded">${i18n[currentLang].lblCurrent}: ${opp.current > 0 ? 'V'+opp.current : 'None'}</span>
+                                </div>
+                                <div class="text-[10px] text-teal-600 font-bold leading-tight mt-1">${opp.msg}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+            showModal('advisorModal');
+            document.getElementById('btnAdvisor').classList.remove('animate-pulse'); // Stop pulsing when seen
+        }
+
+        function adjustZoom(delta) {
+            document.getElementById('scale-wrapper').style.transition = 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1)';
+            document.getElementById('canvas-bounds').style.transition = 'width 0.2s, height 0.2s';
+            currentZoom += delta;
+            currentZoom = Math.max(0.4, Math.min(currentZoom, 2.0)); 
+            pinchZoomLevel = currentZoom;
+            updateZoomLayout();
+        }
+
+        function resetZoom() {
+            document.getElementById('scale-wrapper').style.transition = 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1)';
+            document.getElementById('canvas-bounds').style.transition = 'width 0.2s, height 0.2s';
+            currentZoom = 1;
+            pinchZoomLevel = 1;
+            updateZoomLayout();
+        }
+
+        const mainCanvas = document.getElementById('main-canvas');
+        let initialPinchDistance = null;
+
+        mainCanvas.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 2) {
+                initialPinchDistance = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
+            }
+        });
+
+        mainCanvas.addEventListener('touchmove', (e) => {
+            if (e.touches.length === 2 && initialPinchDistance !== null) {
+                e.preventDefault(); 
+                const currentDistance = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
+                const scaleFactor = currentDistance / initialPinchDistance;
+                let newZoom = currentZoom * scaleFactor;
+                newZoom = Math.max(0.4, Math.min(newZoom, 2.0));
+                
+                if (!isTicking) {
+                    window.requestAnimationFrame(() => {
+                        const scaleWrapper = document.getElementById('scale-wrapper');
+                        const canvasBounds = document.getElementById('canvas-bounds');
+                        const captureWrapper = document.getElementById('capture-wrapper');
+                        
+                        scaleWrapper.style.transition = 'none';
+                        canvasBounds.style.transition = 'none';
+                        
+                        scaleWrapper.style.transform = `scale(${newZoom})`;
+                        canvasBounds.style.width = `${captureWrapper.offsetWidth * newZoom}px`;
+                        canvasBounds.style.height = `${captureWrapper.offsetHeight * newZoom}px`;
+                        
+                        pinchZoomLevel = newZoom;
+                        isTicking = false;
+                    });
+                    isTicking = true;
+                }
+            }
+        }, { passive: false });
+
+        mainCanvas.addEventListener('touchend', (e) => {
+            if (e.touches.length < 2) {
+                if(initialPinchDistance !== null) { 
+                    currentZoom = pinchZoomLevel; 
+                    document.getElementById('scale-wrapper').style.transition = 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1)';
+                    document.getElementById('canvas-bounds').style.transition = 'width 0.2s, height 0.2s';
+                }
+                initialPinchDistance = null;
+            }
+        });
+
+        function showModal(modalId) {
+            document.getElementById('modalsWrapper').classList.remove('hidden');
+            const target = document.getElementById(modalId);
+            target.classList.remove('hidden');
+            target.classList.add('flex');
+            setTimeout(() => { target.classList.remove('scale-95', 'opacity-0'); target.classList.add('scale-100', 'opacity-100'); }, 10);
+        }
+
+        function closeAllModals() {
+            const modals = ['editModal', 'saveModal', 'loadModal', 'positionModal', 'importActionModal', 'catalogModal', 'advisorModal'];
+            modals.forEach(id => {
+                const target = document.getElementById(id);
+                target.classList.remove('scale-100', 'opacity-100');
+                target.classList.add('scale-95', 'opacity-0');
+                setTimeout(() => { target.classList.add('hidden'); target.classList.remove('flex'); }, 200);
+            });
+            setTimeout(() => { document.getElementById('modalsWrapper').classList.add('hidden'); }, 200);
+        }
+
+        let currentlyEditingNode = null;
+        function openEditModal(cardElement) {
+            if (document.body.classList.contains('is-placing')) return; 
+
+            currentlyEditingNode = cardElement;
+            document.getElementById('editName').value = cardElement.querySelector('.node-name').innerText;
+            document.getElementById('editQty').value = cardElement.querySelector('.node-qty').innerText.replace(' T', '');
+            showModal('editModal');
+        }
+
+        function removeNodeFromPool(btn, event) {
+            event.stopPropagation();
+            if (confirm(i18n[currentLang].msgConfirmDeleteNode)) {
+                btn.closest('li').remove();
+                calculateDownlineTotals();
+                saveDraft();
+            }
+        }
+
+        window.onload = () => { 
+            applyTranslations(); 
+            loadDraft(); 
+            setTimeout(() => { isAppReady = true; }, 500);
+            
+            setSyncUI('FREE');
+            setTimeout(autoRestoreProfiles, 1500);
+        };
+
+        function addFloatingMember() {
+            let li = document.createElement('li');
+            li.className = "flex-shrink-0 p-2"; 
+            li.innerHTML = getNodeHTML(i18n[currentLang].newMemDef, "0 T", false);
+            document.getElementById('holding-pool').appendChild(li);
+            document.getElementById('holding-pool').scrollTo({ left: document.getElementById('holding-pool').scrollWidth, behavior: 'smooth' });
+            saveDraft(); 
+        }
+
+        function saveEdit() {
+            if (currentlyEditingNode) {
+                let newName = document.getElementById('editName').value || i18n[currentLang].newMemDef;
+                let rawQty = document.getElementById('editQty').value;
+                let cleanQty = parseFloat(rawQty);
+                if (isNaN(cleanQty)) cleanQty = 0;
+
+                currentlyEditingNode.querySelector('.node-name').innerText = newName;
+                currentlyEditingNode.querySelector('.node-qty').innerText = cleanQty + " T";
+                calculateDownlineTotals(); 
+                saveDraft(); 
+            }
+            closeAllModals();
+        }
+
+        function getProfiles() {
+            const data = localStorage.getItem('tetProfiles');
+            return data ? JSON.parse(data) : {};
+        }
+
+        function openSaveModal() {
+            const profiles = getProfiles();
+            const listDiv = document.getElementById('saveProfileList');
+            listDiv.innerHTML = "";
+
+            if(Object.keys(profiles).length === 0) {
+                listDiv.innerHTML = `<p class='text-xs text-slate-400 text-center py-4'>${i18n[currentLang].msgEmptyProfiles}</p>`;
+            } else {
+                for(let name in profiles) {
+                    let itemDiv = document.createElement('div');
+                    itemDiv.className = 'flex justify-between items-center bg-slate-50 border border-slate-200 p-3 rounded-xl cursor-pointer hover:border-indigo-300 transition';
+                    itemDiv.onclick = () => executeSave(name);
+                    let nameSpan = document.createElement('span');
+                    nameSpan.className = 'font-bold text-slate-700 text-sm overflow-hidden text-ellipsis whitespace-nowrap flex-1 mr-2';
+                    
+                    let syncIcon = !isProUser ? '⚪' : (profiles[name].synced ? '🟢' : '🟡');
+                    nameSpan.innerHTML = `📁 ${name} <span class="text-[10px] ml-1" title="Sync Status">${syncIcon}</span>`;
+                    
+                    let actionsDiv = document.createElement('div');
+                    actionsDiv.className = 'flex gap-2 items-center';
+                    let shareBtn = document.createElement('button');
+                    shareBtn.className = 'bg-blue-100 text-blue-600 hover:bg-blue-200 text-[10px] font-bold px-2 py-1 rounded transition';
+                    shareBtn.innerText = i18n[currentLang].btnShareText;
+                    shareBtn.onclick = (e) => { e.stopPropagation(); generateShareCode(name); };
+                    let overwriteTxt = document.createElement('span');
+                    overwriteTxt.className = "text-[10px] text-slate-400 font-bold ml-1";
+                    overwriteTxt.innerText = i18n[currentLang].msgOverwrite;
+                    actionsDiv.appendChild(shareBtn);
+                    actionsDiv.appendChild(overwriteTxt);
+                    itemDiv.appendChild(nameSpan);
+                    itemDiv.appendChild(actionsDiv);
+                    listDiv.appendChild(itemDiv);
+                }
+            }
+            showModal('saveModal');
+        }
+
+        function executeSave(overrideName = null) {
+            const profileName = overrideName || document.getElementById('newProfileName').value.trim();
+            if(!profileName) { alert(i18n[currentLang].msgAlertSave); return; }
+            
+            const profiles = getProfiles();
+            const isOverwrite = !!profiles[profileName];
+            
+            if (isOverwrite) {
+                const confirmMsg = i18n[currentLang].msgConfirmOverwrite.replace('{name}', profileName);
+                if (!confirm(confirmMsg)) { return; }
+            }
+
+            profiles[profileName] = { 
+                pool: document.getElementById('holding-pool').innerHTML, 
+                tree: document.getElementById('main-tree-zone').innerHTML,
+                synced: false
+            };
+            
+            localStorage.setItem('tetProfiles', JSON.stringify(profiles));
+            
+            setActiveProfile(profileName);
+            closeAllModals();
+            showToast(isOverwrite ? i18n[currentLang].toastOverwritten : i18n[currentLang].toastSaved);
+            
+            autoBackupProfiles();
+        }
+
+        function openLoadModal() {
+            const profiles = getProfiles();
+            const listDiv = document.getElementById('loadProfileList');
+            listDiv.innerHTML = "";
+            if(Object.keys(profiles).length === 0) {
+                listDiv.innerHTML = `<p class='text-xs text-slate-400 text-center py-4'>${i18n[currentLang].msgEmptyProfiles}</p>`;
+            } else {
+                for(let name in profiles) {
+                    let itemDiv = document.createElement('div');
+                    itemDiv.className = 'flex justify-between items-center bg-slate-50 border border-slate-200 p-3 rounded-xl cursor-pointer hover:border-indigo-300 transition';
+                    itemDiv.onclick = () => executeLoad(name);
+                    let nameSpan = document.createElement('span');
+                    nameSpan.className = 'font-bold text-slate-700 text-sm overflow-hidden text-ellipsis whitespace-nowrap flex-1 mr-2';
+                    
+                    let syncIcon = !isProUser ? '⚪' : (profiles[name].synced ? '🟢' : '🟡');
+                    nameSpan.innerHTML = `📄 ${name} <span class="text-[10px] ml-1" title="Sync Status">${syncIcon}</span>`;
+                    
+                    let delBtn = document.createElement('button');
+                    delBtn.className = 'bg-red-50 text-red-500 hover:bg-red-100 text-[10px] font-bold px-3 py-1.5 rounded transition z-10';
+                    delBtn.innerText = i18n[currentLang].btnDelText;
+                    delBtn.onclick = (e) => { e.stopPropagation(); deleteProfile(name); };
+                    itemDiv.appendChild(nameSpan);
+                    itemDiv.appendChild(delBtn);
+                    listDiv.appendChild(itemDiv);
+                }
+            }
+            showModal('loadModal');
+        }
+
+        function executeLoad(name) {
+            if (!confirm(i18n[currentLang].msgConfirmLoadSave)) { return; }
+            isAppReady = false; 
+
+            const profiles = getProfiles();
+            if(!profiles[name]) return;
+            document.getElementById('holding-pool').innerHTML = profiles[name].pool;
+            document.getElementById('main-tree-zone').innerHTML = profiles[name].tree;
+            patchLegacyHTML(); calculateDownlineTotals(); saveDraft(); closeAllModals();
+            setActiveProfile(name);
+            showToast(i18n[currentLang].toastLoaded);
+            
+            setTimeout(() => { isAppReady = true; }, 100);
+        }
+
+        function deleteProfile(name) {
+            if(confirm(`${i18n[currentLang].msgAlertDel}: "${name}"?`)) {
+                const profiles = getProfiles();
+                delete profiles[name];
+                
+                localStorage.setItem('tetProfiles', JSON.stringify(profiles));
+                if (activeProfile === name) { setActiveProfile(null); }
+                openLoadModal(); 
+                
+                autoBackupProfiles();
+            }
+        }
+
+        function copyTextFallback(text) {
+            if (navigator.clipboard) { navigator.clipboard.writeText(text).then(() => showToast(i18n[currentLang].codeCopied)); } 
+            else {
+                const tempInput = document.createElement('input'); tempInput.value = text;
+                document.body.appendChild(tempInput); tempInput.select(); document.execCommand('copy'); document.body.removeChild(tempInput);
+                showToast(i18n[currentLang].codeCopied);
+            }
+        }
+
+        function extractTreeData(ulElement) {
+            let data = [];
+            Array.from(ulElement.children).forEach(li => {
+                let nameEl = li.querySelector('.node-name');
+                let qtyEl = li.querySelector('.node-qty');
+                if(!nameEl) return;
+                
+                let name = nameEl.innerText.trim();
+                let qty = parseFloat(qtyEl.innerText.replace(' T', '')) || 0;
+                let nodeData = { n: name, q: qty };
+                
+                let dropZone = li.querySelector(':scope > ul.drop-zone');
+                if (dropZone && dropZone.children.length > 0) {
+                    nodeData.c = extractTreeData(dropZone);
+                }
+                data.push(nodeData);
+            });
+            return data;
+        }
+
+        function extractPoolData(ulElement) {
+             let data = [];
+             Array.from(ulElement.children).forEach(li => {
+                 let nameEl = li.querySelector('.node-name');
+                 let qtyEl = li.querySelector('.node-qty');
+                 if(!nameEl) return;
+                 
+                 let name = nameEl.innerText.trim();
+                 let qty = parseFloat(qtyEl.innerText.replace(' T', '')) || 0;
+                 data.push({ n: name, q: qty });
+             });
+             return data;
+        }
+
+        function buildNodeHTMLFromData(data, isMain) {
+            let li = document.createElement('li');
+            li.innerHTML = getNodeHTML(data.n, data.q + " T", isMain);
+            if (data.c && data.c.length > 0) {
+                let ul = li.querySelector(':scope > ul.drop-zone');
+                data.c.forEach(childData => {
+                    ul.appendChild(buildNodeHTMLFromData(childData, false));
+                });
+            }
+            return li;
+        }
+
+        function buildTreeHTML(treeData) {
+            let tempUl = document.createElement('ul');
+            treeData.forEach(d => {
+                tempUl.appendChild(buildNodeHTMLFromData(d, true)); 
+            });
+            return tempUl.innerHTML;
+        }
+
+        function buildPoolHTML(poolData) {
+            let tempUl = document.createElement('ul');
+            poolData.forEach(d => {
+                let li = buildNodeHTMLFromData(d, false);
+                li.className = "flex-shrink-0 p-2"; 
+                tempUl.appendChild(li);
+            });
+            return tempUl.innerHTML;
+        }
+
+        function generateShareCode(name) {
+            const profiles = getProfiles();
+            const profileData = profiles[name];
+            if (!profileData) return;
+            
+            try {
+                let tempTree = document.createElement('ul'); tempTree.innerHTML = profileData.tree;
+                let tempPool = document.createElement('ul'); tempPool.innerHTML = profileData.pool;
+
+                let pureData = {
+                    v: 2, 
+                    p: extractPoolData(tempPool),
+                    t: extractTreeData(tempTree)
+                };
+
+                const jsonStr = JSON.stringify(pureData);
+                const compressed = LZString.compressToBase64(jsonStr);
+                const finalShareCode = "TET-" + compressed;
+                
+                copyTextFallback(finalShareCode);
+                
+                if (navigator.share && /Mobi|Android/i.test(navigator.userAgent)) {
+                    setTimeout(() => {
+                        try {
+                            navigator.share({ 
+                                title: 'TET Strategy Profile', 
+                                text: finalShareCode 
+                            });
+                        } catch (err) {
+                            console.log("Native share cancelled");
+                        }
+                    }, 500);
+                }
+            } catch (err) { console.error("Failed to generate share code", err); }
+        }
+
+        function importSharedProfile() {
+            const inputEl = document.getElementById('importCodeInput');
+            let code = inputEl.value.trim();
+            if (!code) return;
+            try {
+                if (code.startsWith("TET-")) { code = code.substring(4); }
+                
+                let jsonStr = "";
+                
+                try { jsonStr = LZString.decompressFromBase64(code); } catch(e) {}
+                
+                if (!jsonStr) {
+                    try { jsonStr = decodeURIComponent(atob(code)); } catch(e) {}
+                }
+                
+                if (!jsonStr) throw new Error("Decompression failed");
+
+                const profileData = JSON.parse(jsonStr);
+                
+                if (profileData.v === 2) {
+                    pendingImportTree = buildTreeHTML(profileData.t);
+                    pendingImportPool = buildPoolHTML(profileData.p);
+                } else if (profileData.tree !== undefined) {
+                    pendingImportTree = profileData.tree;
+                    pendingImportPool = profileData.pool;
+                } else {
+                    throw new Error("Invalid structure");
+                }
+                
+                closeAllModals();
+                setTimeout(() => showModal('importActionModal'), 250);
+                
+            } catch (err) { 
+                console.error(err);
+                showToast(i18n[currentLang].importFail); 
+            }
+        }
+
+        function importAsOverwrite() {
+            closeAllModals();
+            setTimeout(() => {
+                const newName = prompt(i18n[currentLang].saveAsMsg, "Shared Profile");
+                if (newName) {
+                    const profiles = getProfiles();
+                    profiles[newName] = { pool: pendingImportPool, tree: pendingImportTree, synced: false };
+                    
+                    localStorage.setItem('tetProfiles', JSON.stringify(profiles));
+                    showToast(i18n[currentLang].importSuccess);
+                    document.getElementById('importCodeInput').value = "";
+                    executeLoad(newName); 
+                    
+                    autoBackupProfiles();
+                }
+            }, 300);
+        }
+
+        function importAsPlugIn() {
+            closeAllModals();
+            isImportPlacing = true;
+            document.body.classList.add('is-placing');
+            const banner = document.getElementById('placingBanner');
+            document.getElementById('txtPlacingMode').innerText = i18n[currentLang].msgImportPlacing;
+            banner.classList.remove('-translate-y-full');
+            document.getElementById('importCodeInput').value = "";
+        }
+
+        function triggerDownload(blob, filename) {
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = url;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            showToast(i18n[currentLang].msgAlertDown);
+        }
+
+        let isExporting = false;
+        async function saveToImage() {
+            if (isExporting) return;
+            isExporting = true;
+            
+            const loading = document.getElementById('export-loading');
+            loading.classList.remove('hidden');
+
+            const scaleWrapper = document.getElementById('scale-wrapper');
+            const wrapper = document.getElementById('capture-wrapper');
+            const mainCanvasEl = document.getElementById('main-canvas');
+            
+            const prevScrollLeft = mainCanvasEl.scrollLeft;
+            const prevScrollTop = mainCanvasEl.scrollTop;
+            mainCanvasEl.scrollLeft = 0;
+            mainCanvasEl.scrollTop = 0;
+            
+            const prevZoom = currentZoom;
+            currentZoom = 1;
+            
+            scaleWrapper.style.transform = 'none';
+            scaleWrapper.style.transition = 'none';
+            
+            wrapper.classList.add('export-mode');
+            
+            await new Promise(resolve => setTimeout(resolve, 300));
+            
+            try {
+                let blob;
+                try {
+                    blob = await htmlToImage.toBlob(wrapper, { 
+                        pixelRatio: 3, 
+                        skipFonts: true, 
+                        style: { margin: '0', transform: 'scale(1)', transformOrigin: 'top left' } 
+                    });
+                } catch (e) {
+                    console.warn("Canvas limit hit, optimizing...", e);
+                    blob = await htmlToImage.toBlob(wrapper, { 
+                        pixelRatio: 2, 
+                        skipFonts: true, 
+                        style: { margin: '0', transform: 'scale(1)', transformOrigin: 'top left' } 
+                    });
+                }
+                
+                const file = new File([blob], 'tet-strategy-map.png', { type: 'image/png' });
+                const isMobile = navigator.share && /Mobi|Android/i.test(navigator.userAgent);
+                
+                if (isMobile) {
+                    try {
+                        await navigator.share({ files: [file], title: 'TET Strategy Plotter', text: 'Generated by TET 管家' });
+                    } catch (err) {
+                        triggerDownload(blob, file.name);
+                    }
+                } else {
+                    triggerDownload(blob, file.name);
+                    if (navigator.clipboard) {
+                        try {
+                            const item = new ClipboardItem({ "image/png": blob });
+                            await navigator.clipboard.write([item]);
+                        } catch (e) {}
+                    }
+                }
+            } catch (err) {
+                console.error("Capture failed:", err);
+                showToast("❌ Image generation failed!");
+            } finally {
+                wrapper.classList.remove('export-mode');
+                
+                currentZoom = prevZoom;
+                updateZoomLayout();
+                
+                setTimeout(() => {
+                    mainCanvasEl.scrollLeft = prevScrollLeft;
+                    mainCanvasEl.scrollTop = prevScrollTop;
+                }, 50);
+                
+                loading.classList.add('hidden');
+                isExporting = false;
+            }
+        }
+    </script>
+</body>
+</html>

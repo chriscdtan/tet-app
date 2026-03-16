@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TET 管家</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        :root {
+            --sidebar-bg: #1e293b;
+            --sidebar-hover: #334155;
+            --sidebar-active: #4f46e5;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        body, html {
+            margin: 0; padding: 0; width: 100vw; height: 100vh; font-family: 'Roboto', sans-serif;
+            background-color: #0f172a; overflow: hidden; display: flex;
+        }
+
+        .blur-lock { filter: blur(12px); pointer-events: none; user-select: none; transition: filter 0.4s ease; }
+
+        #sidebar {
+            width: 70px; 
+            background-color: var(--sidebar-bg);
+            border-right: 1px solid #0f172a;
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex; flex-direction: column;
+            z-index: 1010; overflow: hidden;
+            box-shadow: 4px 0 25px rgba(0,0,0,0.3);
+            flex-shrink: 0;
+        }
+
+        #sidebar.expanded { width: 260px; }
+
+        .toggle-btn {
+            height: 70px; display: flex; align-items: center; justify-content: flex-start;
+            padding: 0 20px; cursor: pointer; color: var(--text-main); transition: 0.2s;
+            border-bottom: 1px solid rgba(255,255,255,0.05); flex-shrink: 0;
+        }
+        .toggle-btn:hover { background-color: var(--sidebar-hover); }
+        .toggle-icon { font-size: 24px; min-width: 30px; text-align: center; }
+        
+        .brand-title {
+            font-size: 18px; font-weight: 900; margin-left: 15px; letter-spacing: -0.5px;
+            white-space: nowrap; opacity: 0; transition: opacity 0.2s;
+            background: -webkit-linear-gradient(45deg, #818cf8, #c084fc);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        #sidebar.expanded .brand-title { opacity: 1; transition-delay: 0.1s; }
+
+        .menu-items { 
+            flex: 1; padding-top: 20px; display: flex; flex-direction: column; gap: 5px; 
+            overflow-y: auto; -ms-overflow-style: none; scrollbar-width: none; 
+        }
+        .menu-items::-webkit-scrollbar { display: none; }
+        
+        .menu-item {
+            display: flex; align-items: center; padding: 15px 20px;
+            cursor: pointer; color: var(--text-muted); transition: all 0.2s;
+            text-decoration: none; border-left: 4px solid transparent;
+        }
+        .menu-item:hover { background-color: var(--sidebar-hover); color: var(--text-main); }
+        .menu-item.active { 
+            background-color: rgba(79, 70, 229, 0.15); 
+            color: white; border-left: 4px solid var(--sidebar-active);
+        }
+        
+        .menu-icon { font-size: 22px; min-width: 30px; text-align: center; }
+        .menu-text { 
+            font-size: 15px; font-weight: 500; margin-left: 15px;
+            white-space: nowrap; opacity: 0; transition: opacity 0.2s;
+        }
+        #sidebar.expanded .menu-text { opacity: 1; transition-delay: 0.1s; }
+
+        .sidebar-bottom {
+            display: flex; flex-direction: column; border-top: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .lang-toggle-btn {
+            display: flex; align-items: center; padding: 15px 20px; cursor: pointer; 
+            color: var(--text-muted); transition: 0.2s; background-color: rgba(0,0,0,0.1);
+        }
+        .lang-toggle-btn:hover { background-color: rgba(255,255,255,0.05); color: white;}
+        .lang-text { font-size: 13px; font-weight: 700; margin-left: 15px; opacity: 0; transition: opacity 0.2s; white-space: nowrap;}
+        #sidebar.expanded .lang-text { opacity: 1; transition-delay: 0.1s;}
+
+        .license-info {
+            padding: 15px 20px; 
+            display: flex; align-items: center; background-color: rgba(0,0,0,0.25);
+            white-space: nowrap; flex-shrink: 0; min-height: 80px;
+        }
+        .lic-icon { font-size: 22px; min-width: 30px; text-align: center; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));}
+        .lic-details { 
+            margin-left: 15px; opacity: 0; transition: opacity 0.2s; 
+            display: flex; flex-direction: column; gap: 2px;
+        }
+        #sidebar.expanded .lic-details { opacity: 1; transition-delay: 0.1s; }
+        .lic-label { font-size: 10px; color: var(--text-muted); font-weight: 700; letter-spacing: 0.5px;}
+        .lic-value { font-size: 13px; color: #10b981; font-weight: 900; } 
+
+        #main-content {
+            flex: 1; background-color: #f4f7f6; position: relative;
+            height: 100vh; min-width: 0; overflow: hidden;
+        }
+
+        iframe { width: 100%; height: 100%; border: none; display: block; transition: filter 0.4s ease; }
+
+        @media (max-width: 768px) {
+            #sidebar { position: absolute; height: 100%; width: 65px; z-index: 1010; }
+            #sidebar.expanded { width: 250px; }
+            #main-content { margin-left: 65px; width: calc(100vw - 65px); }
+        }
+    </style>
+</head>
+<body class="bg-slate-50">
+
+    <div id="toast-overlay" onclick="dismissAllToasts()" class="fixed inset-0 bg-black/20 z-[9998] hidden"></div>
+    <div id="toast-container" class="fixed top-5 left-1/2 -translate-x-1/2 z-[9999] w-[90%] max-w-[400px] flex flex-col items-center pointer-events-none gap-2"></div>
+
+    <div id="sidebar">
+        <div class="toggle-btn" onclick="toggleSidebar()">
+            <span class="toggle-icon">☰</span>
+            <span class="brand-title">TET 管家</span>
+        </div>
+        
+        <div class="menu-items">
+            <div class="menu-item active" data-url="tet-strategy.html" data-req-lic="false" onclick="loadApp(this)">
+                <span class="menu-icon">🌏</span>
+                <span class="menu-text" data-i18n="nav_strategy">战略布局图</span>
+                <span id="badgeFree" class="text-[9px] bg-emerald-500/20 text-emerald-500 font-bold px-1.5 py-0.5 rounded ml-auto opacity-0 transition-opacity" data-i18n="tag_free">FREE</span>
+            </div>
+
+            <div class="menu-item" data-url="tet-yolo.html" data-req-lic="true" onclick="loadApp(this)">
+                <span class="menu-icon">📱</span>
+                <span class="menu-text" data-i18n="nav_yolo">节点计算器</span>
+                <span id="badgePro" class="text-[9px] bg-indigo-500/20 text-indigo-400 font-bold px-1.5 py-0.5 rounded ml-auto opacity-0 transition-opacity">PRO</span>
+            </div>
+            
+            <div class="menu-item" data-url="tet-dashboard.html" data-req-lic="true" onclick="loadApp(this)">
+                <span class="menu-icon">💻</span>
+                <span class="menu-text" data-i18n="nav_dashboard">数据看板</span>
+                <span id="badgePro1" class="text-[9px] bg-indigo-500/20 text-indigo-400 font-bold px-1.5 py-0.5 rounded ml-auto opacity-0 transition-opacity">PRO</span>
+            </div>
+            
+            <!-- NEW APP: TET SIMULATOR -->
+            <div class="menu-item" data-url="tet-simulator.html" data-req-lic="true" onclick="loadApp(this)">
+                <span class="menu-icon">📈</span>
+                <span class="menu-text" data-i18n="nav_simulator">模拟器</span>
+                <span id="badgePro2" class="text-[9px] bg-indigo-500/20 text-indigo-400 font-bold px-1.5 py-0.5 rounded ml-auto opacity-0 transition-opacity">PRO</span>
+            </div>
+        </div>
+
+        <div class="sidebar-bottom">
+            <div class="lang-toggle-btn" onclick="toggleLanguage()">
+                <span class="menu-icon">🌐</span>
+                <span class="lang-text" id="sidebarLangText">English</span>
+            </div>
+
+            <div class="license-info">
+                <div class="lic-icon">🛡️</div>
+                <div class="lic-details">
+                    <div class="lic-label" data-i18n="licensed_to">LICENSED TO:</div>
+                    <div class="lic-value overflow-hidden text-ellipsis w-32" id="licNameDisplay">...</div>
+                    <div class="lic-label" style="margin-top: 6px;" data-i18n="valid_until">STATUS:</div>
+                    <div class="lic-value text-indigo-400" id="licExpiryDisplay">...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="main-content">
+        <div id="licenseModal" class="absolute inset-0 z-[1000] flex items-center justify-center bg-slate-900/95 backdrop-blur-md p-4 transition-opacity duration-500 hidden">
+            <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+                <div class="bg-indigo-600 p-6 text-center shrink-0">
+                    <h2 class="text-3xl font-black text-white tracking-tighter">TET <span class="text-indigo-200">管家</span></h2>
+                    <p class="text-indigo-100 text-xs font-bold uppercase mt-1" data-i18n="buy_activate">Purchase & Activate</p>
+                </div>
+                
+                <div class="p-6 space-y-6 overflow-y-auto grow custom-scrollbar">
+                    
+                    <div onclick="copyText('deviceIdDisplay', t('addr_copied'))" class="p-3 bg-slate-100 rounded-xl border border-slate-200 flex justify-between items-center cursor-pointer hover:bg-indigo-50 transition group active:scale-95">
+                        <span class="text-[10px] font-bold text-slate-500 uppercase group-hover:text-indigo-600 transition" data-i18n="your_device_id">Your Device ID:</span>
+                        <div class="flex items-center gap-2">
+                            <span class="font-mono text-xs font-black text-slate-700 group-hover:text-indigo-600" id="deviceIdDisplay">...</span>
+                            <span class="text-[10px] bg-slate-200 px-2 py-0.5 rounded text-slate-500">Copy</span>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <div class="flex items-center gap-2">
+                            <span class="bg-slate-200 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded" data-i18n="step1">Step 1</span>
+                            <span class="text-xs font-bold text-slate-500 uppercase" data-i18n="pay_screenshot">Pay & Screenshot</span>
+                        </div>
+                        <div onclick="copyText('walletDisplay', t('addr_copied'))" class="cursor-pointer bg-blue-50 p-3 rounded-xl border-2 border-blue-100 hover:border-blue-400 transition text-center group active:scale-95 relative overflow-hidden">
+                            <p class="text-[10px] text-blue-400 font-bold uppercase mb-1" data-i18n="click_copy_addr">Click to Copy Wallet Address</p>
+                            <p class="font-mono text-xs font-bold text-slate-700 break-all leading-relaxed" id="walletDisplay">0xD33272f53B78437CB9cdACfDC703f120ff445fb9</p>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <div class="flex items-center gap-2">
+                            <span class="bg-slate-200 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded" data-i18n="step2">Step 2</span>
+                            <span class="text-xs font-bold text-slate-500 uppercase" data-i18n="req_license">Send ID to Admin</span>
+                        </div>
+                        
+                        <form id="licenseForm" class="bg-slate-50 p-4 rounded-xl border-2 border-dashed border-slate-300 space-y-4">
+                            <input type="hidden" name="Device_ID" id="hiddenDeviceIdForForm" value="">
+                            
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1" data-i18n="contact_label">WeChat ID or Phone Number</label>
+                                <input type="text" id="reqContact" required class="w-full text-xs p-2.5 rounded-lg border border-slate-300 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition">
+                            </div>
+
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1" data-i18n="screenshot_label">Payment Screenshot</label>
+                                <input type="file" id="reqScreenshot" accept="image/*" required class="w-full text-xs p-1.5 rounded-lg border border-slate-300 outline-none bg-white file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-[10px] file:font-bold file:bg-indigo-100 file:text-indigo-700 hover:file:bg-indigo-200 transition cursor-pointer">
+                            </div>
+
+                            <button type="button" onclick="submitLicenseToLark()" id="btnSubmitRequest" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2.5 rounded-lg active:scale-95 transition shadow-md" data-i18n="btn_submit">
+                                Submit Form
+                            </button>
+                        </form>
+                    </div>
+
+                    <div class="space-y-2 pt-4 border-t border-slate-100">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="bg-indigo-100 text-indigo-600 text-[10px] font-bold px-2 py-0.5 rounded" data-i18n="step3">Step 3</span>
+                            <span class="text-xs font-bold text-indigo-600 uppercase" data-i18n="enter_code">Verify Activation</span>
+                        </div>
+
+                        <button onclick="checkLicense()" id="btnLiveVerify" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-xl shadow-lg active:scale-95 transition flex items-center justify-center gap-2">
+                            🔄 <span data-i18n="unlock_app">Re-Verify & Unlock</span>
+                        </button>
+                    </div>
+
+                    <div class="pt-4 border-t border-slate-100 text-center">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2" data-i18n="contact_support">Need Help? Contact Support:</p>
+                        <div class="flex flex-col items-center justify-center gap-1 text-[11px] font-medium text-slate-600">
+                            <p><span data-i18n="wechat_id">WeChat:</span> <span class="font-bold text-indigo-600 select-all">TET_FUSN</span></p>
+                            <p><span data-i18n="email_id">Email:</span> <span class="font-bold text-indigo-600 select-all">tet.fusn@gmail.com</span></p>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <iframe id="app-frame" src="tet-strategy.html"></iframe>
+    </div>
+
+    <script>
+        // =========================================================================
+        // 🛠️ ADMIN SETTINGS: GLOBAL BETA HEXADATE
+        // =========================================================================
+        // To disable this feature and require normal database activation, leave it empty: ""
+        const GLOBAL_BETA_HEXADATE = ""; 
+        // =========================================================================
+
+        const DEVICE_ID_KEY = 'tet_ecosystem_id';
+        const LANG_KEY = 'tet_ecosystem_lang';
+        
+        let userHasLicense = false; 
+
+        // 🌐 API BASE CONFIGURATION
+        const NETLIFY_DOMAIN = ""; // e.g., "https://my-app.netlify.app"
+        const API_BASE = NETLIFY_DOMAIN ? (NETLIFY_DOMAIN + "/api") : "/api";
+
+        const i18n = {
+            en: {
+                buy_activate: 'Purchase & Activate',
+                your_device_id: 'Your Device ID:',
+                step1: 'Step 1', pay_screenshot: 'Pay & Screenshot', click_copy_addr: 'Click to Copy Wallet Address', addr_copied: 'Copied!',
+                step2: 'Step 2', req_license: 'Submit Request', contact_label: 'Name / WeChat ID / Phone', screenshot_label: 'Payment Screenshot', btn_submit: 'Submit Form',
+                step3: 'Step 3', enter_code: 'Check Activation', unlock_app: 'Re-Verify & Unlock',
+                
+                nav_yolo: 'Node Calculator', nav_strategy: 'Strategy Plotter', nav_dashboard: 'Dashboard', nav_simulator: 'Simulator',
+                licensed_to: 'LICENSED TO:', valid_until: 'STATUS:', beta_tester: 'Beta Tester',
+                tag_free: 'FREE', unlicensed: 'Unregistered',
+                
+                contact_support: 'Need Help? Contact Support:', wechat_id: 'WeChat:', email_id: 'Email:',
+                
+                err_fill_form: '⚠️ Please enter contact info and attach a screenshot!',
+                status_uploading: 'Uploading to Database...',
+                status_sent: '✅ Request Sent! Wait for Admin to approve, then click Re-Verify.',
+                status_success: 'Request Sent',
+                err_upload: '❌ Upload failed. Please contact admin directly.'
+            },
+            zh: {
+                buy_activate: '购买与激活',
+                your_device_id: '您的设备 ID:',
+                step1: '步骤 1', pay_screenshot: '支付并截图', click_copy_addr: '点击复制钱包地址', addr_copied: '已复制！',
+                step2: '步骤 2', req_license: '提交申请单', contact_label: '姓名 / 微信号 / 手机号', screenshot_label: '支付截图', btn_submit: '提交表单',
+                step3: '步骤 3', enter_code: '验证激活状态', unlock_app: '刷新验证并解锁',
+                
+                nav_yolo: '节点计算器', nav_strategy: '战略布局图', nav_dashboard: '数据看板', nav_simulator: '模拟器',
+                licensed_to: '授权给：', valid_until: '到期时间：', beta_tester: '公测用户',
+                tag_free: '免费', unlicensed: '未授权设备',
+                
+                contact_support: '需要帮助？联系客服：', wechat_id: '微信：', email_id: '邮箱：',
+                
+                err_fill_form: '⚠️ 请填写联系方式并上传截图！',
+                status_uploading: '正在上传至系统...',
+                status_sent: '✅ 申请已发送！请等待管理员审核后，点击"刷新验证"。',
+                status_success: '已发送',
+                err_upload: '❌ 上传失败，请直接通过微信发送截图。'
+            }
+        };
+
+        let currentLang = localStorage.getItem(LANG_KEY) || 'zh';
+        let toastTimeout; 
+
+        function t(key) { return i18n[currentLang][key] || key; }
+
+        function toggleLanguage() {
+            currentLang = currentLang === 'zh' ? 'en' : 'zh';
+            localStorage.setItem(LANG_KEY, currentLang);
+            applyLanguage();
+        }
+
+        function applyLanguage() {
+            document.querySelectorAll('[data-i18n]').forEach(el => { el.innerText = t(el.getAttribute('data-i18n')); });
+            document.getElementById('sidebarLangText').innerText = currentLang === 'zh' ? 'English' : '中文';
+            
+            const nameVal = document.getElementById('licNameDisplay').getAttribute('data-raw-name');
+            if(nameVal === 'Beta Tester' || nameVal === '公测用户') { document.getElementById('licNameDisplay').innerText = t('beta_tester'); } 
+            else if (nameVal === 'unlicensed') { document.getElementById('licNameDisplay').innerText = t('unlicensed'); }
+        }
+
+        function showToast(msg, sticky = false) {
+            const container = document.getElementById('toast-container');
+            const overlay = document.getElementById('toast-overlay');
+            if (toastTimeout) clearTimeout(toastTimeout);
+            
+            container.innerHTML = '';
+            const el = document.createElement('div');
+            el.className = 'bg-slate-900 text-white px-6 py-4 rounded-2xl text-sm font-bold shadow-2xl border border-white/10 transition-all duration-300 transform translate-y-[-20px] opacity-0 pointer-events-auto text-center leading-relaxed';
+            
+            if (sticky) { el.innerHTML = msg + `<div class="text-[10px] text-slate-400 mt-2 font-normal opacity-80">${currentLang === 'zh' ? '(点击屏幕任意位置关闭)' : '(Click anywhere to close)'}</div>`; } 
+            else { el.innerText = msg; }
+
+            container.appendChild(el);
+            overlay.classList.remove('hidden');
+            setTimeout(() => { el.classList.remove('translate-y-[-20px]', 'opacity-0'); }, 10);
+            if (!sticky) { toastTimeout = setTimeout(dismissAllToasts, 3000); }
+        }
+
+        function dismissAllToasts() {
+            const container = document.getElementById('toast-container');
+            const overlay = document.getElementById('toast-overlay');
+            container.innerHTML = '';
+            overlay.classList.add('hidden');
+        }
+
+        function copyText(elementId, msg) {
+            const text = document.getElementById(elementId).innerText;
+            if (navigator.clipboard) { navigator.clipboard.writeText(text).then(() => showToast(msg)); } 
+            else {
+                const tempInput = document.createElement('input'); tempInput.value = text;
+                document.body.appendChild(tempInput); tempInput.select(); document.execCommand('copy'); document.body.removeChild(tempInput);
+                showToast(msg);
+            }
+        }
+
+        async function submitLicenseToLark() {
+            const contact = document.getElementById('reqContact').value.trim();
+            const deviceId = document.getElementById('hiddenDeviceIdForForm').value;
+            const fileInput = document.getElementById('reqScreenshot');
+            const btn = document.getElementById('btnSubmitRequest');
+
+            if (!contact || fileInput.files.length === 0) { showToast(t('err_fill_form')); return; }
+            const file = fileInput.files[0];
+
+            btn.innerText = t('status_uploading'); btn.disabled = true; btn.classList.add('opacity-50', 'cursor-not-allowed');
+
+            try {
+                // Build the form data to send to our secure Edge Function
+                const formData = new FormData();
+                formData.append("action", "submit");
+                formData.append("deviceId", deviceId);
+                formData.append("contact", contact);
+                formData.append("file", file);
+
+                const res = await fetch(`${API_BASE}/lark-license`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await res.json();
+                if(!data.success) throw new Error(data.error || "Submission Failed");
+
+                showToast(t('status_sent'), true); 
+                btn.innerText = t('status_success');
+                btn.classList.replace('bg-indigo-600', 'bg-green-600');
+                btn.classList.remove('hover:bg-indigo-700', 'opacity-50', 'cursor-not-allowed');
+
+            } catch (error) {
+                console.error("Submission Error:", error);
+                showToast(t('err_upload'), true); 
+                btn.innerText = t('btn_submit');
+                btn.disabled = false;
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        }
+
+        async function verifyLicenseWithLark(deviceId) {
+            try {
+                const res = await fetch(`${API_BASE}/lark-license`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: "verify", deviceId: deviceId })
+                });
+                
+                const responseData = await res.json();
+                if (!responseData.success) return null;
+                
+                const searchData = responseData.data;
+                
+                if (searchData && searchData.items && searchData.items.length > 0) {
+                    const record = searchData.items[0];
+                    const statusRaw = record.fields["Status"]; 
+                    const endDateRaw = record.fields["End Date"]; 
+                    const userNameRaw = record.fields["Name/WechatID/Phone"];
+                    
+                    let userNameStr = "VIP User";
+                    if (userNameRaw) {
+                        if (Array.isArray(userNameRaw)) {
+                            userNameStr = userNameRaw.map(item => item.text || '').join('');
+                        } else if (typeof userNameRaw === 'object' && userNameRaw !== null) {
+                            userNameStr = userNameRaw.text || "";
+                        } else {
+                            userNameStr = String(userNameRaw);
+                        }
+                    }
+
+                    let statusStr = "";
+                    if (typeof statusRaw === 'object' && statusRaw !== null) statusStr = statusRaw.text || JSON.stringify(statusRaw);
+                    else statusStr = String(statusRaw || "");
+                    
+                    if (statusStr.toLowerCase().includes("active")) {
+                        let formattedEndDate = "LIFETIME";
+                        if(endDateRaw) {
+                            const dateObj = new Date(parseInt(endDateRaw));
+                            const yyyy = dateObj.getFullYear();
+                            const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+                            const dd = String(dateObj.getDate()).padStart(2, '0');
+                            formattedEndDate = `${yyyy}-${mm}-${dd}`;
+                        }
+                        return { name: userNameStr, expiry: formattedEndDate }; 
+                    }
+                }
+                return null;
+            } catch (err) {
+                console.error("License Verify Error:", err);
+                return null; 
+            }
+        }
+
+        function checkGlobalBetaAccess() {
+            if (!GLOBAL_BETA_HEXADATE || GLOBAL_BETA_HEXADATE.trim() === "") return null;
+            const timestamp = parseInt(GLOBAL_BETA_HEXADATE, 16);
+            if (!isNaN(timestamp) && timestamp > Date.now()) {
+                const dateObj = new Date(timestamp);
+                const expiryStr = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`;
+                return { name: "Beta Tester", expiry: expiryStr + " (Beta)" };
+            }
+            return null;
+        }
+
+        async function checkLicense() {
+            let devId = localStorage.getItem(DEVICE_ID_KEY);
+            if (!devId) {
+                devId = 'ID-' + Math.random().toString(36).substr(2, 8).toUpperCase();
+                localStorage.setItem(DEVICE_ID_KEY, devId);
+            }
+            document.getElementById('deviceIdDisplay').innerText = devId;
+            document.getElementById('hiddenDeviceIdForForm').value = devId;
+
+            const btnVerify = document.getElementById('btnLiveVerify');
+            if (btnVerify) { btnVerify.innerHTML = "⏳ Verifying..."; btnVerify.disabled = true; }
+
+            // Check hardcoded script variable first
+            let licenseData = checkGlobalBetaAccess();
+            // Fallback to Lark if script variable is empty or expired
+            if (!licenseData) { licenseData = await verifyLicenseWithLark(devId); }
+            
+            if (btnVerify) { btnVerify.innerHTML = `🔄 <span data-i18n="unlock_app">${t('unlock_app')}</span>`; btnVerify.disabled = false; }
+
+            userHasLicense = !!licenseData;
+            const nameDisplayEl = document.getElementById('licNameDisplay');
+            const expiryDisplayEl = document.getElementById('licExpiryDisplay');
+            
+            if (userHasLicense) {
+                nameDisplayEl.innerText = licenseData.name;
+                nameDisplayEl.setAttribute('data-raw-name', licenseData.name); 
+                expiryDisplayEl.innerText = licenseData.expiry;
+                expiryDisplayEl.classList.add('text-indigo-400');
+                expiryDisplayEl.classList.remove('text-slate-500');
+                showToast(currentLang === 'zh' ? "✅ 设备已授权" : "✅ Device Verified");
+                applyLanguage(); 
+            } else {
+                nameDisplayEl.innerText = t('unlicensed');
+                nameDisplayEl.setAttribute('data-raw-name', 'unlicensed'); 
+                expiryDisplayEl.innerText = "LOCKED";
+                expiryDisplayEl.classList.remove('text-indigo-400');
+                expiryDisplayEl.classList.add('text-slate-500');
+                
+                if (btnVerify && btnVerify.disabled === false) { showToast(currentLang === 'zh' ? "❌ 未找到授权记录" : "❌ No active license found"); }
+            }
+
+            const sidebar = document.getElementById('sidebar');
+            if (sidebar.classList.contains('expanded')) {
+                document.getElementById('badgePro').classList.remove('opacity-0');
+                document.getElementById('badgePro1').classList.remove('opacity-0');
+                document.getElementById('badgePro2').classList.remove('opacity-0');
+                document.getElementById('badgeFree').classList.remove('opacity-0');
+            }
+
+            const activeMenu = document.querySelector('.menu-item.active');
+            if (activeMenu) loadApp(activeMenu);
+        }
+
+        const sidebar = document.getElementById('sidebar');
+        const frame = document.getElementById('app-frame');
+
+        function toggleSidebar() { 
+            sidebar.classList.toggle('expanded'); 
+            const isExpanded = sidebar.classList.contains('expanded');
+            if(isExpanded) {
+                setTimeout(() => { 
+                    document.getElementById('badgePro').classList.remove('opacity-0'); 
+                    document.getElementById('badgePro1').classList.remove('opacity-0'); 
+                    document.getElementById('badgePro2').classList.remove('opacity-0'); 
+                    document.getElementById('badgeFree').classList.remove('opacity-0'); 
+                }, 150);
+            } else {
+                document.getElementById('badgePro').classList.add('opacity-0'); 
+                document.getElementById('badgePro1').classList.add('opacity-0'); 
+                document.getElementById('badgePro2').classList.add('opacity-0'); 
+                document.getElementById('badgeFree').classList.add('opacity-0');
+            }
+        }
+
+        function loadApp(element) {
+            const url = element.getAttribute('data-url');
+            const requiresLicense = element.getAttribute('data-req-lic') === 'true';
+
+            document.querySelectorAll('.menu-item').forEach(item => { item.classList.remove('active'); });
+            element.classList.add('active');
+
+            const modal = document.getElementById('licenseModal');
+
+            if (requiresLicense && !userHasLicense) {
+                modal.classList.remove('hidden');
+                frame.classList.add('blur-lock');
+            } else {
+                modal.classList.add('hidden');
+                frame.classList.remove('blur-lock');
+                if (frame.src.indexOf(url) === -1) { frame.src = url; }
+            }
+            if(window.innerWidth <= 768) { sidebar.classList.remove('expanded'); }
+        }
+
+        document.getElementById('main-content').addEventListener('click', () => {
+            if(window.innerWidth <= 768 && sidebar.classList.contains('expanded')) { sidebar.classList.remove('expanded'); }
+        });
+
+        window.onload = () => { applyLanguage(); checkLicense(); };
+    </script>
+</body>
+</html>

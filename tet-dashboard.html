@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TET 数据看板</title>
+    <link rel="manifest" href="manifest.json">
+
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="TET 数据看板">
+    <link rel="apple-touch-icon" href="icon.png">
+    
+    <meta name="theme-color" content="#4f46e5">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        body { font-family: 'Roboto', 'PingFang SC', 'Microsoft YaHei', sans-serif; background-color: #f8fafc; -webkit-tap-highlight-color: transparent; }
+        
+        /* Scrollbar Styling */
+        .custom-scroll::-webkit-scrollbar { height: 6px; width: 6px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        
+        /* Accordion Styles */
+        details > summary { list-style: none; cursor: pointer; transition: all 0.2s; }
+        details > summary::-webkit-details-marker { display: none; }
+        details[open] > summary { border-bottom-color: #e2e8f0; margin-bottom: 0; }
+        details > summary:after { content: '+'; float: right; font-weight: bold; font-size: 1.2em; color: #64748b; }
+        details[open] > summary:after { content: '-'; color: #4f46e5; }
+
+        /* Animation for pulse */
+        @keyframes subtle-pulse {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+        .urgent-pulse { animation: subtle-pulse 2s infinite; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 pb-24">
+
+    <!-- MAIN APP CONTAINER -->
+    <div id="appContainer" class="max-w-[1400px] mx-auto p-4 md:p-6 space-y-6">
+        
+        <!-- HEADER (Unified Hub Format) -->
+        <div class="flex flex-wrap justify-between items-start gap-4 no-print mb-2">
+            <div class="flex flex-col">
+                <div class="flex items-center gap-2">
+                    <h1 class="text-3xl font-black text-slate-800 tracking-tight">TET <span class="text-indigo-600" data-i18n="app_title">数据看板</span></h1>
+                </div>
+                <div class="flex items-center gap-2 mt-1">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase">V1.2.0 • Hub Edition</p>
+                </div>
+            </div>
+            
+            <div id="topControls" class="flex gap-2 transition-opacity duration-300">
+                <button onclick="toggleLanguage()" class="bg-white/90 backdrop-blur border border-slate-300 shadow-sm text-slate-700 font-bold text-xs px-3 py-2 rounded-full hover:bg-slate-50 transition flex items-center gap-1">
+                    🌐 <span id="langBtnText">EN / 中</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- GLOBAL WARNING BANNER -->
+        <div id="globalWarningBanner" class="hidden bg-red-500 text-white font-bold text-xs md:text-sm px-4 py-3 rounded-xl shadow-md flex flex-col sm:flex-row items-start sm:items-center gap-2 mb-4 animate-pulse">
+            <span class="text-lg leading-none">⚠️</span>
+            <span data-i18n="global_outdated_warning" class="leading-relaxed"></span>
+        </div>
+
+        <!-- EMPTY STATE -->
+        <div id="emptyState" class="max-w-2xl mx-auto mt-20 p-8 text-center hidden">
+            <div class="text-6xl mb-4 opacity-50">📂</div>
+            <h2 class="text-2xl font-black text-slate-700 mb-2" data-i18n="no_data_title">暂无档案数据</h2>
+            <p class="text-slate-500 mb-6" data-i18n="no_data_desc">数据看板需要读取您的节点数据。请先在 TET YOLO 或 收益模拟器 中保存您的档案。</p>
+            <button onclick="location.reload()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-indigo-200 transition active:scale-95">
+                <span data-i18n="refresh">刷新数据</span>
+            </button>
+        </div>
+
+        <!-- DASHBOARD CONTENT -->
+        <div id="dashboardContent" class="space-y-6 hidden transition-opacity duration-500 opacity-0">
+            
+            <!-- 1. HERO OVERVIEW -->
+            <div class="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 rounded-3xl shadow-xl overflow-hidden relative">
+                <div class="absolute top-[-50%] right-[-10%] w-96 h-96 bg-indigo-500 rounded-full mix-blend-overlay filter blur-[100px] opacity-40 pointer-events-none"></div>
+                
+                <div class="p-6 md:p-10 flex flex-col md:flex-row items-center justify-between gap-8 relative z-10">
+                    <div class="text-center md:text-left">
+                        <p class="text-indigo-200 text-xs font-bold uppercase tracking-widest mb-1" data-i18n="total_safe">生态总安全提现额度</p>
+                        <div class="text-5xl md:text-7xl font-black text-white tracking-tighter drop-shadow-sm flex items-baseline justify-center md:justify-start gap-2">
+                            <span id="heroTotalSafe">0.00</span> <span class="text-2xl md:text-3xl text-indigo-300">TET</span>
+                        </div>
+                        <div class="mt-4 inline-flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-lg border border-white/10">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                            <span class="text-xs text-indigo-100 font-bold"><span id="activeAccountsCount">0</span> <span data-i18n="accounts_monitored">个账户监测中</span></span>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4 w-full md:w-auto">
+                        <div class="bg-black/30 backdrop-blur border border-white/10 rounded-2xl p-4 text-center min-w-[140px] flex flex-col justify-center">
+                            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1" data-i18n="total_wallets">当前户口总余额 (TET)</p>
+                            <p class="text-xl font-bold text-white" id="heroCurrentWallet">0.00</p>
+                        </div>
+                        <div class="bg-black/30 backdrop-blur border border-white/10 rounded-2xl p-4 text-center min-w-[140px] flex flex-col justify-center">
+                            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1" data-i18n="total_accel">生态总加速 (TET)</p>
+                            <p class="text-xl font-bold text-sky-400" id="heroTotalAccel">0</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. RESCUE STRATEGY (Only shows if shortages exist) -->
+            <div id="rescueSection" class="hidden">
+                <h3 class="text-sm font-black text-slate-700 uppercase tracking-widest mb-3 px-2 flex items-center gap-2">
+                    🚨 <span data-i18n="rescue_strategy">跨账户救援策略</span>
+                </h3>
+                <div class="bg-red-50 border border-red-200 rounded-2xl shadow-sm overflow-hidden">
+                    <div class="p-4 bg-red-500 text-white flex justify-between items-center">
+                        <div class="flex items-center gap-2 font-bold text-sm">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                            <span data-i18n="shortage_detected">检测到资金缺口风险</span>
+                        </div>
+                        <span class="text-xs font-black bg-white/20 px-2 py-1 rounded" id="rescueTotalShortage">0.00 TET</span>
+                    </div>
+                    <div class="p-4 md:p-6 bg-white flex flex-col gap-3" id="rescueSuggestionsContainer">
+                        <!-- Dynamic Suggestions Injected Here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. COMBINED CHART (Collapsible) -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <details class="group" open>
+                    <summary class="px-5 py-4 bg-slate-50 border-b border-slate-200 font-bold text-xs text-slate-600 uppercase flex justify-between items-center select-none outline-none">
+                        <span>📈 <span data-i18n="combined_chart">合并产出趋势 (60天)</span></span>
+                    </summary>
+                    <div class="p-4 w-full h-72 relative bg-white">
+                        <canvas id="ecosystemChart"></canvas>
+                    </div>
+                </details>
+            </div>
+
+            <!-- 4. ACCOUNTS GRID -->
+            <div>
+                <h3 class="text-sm font-black text-slate-700 uppercase tracking-widest mb-4 px-2 mt-8 flex items-center gap-2">
+                    🗂️ <span data-i18n="account_health">各账户健康状态</span>
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="accountsGrid">
+                    <!-- Dynamic Account Cards Injected Here -->
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // CONFIGURATION
+        const PROFILES_KEY = 'tet_hub_shared_profiles'; 
+        const LANG_KEY = 'tet_hub_shared_lang';
+        const AUTO_PROJECT_KEY = 'tet_yolo_auto_project'; 
+        
+        let currentLang = localStorage.getItem(LANG_KEY) || 'zh';
+        let ecosystemChart = null;
+        let processedProfiles = [];
+
+        const nodeDefinitions = [
+            { id: 5000, cost: 5000, reward: 6500 },
+            { id: 3000, cost: 3000, reward: 3900 },
+            { id: 1000, cost: 1000, reward: 1300 },
+            { id: 500,  cost: 500,  reward: 650 },
+            { id: 300,  cost: 300,  reward: 390 },
+            { id: 100,  cost: 100,  reward: 130 }
+        ];
+
+        const i18n = {
+            zh: {
+                app_title: '数据看板', accounts_monitored: '个账户监测中', total_safe: '生态总安全提现额度', 
+                total_wallets: '当前户口总余额 (TET)', total_accel: '生态总加速 (TET)',
+                no_data_title: '暂无档案数据', no_data_desc: '数据看板需要读取您的节点数据。请先在 TET 节点计算器 或 收益模拟器 中保存您的档案。', refresh: '刷新数据',
+                combined_chart: '合并产出趋势 (60天)', account_health: '各账户健康状态',
+                rescue_strategy: '跨账户救援策略', shortage_detected: '检测到资金缺口风险',
+                status_safe: '健康', status_danger: '风险', safe_sell: '可售出', shortage_lbl: '资金缺口', 
+                shortage_at_day: '在第 {d} 天',
+                rescue_req: '⚠️ <span class="font-black">{name}</span> <span class="text-slate-500 font-normal ml-1">需要 {amt} TET ({day})</span>',
+                rescue_action: '建议：从账户 <strong class="text-emerald-600">{src}</strong> 划转 <strong class="text-indigo-600">{amt} TET</strong> 至 <strong class="text-red-600">{target}</strong>。',
+                rescue_unavailable: '⚠️ 警告：其他账户没有足够的盈余来填补此缺口。',
+                saved_date: '保存于: {date}', 
+                outdated: '⚠️ 数据已过期！',
+                global_outdated_warning: '注意：部分账户数据已过期超过24小时。为了确保全生态分析的准确性，请回到 TET 节点计算器 重新保存这些档案！'
+            },
+            en: {
+                app_title: 'Dashboard', accounts_monitored: 'Accounts Monitored', total_safe: 'Total Ecosystem Safe Withdrawal', 
+                total_wallets: 'TOTAL ACCOUNT (TET)', total_accel: 'TOTAL ACCEL (TET)',
+                no_data_title: 'No Profiles Found', no_data_desc: 'The Dashboard needs data to analyze. Please save your profiles in TET Node Calculator or Profit Simulator first.', refresh: 'Refresh Data',
+                combined_chart: 'Combined Production Trend (60 Days)', account_health: 'Account Health Status',
+                rescue_strategy: 'Cross-Account Rescue Strategy', shortage_detected: 'Shortage Risk Detected',
+                status_safe: 'Healthy', status_danger: 'Risk', safe_sell: 'Safe Sell', shortage_lbl: 'Shortage', 
+                shortage_at_day: 'At Day {d}',
+                rescue_req: '⚠️ <span class="font-black">{name}</span> <span class="text-slate-500 font-normal ml-1">Needs {amt} TET ({day})</span>',
+                rescue_action: 'Action: Transfer <strong class="text-indigo-600">{amt} TET</strong> from <strong class="text-emerald-600">{src}</strong> to <strong class="text-red-600">{target}</strong>.',
+                rescue_unavailable: '⚠️ Warning: Other accounts do not have enough surplus to cover this shortage.',
+                saved_date: 'Saved: {date}', 
+                outdated: '⚠️ Data Outdated!',
+                global_outdated_warning: 'Warning: Some account data is over 24 hours old. For accurate ecosystem analysis, please re-save these profiles in the Node Calculator today!'
+            }
+        };
+
+        function t(key) { return i18n[currentLang][key] || key; }
+
+        function toggleLanguage() {
+            currentLang = currentLang === 'zh' ? 'en' : 'zh';
+            localStorage.setItem(LANG_KEY, currentLang);
+            applyLanguage();
+            renderDashboard(); // Re-render text injects
+        }
+
+        function applyLanguage() {
+            document.querySelectorAll('[data-i18n]').forEach(el => el.innerText = t(el.getAttribute('data-i18n')));
+            document.getElementById('langBtnText').innerText = currentLang === 'zh' ? 'EN' : '中文';
+        }
+
+        function truncateTo2(num) {
+            return Math.floor(num * 100) / 100;
+        }
+
+        // --- CORE ENGINE ---
+
+        // Step 1: Initialize
+        function initApp() {
+            applyLanguage();
+            loadAndProcessData();
+        }
+
+        // Step 2: Load profiles and run simulation
+        function loadAndProcessData() {
+            const raw = localStorage.getItem(PROFILES_KEY);
+            let profiles = raw ? JSON.parse(raw) : [];
+
+            if (profiles.length === 0) {
+                document.getElementById('emptyState').classList.remove('hidden');
+                return;
+            }
+
+            document.getElementById('emptyState').classList.add('hidden');
+            const dashboard = document.getElementById('dashboardContent');
+            dashboard.classList.remove('hidden');
+            
+            // Auto-Project Toggle (Default ON for Dashboard unless YOLO turned it off explicitly)
+            const autoProjectSetting = localStorage.getItem(AUTO_PROJECT_KEY);
+            const shouldProject = autoProjectSetting === null ? true : (autoProjectSetting === 'true');
+
+            processedProfiles = [];
+
+            profiles.forEach(p => {
+                let data = JSON.parse(JSON.stringify(p.data)); // Deep copy
+                
+                // Auto-project time to "Today"
+                if (shouldProject && p.timestamp && data.nodes) {
+                    const daysPassed = Math.floor((Date.now() - p.timestamp) / (1000 * 60 * 60 * 24));
+                    if (daysPassed > 0) {
+                        for (let nodeId in data.nodes) {
+                            let nd = data.nodes[nodeId];
+                            if (nd.a) {
+                                nd.o = ''; 
+                                let h = parseFloat(nd.h) || 0;
+                                let c = parseFloat(nd.c) || 55;
+                                let daysLeft = daysPassed;
+                                
+                                while (daysLeft > 0) {
+                                    let remainingCycleDays = c - h;
+                                    if (daysLeft < remainingCycleDays) {
+                                        h += daysLeft;
+                                        daysLeft = 0;
+                                    } else {
+                                        daysLeft -= remainingCycleDays;
+                                        if (nd.r) { c = Math.min(120, c + 5); h = 0; } 
+                                        else { nd.a = false; h = c; daysLeft = 0; }
+                                    }
+                                }
+                                nd.h = h; nd.c = c;
+                            }
+                        }
+                    }
+                }
+
+                // Simulate 60 Days
+                const simResult = simulateProfile(data);
+                
+                processedProfiles.push({
+                    name: p.name,
+                    rawAccel: parseFloat(data.accel) || 0,
+                    rawWallet: parseFloat(data.wallet) || 0,
+                    safeAmt: simResult.safe,
+                    shortageAmt: simResult.shortage,
+                    shortageDay: simResult.shortageDay,
+                    dailyWallets: simResult.dailyWallets,
+                    timestamp: p.timestamp,
+                    date: p.date
+                });
+            });
+
+            // Smooth fade in
+            setTimeout(() => { dashboard.classList.remove('opacity-0'); }, 50);
+
+            renderDashboard();
+        }
+
+        // Standard 60-Day Simulator Engine
+        function simulateProfile(data) {
+            const accel = parseFloat(data.accel) || 0;
+            const startWallet = parseFloat(data.wallet) || 0;
+            const globalCycle = parseInt(data.globalCycle) || 55;
+            
+            let nodes = [];
+            nodeDefinitions.forEach(def => {
+                if (data.nodes && data.nodes[def.id]) {
+                    let nd = data.nodes[def.id];
+                    let isActive = nd.a;
+                    let autoRestake = nd.r;
+                    let h = parseFloat(nd.h) || 0;
+                    let c = parseFloat(nd.c) || 55;
+                    let o = nd.o;
+                    
+                    let balance = 0;
+                    let remainingDays = Math.max(0, c - h);
+
+                    if (isActive) {
+                        const dailyRateRaw = def.reward / c;
+                        const dailyRateTrunc = truncateTo2(dailyRateRaw);
+                        if (o && parseFloat(o) > 0) {
+                            balance = Math.max(0, def.reward - parseFloat(o));
+                        } else {
+                            balance = Math.max(0, def.reward - (dailyRateTrunc * h));
+                        }
+                    }
+
+                    nodes.push({ def: def, balance: balance, currentCycle: c, cycleRemainingDays: remainingDays, active: isActive, autoRestake: autoRestake, waiting: false, justBought: false, dead: false });
+                }
+            });
+
+            let currentWallet = startWallet;
+            let lowestWalletPoint = startWallet;
+            let shortageDay = null;
+            let dailyWallets = [];
+
+            for (let d = 1; d <= 60; d++) {
+                let dailyProd = 0;
+                let dailyCost = 0;
+                let dailyAccelRemaining = accel;
+
+                nodes.forEach(node => {
+                    if (node.active && !node.dead && !node.justBought && !node.waiting && node.cycleRemainingDays > 0) { 
+                        const baseRate = truncateTo2(node.def.reward / node.currentCycle);
+                        let isLastDayOfCycle = (node.cycleRemainingDays === 1);
+                        let potentialProd = baseRate + dailyAccelRemaining;
+                        let nodeProd = 0;
+
+                        if (isLastDayOfCycle) {
+                            nodeProd = node.balance;
+                        } else {
+                            if (node.balance >= potentialProd) {
+                                nodeProd = potentialProd;
+                                dailyAccelRemaining = 0; 
+                            } else {
+                                nodeProd = node.balance;
+                                let neededAccel = Math.max(0, nodeProd - baseRate);
+                                dailyAccelRemaining -= neededAccel;
+                            }
+                        }
+
+                        node.balance -= nodeProd;
+                        dailyProd += nodeProd;
+                        node.cycleRemainingDays--;
+
+                        if (node.cycleRemainingDays <= 0 || node.balance <= 0.001) {
+                            if (node.autoRestake) {
+                                dailyCost += node.def.cost;
+                                node.currentCycle = Math.min(120, node.currentCycle + 5); 
+                                node.cycleRemainingDays = node.currentCycle; 
+                                node.balance = node.def.reward; 
+                            } else {
+                                node.dead = true;
+                                node.active = false;
+                            }
+                        }
+                    }
+                });
+
+                currentWallet = currentWallet + dailyProd - dailyCost;
+                
+                for(let node of nodes) {
+                    if (!node.active && !node.dead && node.autoRestake && currentWallet >= node.def.cost) {
+                        currentWallet -= node.def.cost;
+                        node.active = true;
+                        node.justBought = true; 
+                        node.balance = node.def.reward;
+                        node.currentCycle = globalCycle;
+                        node.cycleRemainingDays = globalCycle;
+                        break; 
+                    }
+                }
+
+                if (currentWallet < lowestWalletPoint) lowestWalletPoint = currentWallet;
+                if (currentWallet < 0 && shortageDay === null) { shortageDay = d; }
+
+                nodes.forEach(n => n.justBought = false);
+                dailyWallets.push(currentWallet);
+            }
+
+            return {
+                safe: lowestWalletPoint >= 0 ? lowestWalletPoint : 0,
+                shortage: lowestWalletPoint < 0 ? Math.abs(lowestWalletPoint) : 0,
+                shortageDay: shortageDay,
+                dailyWallets: dailyWallets
+            };
+        }
+
+        // Step 3: Render View
+        function renderDashboard() {
+            let totalSafe = 0;
+            let totalShortage = 0;
+            let totalStartWallet = 0;
+            let totalAccel = 0;
+            let combinedChartData = new Array(60).fill(0);
+
+            let surplusAccounts = [];
+            let shortageAccounts = [];
+            let hasOutdatedProfiles = false;
+
+            processedProfiles.forEach(p => {
+                totalSafe += p.safeAmt;
+                totalShortage += p.shortageAmt;
+                totalStartWallet += p.rawWallet;
+                totalAccel += p.rawAccel;
+
+                if (p.safeAmt > 0) surplusAccounts.push({ name: p.name, amt: p.safeAmt });
+                if (p.shortageAmt > 0) shortageAccounts.push({ name: p.name, amt: p.shortageAmt, day: p.shortageDay });
+
+                for(let i=0; i<60; i++) {
+                    combinedChartData[i] += p.dailyWallets[i];
+                }
+
+                // Check outdated status for Global Banner
+                if (p.timestamp) {
+                    if ((Date.now() - p.timestamp) > (24 * 60 * 60 * 1000)) hasOutdatedProfiles = true;
+                } else {
+                    let today = new Date().toLocaleDateString();
+                    if (!(p.date || '').includes(today)) hasOutdatedProfiles = true;
+                }
+            });
+
+            // Toggle Global Warning Banner
+            if (hasOutdatedProfiles) {
+                document.getElementById('globalWarningBanner').classList.remove('hidden');
+            } else {
+                document.getElementById('globalWarningBanner').classList.add('hidden');
+            }
+
+            // Update Hero
+            document.getElementById('heroTotalSafe').innerText = totalSafe.toFixed(2);
+            document.getElementById('heroCurrentWallet').innerText = totalStartWallet.toFixed(2);
+            document.getElementById('heroTotalAccel').innerText = totalAccel.toFixed(2);
+            document.getElementById('activeAccountsCount').innerText = processedProfiles.length;
+
+            renderRescueStrategy(surplusAccounts, shortageAccounts);
+            renderChart(combinedChartData);
+            renderAccountGrid();
+        }
+
+        function renderRescueStrategy(surplusList, shortageList) {
+            const section = document.getElementById('rescueSection');
+            const container = document.getElementById('rescueSuggestionsContainer');
+            
+            if (shortageList.length === 0) {
+                section.classList.add('hidden');
+                return;
+            }
+
+            section.classList.remove('hidden');
+            document.getElementById('rescueTotalShortage').innerText = shortageList.reduce((sum, a) => sum + a.amt, 0).toFixed(2) + ' TET';
+            container.innerHTML = '';
+
+            let surpluses = JSON.parse(JSON.stringify(surplusList)).sort((a,b) => b.amt - a.amt);
+            
+            // Priority: Sort shortages so the accounts starving EARLIEST get rescued first.
+            // If the day is identical, sort by amount descending.
+            let sortedShortages = JSON.parse(JSON.stringify(shortageList)).sort((a,b) => {
+                if (a.day !== b.day) return a.day - b.day;
+                return b.amt - a.amt;
+            });
+            
+            sortedShortages.forEach(short => {
+                let needed = short.amt;
+                let dayStr = t('shortage_at_day').replace('{d}', short.day);
+                
+                let header = document.createElement('div');
+                header.className = "text-sm font-bold text-slate-800 border-b border-slate-100 pb-2";
+                header.innerHTML = t('rescue_req')
+                    .replace('{name}', short.name)
+                    .replace('{amt}', needed.toFixed(2))
+                    .replace('{day}', dayStr);
+                container.appendChild(header);
+
+                let transfers = [];
+                for (let i = 0; i < surpluses.length; i++) {
+                    if (needed <= 0) break;
+                    if (surpluses[i].amt > 0) {
+                        let take = Math.min(surpluses[i].amt, needed);
+                        surpluses[i].amt -= take;
+                        needed -= take;
+                        
+                        let msg = t('rescue_action')
+                            .replace('{src}', surpluses[i].name)
+                            .replace('{amt}', take.toFixed(2))
+                            .replace('{target}', short.name);
+                        transfers.push(msg);
+                    }
+                }
+
+                if (needed > 0.01) {
+                    let warn = document.createElement('p');
+                    warn.className = "text-xs text-red-500 font-bold mt-1 bg-red-50 p-2 rounded";
+                    warn.innerText = t('rescue_unavailable') + ` (还差 ${needed.toFixed(2)} TET)`;
+                    container.appendChild(warn);
+                }
+
+                transfers.forEach(txt => {
+                    let p = document.createElement('p');
+                    p.className = "text-xs text-slate-600 flex items-start gap-2 py-1";
+                    p.innerHTML = `<span class="text-indigo-400 mt-0.5">↳</span> <span>${txt}</span>`;
+                    container.appendChild(p);
+                });
+            });
+        }
+
+        function renderAccountGrid() {
+            const grid = document.getElementById('accountsGrid');
+            grid.innerHTML = '';
+
+            processedProfiles.forEach(p => {
+                const isSafe = p.shortageAmt === 0;
+                
+                let statusBadge = isSafe 
+                    ? `<span class="bg-emerald-100 text-emerald-700 text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wider">${t('status_safe')}</span>`
+                    : `<span class="bg-red-100 text-red-700 text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wider urgent-pulse">${t('status_danger')}</span>`;
+                
+                let valueLabel = isSafe ? t('safe_sell') : t('shortage_lbl');
+                let valueColor = isSafe ? 'text-emerald-500' : 'text-red-500';
+                let valueAmt = isSafe ? p.safeAmt : p.shortageAmt;
+                
+                let dayNote = !isSafe ? `<span class="text-[10px] text-red-500 font-bold ml-1 block mt-1">${t('shortage_at_day').replace('{d}', p.shortageDay)}</span>` : '';
+
+                // Calculate Date/Outdated Warning
+                let savedDate = p.date || '-';
+                let isOutdated = false;
+                if (p.timestamp) {
+                    isOutdated = (Date.now() - p.timestamp) > (24 * 60 * 60 * 1000);
+                } else {
+                    let today = new Date().toLocaleDateString();
+                    if (!savedDate.includes(today)) isOutdated = true;
+                }
+                
+                let outdatedHTML = isOutdated ? `
+                    <div class="mt-3 bg-red-100 border border-red-300 text-red-700 text-xs font-bold px-3 py-2 rounded-lg text-center flex justify-center items-center shadow-sm urgent-pulse">
+                        ${t('outdated')}
+                    </div>
+                ` : '';
+
+                let dateHTML = `
+                    <div class="mt-4 pt-3 border-t border-slate-100 flex flex-col justify-between text-[10px] text-slate-400">
+                        <div class="flex justify-between items-center w-full">
+                            <span>📅 ${t('saved_date').replace('{date}', savedDate)}</span>
+                        </div>
+                        ${outdatedHTML}
+                    </div>
+                `;
+
+                let html = `
+                    <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group flex flex-col justify-between">
+                        <div>
+                            <div class="absolute top-0 right-0 w-16 h-16 rounded-bl-full bg-slate-50 transition-colors group-hover:bg-indigo-50/50 -z-0"></div>
+                            <div class="flex justify-between items-start mb-4 relative z-10">
+                                <h4 class="font-black text-slate-800 text-lg tracking-tight truncate pr-4">${p.name}</h4>
+                                ${statusBadge}
+                            </div>
+                            <div class="relative z-10">
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">${valueLabel}</p>
+                                <p class="text-2xl font-black ${valueColor} tracking-tighter">${valueAmt.toFixed(2)} ${dayNote}</p>
+                            </div>
+                        </div>
+                        ${dateHTML}
+                    </div>
+                `;
+                grid.innerHTML += html;
+            });
+        }
+
+        function renderChart(data) {
+            const ctx = document.getElementById('ecosystemChart').getContext('2d');
+            if (ecosystemChart) ecosystemChart.destroy();
+
+            let labels = [];
+            for(let i=1; i<=60; i++) labels.push(t('shortage_at_day').replace('{d}', i));
+
+            // Create gradient
+            let gradient = ctx.createLinearGradient(0, 0, 0, 300);
+            gradient.addColorStop(0, 'rgba(79, 70, 229, 0.4)'); // indigo-600
+            gradient.addColorStop(1, 'rgba(79, 70, 229, 0.0)');
+
+            ecosystemChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: t('total_wallets'),
+                        data: data,
+                        borderColor: '#4f46e5',
+                        backgroundColor: gradient,
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4, // smooth curves
+                        pointRadius: 0,
+                        pointHoverRadius: 6,
+                        pointHoverBackgroundColor: '#4f46e5',
+                        pointHoverBorderColor: '#fff',
+                        pointHoverBorderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: { 
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                            titleFont: { family: 'Roboto', size: 12 },
+                            bodyFont: { family: 'Roboto', size: 14, weight: 'bold' },
+                            padding: 12,
+                            cornerRadius: 8,
+                            displayColors: false,
+                            callbacks: {
+                                label: function(context) { return context.parsed.y.toFixed(2) + ' TET'; }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: { 
+                            beginAtZero: false, 
+                            grid: { borderDash: [4, 4], color: '#f1f5f9' },
+                            ticks: { font: { family: 'Roboto' }, color: '#94a3b8' }
+                        },
+                        x: { 
+                            grid: { display: false }, 
+                            ticks: { maxTicksLimit: 8, font: { family: 'Roboto' }, color: '#94a3b8' } 
+                        }
+                    }
+                }
+            });
+        }
+
+        window.onload = initApp;
+    </script>
+</body>
+</html>
