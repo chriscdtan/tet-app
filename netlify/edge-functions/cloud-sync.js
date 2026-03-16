@@ -80,16 +80,24 @@ export default async (request, context) => {
 
         // --- HANDLE RESTORE (GET) ---
         if (request.method === "GET") {
-            // If user is licensed but has no data, return Success but with null data
             if (!existingRecord) {
-                return new Response(JSON.stringify({ success: true, data: null }), { headers: corsHeaders });
+                return new Response(JSON.stringify({ success: true, data: "[]" }), { headers: corsHeaders });
             }
             
             let profilesJson = existingRecord.fields["Profiles Data"];
-            if (typeof profilesJson === 'object' && profilesJson !== null) {
-                profilesJson = profilesJson[0]?.text || profilesJson.text || profilesJson;
+            let fullText = "";
+            
+            // 🛠️ CRITICAL FIX: Lark chunks long text fields into an array of segment objects.
+            // We must map and join them together so the JSON doesn't tear in half!
+            if (Array.isArray(profilesJson)) {
+                fullText = profilesJson.map(segment => segment.text || "").join("");
+            } else if (typeof profilesJson === 'object' && profilesJson !== null) {
+                fullText = profilesJson.text || "";
+            } else {
+                fullText = String(profilesJson || "[]");
             }
-            return new Response(JSON.stringify({ success: true, data: profilesJson }), { headers: corsHeaders });
+            
+            return new Response(JSON.stringify({ success: true, data: fullText }), { headers: corsHeaders });
         }
 
         // --- HANDLE BACKUP (POST) ---
@@ -97,13 +105,12 @@ export default async (request, context) => {
             const body = await request.json();
             const profilesString = JSON.stringify(body.profiles);
 
-            // Prepare payload matching the 4 specified columns
             const payload = {
                 fields: {
                     "Device ID": deviceId,
                     "App Name": appName,
                     "Profiles Data": profilesString,
-                    "Last Synced": Date.now() // Lark expects a Unix timestamp (ms) for Date fields
+                    "Last Synced": Date.now()
                 }
             };
 
@@ -123,8 +130,6 @@ export default async (request, context) => {
             }
             
             const larkData = await larkRes.json();
-            
-            // Catch exact Lark errors so we can debug them in Netlify Logs
             if (larkData.code !== 0) {
                 console.error("Lark API Rejected the Save:", larkData);
                 throw new Error("Lark Rejected Save: " + larkData.msg);
