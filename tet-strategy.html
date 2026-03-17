@@ -152,6 +152,17 @@
 
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
 
+        /* RADAR TARGET HIGHLIGHT ANIMATION */
+        @keyframes radar-pulse {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.8), 0 0 20px 5px rgba(16, 185, 129, 0.6) !important; transform: scale(1); z-index: 60; }
+            50% { box-shadow: 0 0 0 25px rgba(16, 185, 129, 0), 0 0 30px 10px rgba(16, 185, 129, 0.3) !important; transform: scale(1.1); z-index: 60; }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0), 0 0 20px 5px rgba(16, 185, 129, 0) !important; transform: scale(1); z-index: 60; }
+        }
+        .radar-target {
+            animation: radar-pulse 1.5s cubic-bezier(0.4, 0, 0.2, 1) 2 !important;
+            border-bottom-color: #10b981 !important;
+        }
+
         .toast {
             background-color: #0f172a; color: white; padding: 12px 24px; border-radius: 9999px;
             font-size: 14px; font-weight: bold; box-shadow: 0 10px 25px rgba(0,0,0,0.2);
@@ -608,7 +619,6 @@
             txt.innerText = state.text;
         }
 
-        // STRICT TIMESTAMP OVERWRITE (Replaces Smart Merge)
         function syncProfilesByTimestamp(cloudProfiles) {
             if (!cloudProfiles || typeof cloudProfiles !== 'object' || Array.isArray(cloudProfiles)) return false;
             
@@ -620,7 +630,6 @@
                 if (!cloudProf) continue;
                 
                 const localProf = localProfiles[key];
-                
                 cloudProf.synced = true;
                 
                 if (!localProf) {
@@ -669,7 +678,7 @@
                             cloudData = typeof data.data === 'string' ? JSON.parse(data.data) : data.data;
                         } catch(e) { console.warn("Cloud data parse error"); }
                         
-                        const didUpdate = syncProfilesByTimestamp(cloudData); // Using the strictly timestamp method
+                        const didUpdate = syncProfilesByTimestamp(cloudData);
                         if (didUpdate && !document.getElementById('loadModal').classList.contains('hidden')) {
                             openLoadModal(); 
                         }
@@ -715,6 +724,30 @@
             } catch (err) {
                 console.error("Auto-backup failed:", err);
                 setSyncUI('OFFLINE');
+            }
+        }
+
+        // Optimize Profiles to JSON (Reduces HTML String Payload Size to Prevent Sync Errors)
+        function migrateProfilesToJSON() {
+            let profiles = getProfiles();
+            let changed = false;
+            for (let name in profiles) {
+                let p = profiles[name];
+                if (!p.v || p.v < 3) {
+                    if (p.tree) {
+                        let tempTree = document.createElement('ul'); tempTree.innerHTML = p.tree;
+                        let tempPool = document.createElement('ul'); tempPool.innerHTML = p.pool;
+                        p.t = extractTreeData(tempTree);
+                        p.p = extractPoolData(tempPool);
+                        p.v = 3; 
+                        delete p.tree; // Strip the bloated HTML text
+                        delete p.pool; 
+                        changed = true;
+                    }
+                }
+            }
+            if (changed) {
+                localStorage.setItem('tetProfiles', JSON.stringify(profiles));
             }
         }
 
@@ -822,10 +855,11 @@
             if (!activeProfile) return;
             const profiles = getProfiles();
             profiles[activeProfile] = { 
-                pool: document.getElementById('holding-pool').innerHTML, 
-                tree: document.getElementById('main-tree-zone').innerHTML,
+                v: 3,
+                p: extractPoolData(document.getElementById('holding-pool')), 
+                t: extractTreeData(document.getElementById('main-tree-zone')),
                 synced: false,
-                timestamp: Date.now() // Added Timestamp
+                timestamp: Date.now()
             };
             localStorage.setItem('tetProfiles', JSON.stringify(profiles));
             showToast(i18n[currentLang].toastQuickSaved.replace('{name}', activeProfile));
@@ -1068,7 +1102,11 @@
         }
 
         function saveDraft() {
-            const draft = { pool: document.getElementById('holding-pool').innerHTML, tree: document.getElementById('main-tree-zone').innerHTML };
+            const draft = { 
+                v: 3, 
+                p: extractPoolData(document.getElementById('holding-pool')), 
+                t: extractTreeData(document.getElementById('main-tree-zone')) 
+            };
             localStorage.setItem('tet_strategy_draft', JSON.stringify(draft));
         }
 
@@ -1078,8 +1116,13 @@
             if(draftData) {
                 try {
                     const draft = JSON.parse(draftData);
-                    document.getElementById('holding-pool').innerHTML = draft.pool;
-                    document.getElementById('main-tree-zone').innerHTML = draft.tree;
+                    if (draft.v >= 3) {
+                        document.getElementById('holding-pool').innerHTML = buildPoolHTML(draft.p);
+                        document.getElementById('main-tree-zone').innerHTML = buildTreeHTML(draft.t);
+                    } else {
+                        document.getElementById('holding-pool').innerHTML = draft.pool || '';
+                        document.getElementById('main-tree-zone').innerHTML = draft.tree || `<li>${getNodeHTML("Main Account", "5000 T", true)}</li>`;
+                    }
                     patchLegacyHTML(); 
                 } catch(e) {}
             } else {
@@ -1188,6 +1231,11 @@
             const card = li.querySelector(':scope > .node-card');
             if (!card) return { teamTotal: 0, vLevel: 0, maxVInBranch: 0 };
 
+            // Ensure unique ID for radar navigation
+            if (!card.id) {
+                card.id = 'tet_node_' + Math.random().toString(36).substr(2, 9);
+            }
+
             const qtyText = card.querySelector('.node-qty').innerText.replace(' T', '');
             let ownQty = parseFloat(qtyText) || 0;
             let teamTotal = ownQty;
@@ -1257,6 +1305,7 @@
                     
                     if (isOpp) {
                         window.vipOpportunities.push({
+                            id: card.id, // Store target element ID
                             name: card.querySelector('.node-name').innerText,
                             current: vLevel,
                             target: nextLevel,
@@ -1377,9 +1426,9 @@
                     badgeHTML += `</div></div>`;
 
                     listContainer.innerHTML += `
-                        <div class="bg-white border border-slate-200 p-3 rounded-2xl flex items-center gap-3 shadow-sm hover:shadow-md transition">
+                        <div onclick="jumpToTargetNode('${opp.id}')" class="bg-white border border-slate-200 p-3 rounded-2xl flex items-center gap-3 shadow-sm hover:shadow-md hover:border-emerald-400 hover:ring-2 hover:ring-emerald-400/30 cursor-pointer transition">
                             ${badgeHTML}
-                            <div class="flex-1 min-w-0">
+                            <div class="flex-1 min-w-0 pointer-events-none">
                                 <div class="font-black text-slate-800 text-sm truncate flex items-center gap-2">
                                     ${opp.name} 
                                     <span class="text-[9px] font-bold bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded">${i18n[currentLang].lblCurrent}: ${opp.current > 0 ? 'V'+opp.current : 'None'}</span>
@@ -1392,6 +1441,28 @@
             }
             showModal('advisorModal');
             document.getElementById('btnAdvisor').classList.remove('animate-pulse'); 
+        }
+
+        // Feature: Jump to targeted node and highlight it
+        function jumpToTargetNode(id) {
+            closeAllModals();
+            
+            // Wait slightly for the modal disappear animation
+            setTimeout(() => {
+                const targetCard = document.getElementById(id);
+                if (targetCard) {
+                    // Smooth scroll to element's center inside the scrolling canvas
+                    targetCard.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+                    
+                    // Trigger the CSS highlight pulse animation
+                    targetCard.classList.add('radar-target');
+                    
+                    // Clean up highlight after animation finishes (1.5s * 2 pulses = 3000ms)
+                    setTimeout(() => {
+                        targetCard.classList.remove('radar-target');
+                    }, 3000);
+                }
+            }, 300);
         }
 
         function adjustZoom(delta) {
@@ -1500,6 +1571,7 @@
 
         window.onload = () => { 
             applyTranslations(); 
+            migrateProfilesToJSON(); // Clean up existing raw HTML localStorage blobs to fix Sync Errors
             loadDraft(); 
             setTimeout(() => { isAppReady = true; }, 500);
             
@@ -1586,10 +1658,11 @@
             }
 
             profiles[profileName] = { 
-                pool: document.getElementById('holding-pool').innerHTML, 
-                tree: document.getElementById('main-tree-zone').innerHTML,
+                v: 3, 
+                p: extractPoolData(document.getElementById('holding-pool')), 
+                t: extractTreeData(document.getElementById('main-tree-zone')),
                 synced: false,
-                timestamp: Date.now() // Added Timestamp
+                timestamp: Date.now() 
             };
             
             localStorage.setItem('tetProfiles', JSON.stringify(profiles));
@@ -1635,9 +1708,17 @@
             isAppReady = false; 
 
             const profiles = getProfiles();
-            if(!profiles[name]) return;
-            document.getElementById('holding-pool').innerHTML = profiles[name].pool;
-            document.getElementById('main-tree-zone').innerHTML = profiles[name].tree;
+            const profile = profiles[name];
+            if(!profile) return;
+            
+            if (profile.v >= 3) {
+                document.getElementById('holding-pool').innerHTML = buildPoolHTML(profile.p);
+                document.getElementById('main-tree-zone').innerHTML = buildTreeHTML(profile.t);
+            } else {
+                document.getElementById('holding-pool').innerHTML = profile.pool;
+                document.getElementById('main-tree-zone').innerHTML = profile.tree;
+            }
+            
             patchLegacyHTML(); calculateDownlineTotals(); saveDraft(); closeAllModals();
             setActiveProfile(name);
             showToast(i18n[currentLang].toastLoaded);
@@ -1714,6 +1795,7 @@
         }
 
         function buildTreeHTML(treeData) {
+            if (!treeData) return "";
             let tempUl = document.createElement('ul');
             treeData.forEach(d => {
                 tempUl.appendChild(buildNodeHTMLFromData(d, true)); 
@@ -1722,6 +1804,7 @@
         }
 
         function buildPoolHTML(poolData) {
+            if (!poolData) return "";
             let tempUl = document.createElement('ul');
             poolData.forEach(d => {
                 let li = buildNodeHTMLFromData(d, false);
@@ -1737,14 +1820,15 @@
             if (!profileData) return;
             
             try {
-                let tempTree = document.createElement('ul'); tempTree.innerHTML = profileData.tree;
-                let tempPool = document.createElement('ul'); tempPool.innerHTML = profileData.pool;
-
-                let pureData = {
-                    v: 2, 
-                    p: extractPoolData(tempPool),
-                    t: extractTreeData(tempTree)
-                };
+                let pureData;
+                
+                if (profileData.v >= 3) {
+                    pureData = { v: 2, p: profileData.p, t: profileData.t };
+                } else {
+                    let tempTree = document.createElement('ul'); tempTree.innerHTML = profileData.tree;
+                    let tempPool = document.createElement('ul'); tempPool.innerHTML = profileData.pool;
+                    pureData = { v: 2, p: extractPoolData(tempPool), t: extractTreeData(tempTree) };
+                }
 
                 const jsonStr = JSON.stringify(pureData);
                 const compressed = LZString.compressToBase64(jsonStr);
@@ -1786,7 +1870,7 @@
 
                 const profileData = JSON.parse(jsonStr);
                 
-                if (profileData.v === 2) {
+                if (profileData.v === 2 || profileData.v === 3) {
                     pendingImportTree = buildTreeHTML(profileData.t);
                     pendingImportPool = buildPoolHTML(profileData.p);
                 } else if (profileData.tree !== undefined) {
@@ -1811,7 +1895,17 @@
                 const newName = prompt(i18n[currentLang].saveAsMsg, "Shared Profile");
                 if (newName) {
                     const profiles = getProfiles();
-                    profiles[newName] = { pool: pendingImportPool, tree: pendingImportTree, synced: false, timestamp: Date.now() }; // Added Timestamp
+                    
+                    let tempTree = document.createElement('ul'); tempTree.innerHTML = pendingImportTree;
+                    let tempPool = document.createElement('ul'); tempPool.innerHTML = pendingImportPool;
+                    
+                    profiles[newName] = { 
+                        v: 3, 
+                        p: extractPoolData(tempPool), 
+                        t: extractTreeData(tempTree), 
+                        synced: false, 
+                        timestamp: Date.now() 
+                    }; 
                     
                     localStorage.setItem('tetProfiles', JSON.stringify(profiles));
                     showToast(i18n[currentLang].importSuccess);
