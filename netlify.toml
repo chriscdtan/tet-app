@@ -1,7 +1,3 @@
-# Tell Netlify to use the 21yunbox plugin
-[[plugins]]
-  package = "@21yunbox/netlify-plugin-21yunbox-deploy-to-china-cdn"
-
 [[edge_functions]]
   path = "/lark-api/*"
   function = "cors"

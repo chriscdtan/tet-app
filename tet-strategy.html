@@ -82,7 +82,6 @@
         
         .node-card.is-selected { box-shadow: 0 0 0 4px #fbbf24, 0 10px 25px rgba(0,0,0,0.2); transform: scale(1.05); z-index: 50; }
 
-        /* V4.15.0: THICKER GLOW WEIGHTS & DARK STEEL V1 */
         .v-badge-wrap { position: absolute; z-index: 25; display: flex; align-items: center; justify-content: center; pointer-events: none; transition: all 0.3s ease; }
         .v-badge-wrap-1 { top: -12px; left: -12px; width: 28px; height: 28px; }
         .v-badge-wrap-2 { top: -14px; left: -14px; width: 30px; height: 30px; }
@@ -197,31 +196,25 @@
                 <div class="flex items-center gap-2 mt-1">
                     <p class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase">V5.0.0 - RADAR HUB</p>
                     
-                    <!-- Cloud Sync Indicator UI -->
                     <div class="group relative flex items-center">
                         <span id="cloudSyncIndicator" class="text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-widest shadow-sm transition-all flex items-center gap-1 text-slate-500 bg-slate-100">
                             <span>⚪</span> <span id="syncText">Local (Free)</span>
                         </span>
                         
-                        <!-- NEW BULB ICON -->
                         <div class="ml-1 flex items-center justify-center cursor-help transition hover:scale-110 text-sm opacity-80 hover:opacity-100">💡</div>
                         
-                        <!-- TOOLTIP CONTENT (Injected by JS) -->
                         <div id="syncTooltipContent" class="absolute left-full ml-2 top-1/2 -translate-y-1/2 w-[220px] bg-slate-800 text-white text-[10px] leading-relaxed p-2.5 rounded shadow-xl opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50">
                         </div>
                     </div>
                 </div>
             </div>
             
-            <!-- CHANGED: Added py-2 (padding top & bottom) inside the scrollview to ensure absolute badges are never cut off. -->
             <div class="flex gap-2 overflow-x-auto scrollbar-hide w-full md:w-auto py-2 mt-1 md:mt-0 items-center">
                 <button onclick="toggleLanguage()" id="btnToggleLang" class="shrink-0 bg-white border border-slate-300 shadow-sm text-slate-700 font-bold text-xs px-4 py-2 md:py-2.5 rounded-full hover:bg-slate-50 transition active:scale-95">🌐 EN</button>
                 <button onclick="showModal('catalogModal')" id="btnCatalog" class="shrink-0 bg-gradient-to-r from-amber-400 to-amber-500 border border-amber-600 shadow-md text-amber-950 font-black text-xs px-4 py-2 md:py-2.5 rounded-full hover:scale-105 transition active:scale-95 flex items-center gap-1">👑 VIP Lineup</button>
                 
-                <!-- NEW VIP ADVISOR BUTTON -->
                 <button onclick="openAdvisorModal()" id="btnAdvisor" class="shrink-0 relative bg-gradient-to-r from-emerald-400 to-teal-500 border border-teal-600 shadow-md text-teal-950 font-black text-xs px-4 py-2 md:py-2.5 rounded-full hover:scale-105 transition active:scale-95 flex items-center gap-1">
                     🎯 <span id="btnAdvisorText">VIP Radar</span>
-                    <!-- CHANGED: Re-positioned, made wider/pill shaped for readability, added border thickness -->
                     <span id="advisorBadge" class="hidden absolute -top-1.5 -right-1 bg-red-500 text-white text-[10px] font-black px-1.5 min-w-[20px] h-5 rounded-full flex items-center justify-center border-2 border-white shadow-md z-10">0</span>
                 </button>
 
@@ -503,8 +496,6 @@
                 lvlUpTitle: "LEVEL UP!", lvlUpDesc: "Congratulations! {name} has reached VIP {level}!",
                 syncTipFreeLabel: "Free Users: ", syncTipFreeDesc: "Data saves locally to this browser. Clearing your cache will delete your profiles.",
                 syncTipProLabel: "Pro Users: ", syncTipProDesc: "Data automatically syncs to the cloud securely across all your devices.",
-                
-                // VIP Advisor i18n
                 btnAdvisor: "Radar",
                 modAdvTitle: "VIP Rank-Up Radar",
                 modAdvDesc: "These members are exactly ONE leg away from ranking up! Help them push to the next level.",
@@ -549,8 +540,6 @@
                 lvlUpTitle: "等级提升！", lvlUpDesc: "恭喜！{name} 成功晋级 VIP {level}！",
                 syncTipFreeLabel: "免费用户：", syncTipFreeDesc: "数据保存在当前浏览器本地。清除缓存将导致档案丢失。",
                 syncTipProLabel: "专业版用户：", syncTipProDesc: "数据自动安全地同步到云端，跨设备无缝使用。",
-                
-                // VIP Advisor i18n
                 btnAdvisor: "晋级雷达",
                 modAdvTitle: "VIP 晋级雷达",
                 modAdvDesc: "以下成员只差一条线即可晋级！帮他们规划冲刺，冲击下一个等级。",
@@ -619,21 +608,30 @@
             txt.innerText = state.text;
         }
 
-        function smartMergeProfiles(cloudProfiles) {
+        // STRICT TIMESTAMP OVERWRITE (Replaces Smart Merge)
+        function syncProfilesByTimestamp(cloudProfiles) {
+            if (!cloudProfiles || typeof cloudProfiles !== 'object' || Array.isArray(cloudProfiles)) return false;
+            
             let localProfiles = JSON.parse(localStorage.getItem('tetProfiles') || '{}');
             let hasChanges = false;
             
             for (let key in cloudProfiles) {
-                cloudProfiles[key].synced = true; 
+                const cloudProf = cloudProfiles[key];
+                if (!cloudProf) continue;
                 
-                if (!localProfiles[key]) {
-                    localProfiles[key] = cloudProfiles[key];
+                const localProf = localProfiles[key];
+                
+                cloudProf.synced = true;
+                
+                if (!localProf) {
+                    localProfiles[key] = cloudProf;
                     hasChanges = true;
                 } else {
-                    const localStr = JSON.stringify(localProfiles[key]);
-                    const cloudStr = JSON.stringify(cloudProfiles[key]);
-                    if (localStr !== cloudStr) {
-                        localProfiles[`${key} (Cloud Restore)`] = cloudProfiles[key];
+                    const cloudTime = cloudProf.timestamp || 0;
+                    const localTime = localProf.timestamp || 0;
+                    
+                    if (cloudTime > localTime) {
+                        localProfiles[key] = cloudProf;
                         hasChanges = true;
                     }
                 }
@@ -666,8 +664,12 @@
                     isProUser = true; 
                     
                     if (data.data) {
-                        let cloudData = typeof data.data === 'string' ? JSON.parse(data.data) : data.data;
-                        const didUpdate = smartMergeProfiles(cloudData);
+                        let cloudData = {};
+                        try {
+                            cloudData = typeof data.data === 'string' ? JSON.parse(data.data) : data.data;
+                        } catch(e) { console.warn("Cloud data parse error"); }
+                        
+                        const didUpdate = syncProfilesByTimestamp(cloudData); // Using the strictly timestamp method
                         if (didUpdate && !document.getElementById('loadModal').classList.contains('hidden')) {
                             openLoadModal(); 
                         }
@@ -782,7 +784,6 @@
             document.getElementById('modCatDesc').innerText = t.modCatDesc;
             document.getElementById('btnCatClose').innerText = t.btnCatClose;
             
-            // ADVISOR I18N
             document.getElementById('btnAdvisorText').innerText = t.btnAdvisor;
             document.getElementById('modAdvTitle').innerHTML = `<span class="text-emerald-300">🎯</span> ` + t.modAdvTitle;
             document.getElementById('modAdvDesc').innerText = t.modAdvDesc;
@@ -823,7 +824,8 @@
             profiles[activeProfile] = { 
                 pool: document.getElementById('holding-pool').innerHTML, 
                 tree: document.getElementById('main-tree-zone').innerHTML,
-                synced: false
+                synced: false,
+                timestamp: Date.now() // Added Timestamp
             };
             localStorage.setItem('tetProfiles', JSON.stringify(profiles));
             showToast(i18n[currentLang].toastQuickSaved.replace('{name}', activeProfile));
@@ -1341,7 +1343,6 @@
             updateAdvisorBadge();
         }
 
-        // --- NEW VIP ADVISOR LOGIC ---
         function updateAdvisorBadge() {
             const badge = document.getElementById('advisorBadge');
             const count = window.vipOpportunities.length;
@@ -1364,11 +1365,9 @@
             if (window.vipOpportunities.length === 0) {
                 listContainer.innerHTML = `<p class="text-xs text-slate-400 text-center py-6">${i18n[currentLang].advEmpty}</p>`;
             } else {
-                // Sort by target level highest first
                 const sortedOpps = [...window.vipOpportunities].sort((a,b) => b.target - a.target);
                 
                 sortedOpps.forEach(opp => {
-                    // Generate mini badge for target
                     let badgeHTML = `<div class="relative w-10 h-10 flex shrink-0 items-center justify-center transform scale-90">`;
                     badgeHTML += `<div class="v-badge-wrap v-badge-wrap-${opp.target} !relative !top-0 !left-0 shadow-md">`;
                     if (opp.target === 2) badgeHTML += `<div class="v-aura-2"></div>`;
@@ -1392,7 +1391,7 @@
                 });
             }
             showModal('advisorModal');
-            document.getElementById('btnAdvisor').classList.remove('animate-pulse'); // Stop pulsing when seen
+            document.getElementById('btnAdvisor').classList.remove('animate-pulse'); 
         }
 
         function adjustZoom(delta) {
@@ -1589,7 +1588,8 @@
             profiles[profileName] = { 
                 pool: document.getElementById('holding-pool').innerHTML, 
                 tree: document.getElementById('main-tree-zone').innerHTML,
-                synced: false
+                synced: false,
+                timestamp: Date.now() // Added Timestamp
             };
             
             localStorage.setItem('tetProfiles', JSON.stringify(profiles));
@@ -1811,7 +1811,7 @@
                 const newName = prompt(i18n[currentLang].saveAsMsg, "Shared Profile");
                 if (newName) {
                     const profiles = getProfiles();
-                    profiles[newName] = { pool: pendingImportPool, tree: pendingImportTree, synced: false };
+                    profiles[newName] = { pool: pendingImportPool, tree: pendingImportTree, synced: false, timestamp: Date.now() }; // Added Timestamp
                     
                     localStorage.setItem('tetProfiles', JSON.stringify(profiles));
                     showToast(i18n[currentLang].importSuccess);

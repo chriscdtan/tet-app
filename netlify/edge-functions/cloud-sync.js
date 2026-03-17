@@ -80,20 +80,39 @@ export default async (request, context) => {
 
         // --- HANDLE RESTORE (GET) ---
         if (request.method === "GET") {
+            const defaultEmpty = appName === "strategy" ? "{}" : "[]";
             if (!existingRecord) {
-                return new Response(JSON.stringify({ success: true, data: "[]" }), { headers: corsHeaders });
+                return new Response(JSON.stringify({ success: true, data: defaultEmpty }), { headers: corsHeaders });
             }
             
-            let profilesJson = existingRecord.fields["Profiles Data"];
-            let fullText = "";
+            let profilesField = existingRecord.fields["Profiles Data"];
+            let fullText = defaultEmpty;
             
-            // Re-stitch the chunked text segments back together for the frontend
-            if (Array.isArray(profilesJson)) {
-                fullText = profilesJson.map(segment => segment.text || "").join("");
-            } else if (typeof profilesJson === 'object' && profilesJson !== null) {
-                fullText = profilesJson.text || "";
+            // Look for the file attachment token in the field
+            if (profilesField && Array.isArray(profilesField) && profilesField[0]?.file_token) {
+                try {
+                    const fileToken = profilesField[0].file_token;
+                    // Download the JSON file content from Lark Drive
+                    const dlRes = await fetch(`https://open.larksuite.com/open-apis/drive/v1/medias/${fileToken}/download`, {
+                        headers: { "Authorization": `Bearer ${token}` }
+                    });
+                    if (dlRes.ok) {
+                        fullText = await dlRes.text();
+                    } else {
+                        console.error("Failed to download attachment from Lark Drive");
+                    }
+                } catch(e) {
+                    console.error("Failed to parse profile attachment", e);
+                }
             } else {
-                fullText = String(profilesJson || "[]");
+                // Fallback for old text records if any still exist
+                if (Array.isArray(profilesField)) {
+                    fullText = profilesField.map(segment => segment.text || "").join("");
+                } else if (typeof profilesField === 'object' && profilesField !== null) {
+                    fullText = profilesField.text || "";
+                } else {
+                    fullText = String(profilesField || defaultEmpty);
+                }
             }
             
             return new Response(JSON.stringify({ success: true, data: fullText }), { headers: corsHeaders });
@@ -104,45 +123,79 @@ export default async (request, context) => {
             const body = await request.json();
             const profilesString = JSON.stringify(body.profiles);
 
-            // 🛠️ CRITICAL FIX: Lark rejects simple strings > 1000 chars.
-            // We must chunk the long JSON string into an array of Segment Objects
-            const MAX_SEGMENT_LENGTH = 900;
-            const profilesSegments = [];
-            
-            for (let i = 0; i < profilesString.length; i += MAX_SEGMENT_LENGTH) {
-                profilesSegments.push({
-                    type: "text",
-                    text: profilesString.substring(i, i + MAX_SEGMENT_LENGTH)
-                });
-            }
+            // 1. Upload the File to Lark Drive safely
+            const textBytes = new TextEncoder().encode(profilesString);
+            const blob = new Blob([textBytes], { type: 'application/json' });
 
-            const payload = {
+            const larkFormData = new FormData();
+            larkFormData.append("file_name", `profiles_${appName}.json`);
+            larkFormData.append("parent_type", "bitable_file"); 
+            larkFormData.append("parent_node", LARK_APP_TOKEN);
+            larkFormData.append("size", blob.size.toString());
+            larkFormData.append("file", blob, `profiles_${appName}.json`); // Safe filename formatting
+
+            const uploadRes = await fetch("https://open.larksuite.com/open-apis/drive/v1/medias/upload_all", {
+                method: "POST",
+                headers: { "Authorization": `Bearer ${token}` },
+                body: larkFormData
+            });
+
+            const uploadData = await uploadRes.json();
+            if (uploadData.code !== 0) throw new Error("File Upload Failed: " + JSON.stringify(uploadData));
+            const fileToken = uploadData.data.file_token;
+
+            // 2. Prepare Bitable Payload
+            const readableDate = new Intl.DateTimeFormat('en-GB', {
+                timeZone: 'Asia/Kuala_Lumpur',
+                day: '2-digit', month: '2-digit', year: 'numeric',
+                hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true
+            }).format(new Date());
+
+            let payload = {
                 fields: {
                     "Device ID": deviceId,
                     "App Name": appName,
-                    "Profiles Data": profilesSegments,
-                    "Last Synced": Date.now()
+                    "Profiles Data": [{ "file_token": fileToken }],
+                    "Last Synced": readableDate
                 }
             };
 
-            let larkRes;
-            if (existingRecord) {
-                larkRes = await fetch(`https://open.larksuite.com/open-apis/bitable/v1/apps/${LARK_APP_TOKEN}/tables/${LARK_SYNC_TABLE_ID}/records/${existingRecord.record_id}`, {
-                    method: "PUT",
+            const saveRecord = async (dataPayload) => {
+                const endpoint = existingRecord 
+                    ? `https://open.larksuite.com/open-apis/bitable/v1/apps/${LARK_APP_TOKEN}/tables/${LARK_SYNC_TABLE_ID}/records/${existingRecord.record_id}`
+                    : `https://open.larksuite.com/open-apis/bitable/v1/apps/${LARK_APP_TOKEN}/tables/${LARK_SYNC_TABLE_ID}/records`;
+                const method = existingRecord ? "PUT" : "POST";
+                
+                const res = await fetch(endpoint, {
+                    method: method,
                     headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify(dataPayload)
                 });
-            } else {
-                larkRes = await fetch(`https://open.larksuite.com/open-apis/bitable/v1/apps/${LARK_APP_TOKEN}/tables/${LARK_SYNC_TABLE_ID}/records`, {
-                    method: "POST",
-                    headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
-                    body: JSON.stringify(payload)
-                });
-            }
+                return await res.json();
+            };
+
+            let larkData = await saveRecord(payload);
+
+            // ==========================================
+            // AUTO-HEALING MECHANISMS
+            // ==========================================
             
-            const larkData = await larkRes.json();
+            // Heal 1: If user forgot to create the "Last Synced" column, remove it and retry
+            if (larkData.code !== 0 && larkData.msg && larkData.msg.includes("Invalid field")) {
+                console.warn("Auto-healing: Missing 'Last Synced' field. Retrying without it...");
+                delete payload.fields["Last Synced"];
+                larkData = await saveRecord(payload);
+            }
+
+            // Heal 2: If the "Profiles Data" is still a Text column (not Attachment), fallback to raw text
+            if (larkData.code !== 0 && larkData.msg && (larkData.msg.includes("type") || larkData.msg.includes("attachment"))) {
+                console.warn("Auto-healing: Column is not Attachment type. Falling back to text saving...");
+                payload.fields["Profiles Data"] = profilesString.substring(0, 90000); 
+                larkData = await saveRecord(payload);
+            }
+
+            // Final Error Check
             if (larkData.code !== 0) {
-                console.error("Lark API Rejected the Save:", larkData);
                 throw new Error("Lark Rejected Save: " + larkData.msg);
             }
 

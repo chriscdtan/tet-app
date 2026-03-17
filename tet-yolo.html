@@ -349,12 +349,12 @@
                 syncing: '同步中...', sync_success: '云端已同步', sync_fail: '离线模式',
                 node_settings: '节点设置 (点击展开/收起)',
                 lbl_accel: '加速 (TET)', lbl_wallet: '户口现有 (TET)', run_analysis: '🔎 运行安全分析',
-                lbl_global_cycle: '自动复投周期',
+                lbl_global_cycle: '自动质押初始周期',
                 analysis_result: '流动性分析结果', safe_to_sell: '✅ 安全可售额度', 
                 safe_desc: '即使提现此额度，未来的产出也足以覆盖复投成本。但请注意：若未来增加【加速】，节点周期将提前结束。建议额外保留部分 TET 备用，以防因提前复投造成资金断链。',
                 warning_title: '资金紧张', shortage: '资金缺口:', danger_desc: '未来某个时间点的余额将不足以支付复投费用。请勿提现。', shortage_day: '发生于天数:',
                 press_run: '请点击上方按钮运行分析...', save: '保存', copy: '复制', ledger_title: '资金流向预测', days: '天',
-                timeline_title: '节点生命周期图', legend_prod: '正常产出', legend_buy: '购买·复投', legend_wait: '资金不足·等待', legend_stop: '周期结束·停止',
+                timeline_title: '节点生命周期图', legend_prod: '正常产出', legend_buy: '质押·复投', legend_wait: '资金不足·等待', legend_stop: '周期结束·停止',
                 node_n: '节点', days_harv: '已产天数', cycle_days: '周期天数', override: '覆盖(TET)', days_left: '天剩余',
                 th_day: '天数', th_bal: '余', th_prod: '产', th_acc: '加', th_wallet: '总余额', th_net: '净变', th_name: '名称',
                 msg_safe_copy: '✅ TET YOLO 安全提现分析\n💰 可售: *{amt} TET*\n📅 模拟时长: {days} 天\n----------------\n由 TET YOLO 生成',
@@ -362,8 +362,8 @@
                 activate_node: '启用', harvested_val: '已产出:', enter_acc_name: '请输入账户名称',
                 title_name: '节点计算器',
                 clear_inputs: '清除所有输入', confirm_reset: '确定要清除所有输入吗？', reset_done: '已重置',
-                auto_restake: '自动复投/购买',
-                tip_accel: '输入你账户当前的加速总额 (TET)。', tip_wallet: '输入你钱包里目前可用的 TET 余额。', tip_global_cycle: '当节点自动复投或自动购买时，将默认使用此周期天数。', tip_harv: '该节点从购买至今已经运行了多少天。', tip_cyc: '节点的生命周期。默认为 55 天，复投后会增加。', tip_over: '【可选】如果你知道确切的已产出数量，在此输入以覆盖自动计算。', tip_restake: '开启后，该节点将在钱包余额充足时自动复投或自动购买。关闭则让其自然过期停止。'
+                auto_restake: '自动复投/质押',
+                tip_accel: '输入你账户当前的加速总额 (TET)。', tip_wallet: '输入你钱包里目前可用的 TET 余额。', tip_global_cycle: '当节点自动复投或自动质押时，将默认使用此周期天数。', tip_harv: '该节点从质押至今已经运行了多少天。', tip_cyc: '节点的生命周期。默认为 55 天，复投后会增加。', tip_over: '【可选】如果你知道确切的已产出数量，在此输入以覆盖自动计算。', tip_restake: '开启后，该节点将在钱包余额充足时自动复投或自动质押。关闭则让其自然过期停止。'
             },
             en: {
                 saved_profiles: 'Saved Profiles', date: 'Date', profile_name: 'Profile Name', result: 'Result', action: 'Action',
@@ -374,12 +374,12 @@
                 syncing: 'Syncing...', sync_success: 'Cloud Synced', sync_fail: 'Offline Mode',
                 node_settings: 'Node Settings',
                 lbl_accel: 'Acceleration (TET)', lbl_wallet: 'Current Account (TET)', run_analysis: '🔎 Run Analysis',
-                lbl_global_cycle: 'Auto Cycle (Days)',
+                lbl_global_cycle: 'Auto Stake Cycle (Days)',
                 analysis_result: 'Liquidity Analysis', safe_to_sell: '✅ Safe to Sell', 
                 safe_desc: 'Your future production will cover restaking costs. However, higher [acceleration] will cause cycles to end earlier. We advise keeping a TET reserve to prevent shortages from early restaking.',
                 warning_title: 'Shortage Risk', shortage: 'Shortage:', danger_desc: 'Your wallet will not have enough funds for a future restake. Do not withdraw.', shortage_day: 'Happens on Day:',
                 press_run: 'Tap button above to analyze...', save: 'Save', copy: 'Copy', ledger_title: 'Cashflow Forecast', days: 'Days',
-                timeline_title: 'Node Timeline', legend_prod: 'Producing', legend_buy: 'Buy / Restake', legend_wait: 'Waiting (Shortage)', legend_stop: 'Stopped',
+                timeline_title: 'Node Timeline', legend_prod: 'Producing', legend_buy: 'Stake / Restake', legend_wait: 'Waiting (Shortage)', legend_stop: 'Stopped',
                 node_n: 'Node', days_harv: 'Harvested Days', cycle_days: 'Cycle Days', override: 'Override (TET)', days_left: 'Days Left',
                 th_day: 'Day', th_bal: 'Bal', th_prod: 'Prd', th_acc: 'Acc', th_wallet: 'Account', th_net: 'Net', th_name: 'Name',
                 msg_safe_copy: '✅ TET YOLO Safe Withdrawal\n💰 Sell: *{amt} TET*\n📅 Sim Days: {days}\n----------------\nGen by TET YOLO',
@@ -387,8 +387,8 @@
                 activate_node: 'Active', harvested_val: 'Harvested:', enter_acc_name: 'Enter Account Name',
                 title_name: 'Node Calculator',
                 clear_inputs: 'Clear All Inputs', confirm_reset: 'Are you sure you want to clear all inputs?', reset_done: 'Reset Complete',
-                auto_restake: 'Auto Buy/Restake',
-                tip_accel: 'Enter your current total Acceleration (TET).', tip_wallet: 'Enter the current available TET in your account.', tip_global_cycle: 'When a node auto-restakes or auto-buys, it will default to this cycle length.', tip_harv: 'How many days this node has been running since purchase.', tip_cyc: 'Lifecycle of the node. Default 55, increases after restake.', tip_over: '[Optional] Enter exact harvested amount here to override calculation.', tip_restake: 'If enabled, this node will auto-restake or auto-buy when funds are available. Disable to let it stop.'
+                auto_restake: 'Auto Stake/Restake',
+                tip_accel: 'Enter your current total Acceleration (TET).', tip_wallet: 'Enter the current available TET in your account.', tip_global_cycle: 'When a node auto-restakes or auto-Stakes, it will default to this cycle length.', tip_harv: 'How many days this node has been running since purchase.', tip_cyc: 'Lifecycle of the node. Default 55, increases after restake.', tip_over: '[Optional] Enter exact harvested amount here to override calculation.', tip_restake: 'If enabled, this node will auto-restake or auto-Stake when funds are available. Disable to let it stop.'
             }
         };
 
@@ -411,84 +411,148 @@
             setTimeout(autoRestoreProfiles, 1500); 
         }
 
-        // --- STRATEGY STYLE SYNC UPDATER ---
+		// --- STRATEGY STYLE SYNC UPDATER (BUG FIXED) ---
         function updateSyncStatus(status) {
             currentSyncStatus = status;
             const badges = document.querySelectorAll('.sync-badge');
             badges.forEach(badge => {
                 const dot = badge.querySelector('.sync-dot');
-                const ping = badge.querySelector('.sync-dot-ping');
+                
+                // THE FIX: Grab the ping animation by its position inside the dot, 
+                // immune to class name changes!
+                const ping = dot ? dot.firstElementChild : null;
                 const text = badge.querySelector('.sync-status-text');
 
                 if (status === 'syncing') {
                     badge.className = "sync-badge bg-indigo-50 text-indigo-500 border border-indigo-100 shadow-sm";
-                    dot.className = "sync-dot bg-indigo-500";
-                    ping.className = "sync-dot-ping bg-indigo-400";
-                    text.innerText = t('syncing');
+                    if (dot) dot.className = "sync-dot bg-indigo-500";
+                    if (ping) ping.className = "sync-dot-ping bg-indigo-400";
+                    if (text) text.innerText = t('syncing');
                 } else if (status === 'success') {
                     badge.className = "sync-badge bg-emerald-50 text-emerald-600 border border-emerald-100 shadow-sm";
-                    dot.className = "sync-dot bg-emerald-500";
-                    ping.className = "hidden";
-                    text.innerText = t('sync_success');
+                    if (dot) dot.className = "sync-dot bg-emerald-500";
+                    if (ping) ping.className = "hidden"; // Hides safely
+                    if (text) text.innerText = t('sync_success');
                 } else if (status === 'error') {
                     badge.className = "sync-badge bg-amber-50 text-amber-600 border border-amber-100 shadow-sm";
-                    dot.className = "sync-dot bg-amber-500";
-                    ping.className = "hidden";
-                    text.innerText = t('sync_fail');
+                    if (dot) dot.className = "sync-dot bg-amber-500";
+                    if (ping) ping.className = "hidden"; // Hides safely
+                    if (text) text.innerText = t('sync_fail');
                 }
             });
 
-            if (!document.getElementById('profileModal').classList.contains('hidden')) renderProfiles();
+            if (document.getElementById('profileModal') && !document.getElementById('profileModal').classList.contains('hidden')) {
+                if (typeof renderProfiles === 'function') renderProfiles();
+            }
         }
-
-        // --- SILENT CLOUD SYNC LOGIC ---
-        function smartMergeProfiles(local, cloud) {
-            let merged = [...local];
-            let changed = false;
-            cloud.forEach(cp => {
-                const idx = merged.findIndex(p => p.name === cp.name);
-                if (idx === -1) { merged.push(cp); changed = true; } 
-                else if ((cp.timestamp || 0) > (merged[idx].timestamp || 0)) { merged[idx] = cp; changed = true; }
-            });
-            if (changed) merged.sort((a,b) => (b.timestamp || 0) - (a.timestamp || 0));
-            return { merged, changed };
-        }
-
-        async function autoRestoreProfiles() {
-            const deviceId = localStorage.getItem(DEVICE_ID_KEY);
-            if (!deviceId) return;
-            try {
-                updateSyncStatus('syncing');
-                const res = await fetch(`${CLOUD_SYNC_URL}&deviceId=${deviceId}`);
-                if (res.status !== 200) { updateSyncStatus('error'); return; }
-                const data = await res.json();
-                if (data.success && data.data) {
-                    let cloud = typeof data.data === 'string' ? JSON.parse(data.data) : data.data;
-                    let local = JSON.parse(localStorage.getItem(PROFILES_KEY) || "[]");
-                    const { merged, changed } = smartMergeProfiles(local, cloud);
-                    if (changed) {
-                        localStorage.setItem(PROFILES_KEY, JSON.stringify(merged));
-                        if (!document.getElementById('profileModal').classList.contains('hidden')) renderProfiles();
-                    }
+		
+		// STRICT TIMESTAMP OVERWRITE
+		function syncProfilesByTimestamp(cloudProfilesArray) {
+			if (!cloudProfilesArray || !Array.isArray(cloudProfilesArray)) return false;
+			
+			let localProfiles = JSON.parse(localStorage.getItem(PROFILES_KEY) || '[]');
+			if (!Array.isArray(localProfiles)) localProfiles = [];
+			
+			let hasChanges = false;
+			let localMap = {};
+			localProfiles.forEach(p => localMap[p.name] = p);
+		
+			cloudProfilesArray.forEach(cloudProf => {
+				if (!cloudProf || !cloudProf.name) return;
+				const localProf = localMap[cloudProf.name];
+				cloudProf.synced = true;
+				
+				if (!localProf) {
+					localMap[cloudProf.name] = cloudProf;
+					hasChanges = true;
+				} else {
+					const cloudTime = cloudProf.timestamp || 0;
+					const localTime = localProf.timestamp || 0;
+					
+					if (cloudTime > localTime) {
+						localMap[cloudProf.name] = cloudProf;
+						hasChanges = true;
+					}
+				}
+			});
+		
+			if (hasChanges) {
+				const mergedArray = Object.values(localMap).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+				localStorage.setItem(PROFILES_KEY, JSON.stringify(mergedArray));
+				return true;
+			}
+			return false;
+		}		
+		
+		// SAFE RESTORE FUNCTION
+		async function autoRestoreProfiles() {
+			const deviceId = localStorage.getItem(DEVICE_ID_KEY);
+			if (!deviceId) return;
+		
+			try {
+				updateSyncStatus('syncing'); 
+				
+                // ADDED CACHE-BUSTER: Forces browser to fetch the absolute newest data from Lark Base!
+				const res = await fetch(`${CLOUD_SYNC_URL}&deviceId=${deviceId}&_t=${Date.now()}`);
+				
+				if (res.status !== 200) { 
+					updateSyncStatus('error'); 
+					return; 
+				}
+		
+				const data = await res.json();
+				if (data.success) {
+					if (data.data) {
+						let cloudData = [];
+						try {
+							cloudData = typeof data.data === 'string' ? JSON.parse(data.data) : data.data;
+						} catch(e) { console.warn("Cloud parse error"); }
+						
+						const didUpdate = syncProfilesByTimestamp(cloudData);
+						if (didUpdate) {
+							if (typeof loadProfiles === 'function') loadProfiles();
+							if (typeof updateHubProfiles === 'function') updateHubProfiles();
+						}
+					}
+					updateSyncStatus('success'); 
+					autoBackupProfiles(true); 
+				} else {
+					updateSyncStatus('error');
+				}
+			} catch (err) { 
+				updateSyncStatus('error'); 
+			}
+		}
+		
+		async function autoBackupProfiles(isSilentBackground = false) {
+			const deviceId = localStorage.getItem(DEVICE_ID_KEY);
+			if (!deviceId) return;
+			try {
+				if (!isSilentBackground) updateSyncStatus('syncing');
+				const profiles = JSON.parse(localStorage.getItem(PROFILES_KEY) || "[]");
+				
+                // REMOVED keepalive: true which causes silent network crashes on some browsers
+				const res = await fetch(`${CLOUD_SYNC_URL}&deviceId=${deviceId}`, {
+					method: 'POST', headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ profiles: profiles })
+				});
+				
+				if (res.status === 200) {
+					// 1. Mark local profiles as synced FIRST
+					let currentProfiles = JSON.parse(localStorage.getItem(PROFILES_KEY) || "[]");
+					currentProfiles.forEach(p => p.synced = true);
+					localStorage.setItem(PROFILES_KEY, JSON.stringify(currentProfiles));
+					
+					// 2. Call success ONLY AFTER local storage is updated, so UI dots render green perfectly!
                     updateSyncStatus('success');
-                }
-            } catch (err) { updateSyncStatus('error'); }
-        }
-
-        async function autoBackupProfiles() {
-            const deviceId = localStorage.getItem(DEVICE_ID_KEY);
-            if (!deviceId) return;
-            try {
-                updateSyncStatus('syncing');
-                const profiles = JSON.parse(localStorage.getItem(PROFILES_KEY) || "[]");
-                const res = await fetch(`${CLOUD_SYNC_URL}&deviceId=${deviceId}`, {
-                    method: 'POST', keepalive: true, headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ profiles: profiles })
-                });
-                if (res.status === 200) updateSyncStatus('success');
-                else updateSyncStatus('error');
-            } catch (err) { updateSyncStatus('error'); }
-        }
+					
+				} else {
+					if (!isSilentBackground) updateSyncStatus('error');
+				}
+			} catch (err) { 
+				if (!isSilentBackground) updateSyncStatus('error'); 
+			}
+		}
 
         function renderGlobalCycleOptions() {
             const select = document.getElementById('globalCycleInput');
@@ -852,24 +916,46 @@
 
         function closeSaveProfileModal() { document.getElementById('saveProfileModal').classList.add('hidden'); }
 
-        function confirmSaveProfile() {
-            const name = document.getElementById('newProfileName').value.trim();
-            if (!name) return showToast(currentLang === 'zh' ? '请输入档案名称' : 'Please enter a name', null, true);
-            const data = getInputsData();
-            const isSafe = !document.getElementById('safeState').classList.contains('hidden');
-            const finalAmt = isSafe ? "+ " + document.getElementById('safeAmount').innerText + " TET" : "- " + document.getElementById('shortageAmount').innerText + " TET";
-            let profiles = JSON.parse(localStorage.getItem(PROFILES_KEY) || "[]"); let existingIdx = profiles.findIndex(p => p.name === name);
-            
-            // App: YOLO explicitly marks its origin
-            const record = { date: new Date().toLocaleString(), timestamp: Date.now(), name: name, amt: finalAmt, data: data, app: 'yolo' };
-            
-            if (existingIdx >= 0) { if(confirm(t('confirm_overwrite'))) { profiles[existingIdx] = record; } else { return; } } 
-            else { profiles.unshift(record); }
-            localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles)); activeProfileName = name; localStorage.setItem(ACTIVE_PROFILE_KEY, activeProfileName);
-            updateProfileDisplay(); closeSaveProfileModal(); showToast(currentLang === 'zh' ? '档案保存成功' : 'Profile Saved!', null, true); renderProfiles();
-            autoBackupProfiles();
-        }
-
+		function confirmSaveProfile() {
+			const name = document.getElementById('newProfileName').value.trim();
+			if (!name) return showToast(currentLang === 'zh' ? '请输入档案名称' : 'Please enter a name', null, true);
+			const data = getInputsData();
+			const isSafe = !document.getElementById('safeState').classList.contains('hidden');
+			const finalAmt = isSafe ? "+ " + document.getElementById('safeAmount').innerText + " TET" : "- " + document.getElementById('shortageAmount').innerText + " TET";
+			
+			let profiles = JSON.parse(localStorage.getItem(PROFILES_KEY) || "[]"); 
+			let existingIdx = profiles.findIndex(p => p.name === name);
+			
+			if (existingIdx >= 0) { 
+				if(confirm(t('confirm_overwrite'))) { 
+					// MERGE: Keep existing Simulator data, update shared inputs and YOLO amt
+					profiles[existingIdx].timestamp = Date.now();
+					profiles[existingIdx].synced = false;
+					profiles[existingIdx].data = data;
+					profiles[existingIdx].amt_yolo = finalAmt;
+					profiles[existingIdx].date = new Date().toLocaleString();
+				} else { return; } 
+			} 
+			else { 
+				// NEW PROFILE
+				profiles.unshift({
+					name: name, timestamp: Date.now(), synced: false, data: data,
+					amt_yolo: finalAmt, date: new Date().toLocaleString()
+				}); 
+			}
+			
+			profiles.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+			localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles)); 
+			activeProfileName = name; 
+			localStorage.setItem(ACTIVE_PROFILE_KEY, activeProfileName);
+			
+			updateProfileDisplay(); 
+			closeSaveProfileModal(); 
+			showToast(currentLang === 'zh' ? '档案保存成功' : 'Profile Saved!', null, true); 
+			renderProfiles();
+			autoBackupProfiles(); 
+		}
+		
         function updateProfileDisplay() {
             const badge = document.getElementById('activeProfileBadge');
             if (activeProfileName) { badge.innerText = activeProfileName; badge.classList.remove('hidden'); } else { badge.classList.add('hidden'); }
@@ -880,48 +966,48 @@
             if(m.classList.contains('hidden')) { m.classList.remove('hidden'); renderProfiles(); } else { m.classList.add('hidden'); }
         }
 
-        function renderProfiles() {
-            const p = JSON.parse(localStorage.getItem(PROFILES_KEY) || "[]"); const tbody = document.getElementById('profileTableBody'); tbody.innerHTML = '';
-            
-            let dotClass = "bg-indigo-400";
-            if (currentSyncStatus === 'success') dotClass = "bg-emerald-400";
-            else if (currentSyncStatus === 'error') dotClass = "bg-amber-400";
-
-            p.forEach((r, i) => {
-                const displayName = r.name ? r.name : '-';
-                
-                // Cross-App Blind check logic
-                const isYoloProfile = r.app === 'yolo' || (!r.app && (String(r.amt).includes('+') || String(r.amt).includes('-')));
-                
-                let amtDisplay = '-';
-                let colorClass = 'text-slate-400';
-
-                if (isYoloProfile) {
-                    amtDisplay = r.amt || '-'; 
-                    if (r.amt && !String(r.amt).includes('TET')) amtDisplay += " TET"; 
-                    if (String(r.amt).includes('+')) colorClass = 'text-emerald-500'; 
-                    if (String(r.amt).includes('-')) colorClass = 'text-red-500'; 
-                }
-
-                tbody.innerHTML += `
-                    <tr class="border-b border-slate-50 last:border-0 hover:bg-slate-50/50 transition-colors">
-                        <td class="px-3 py-3 text-[10px] leading-tight text-slate-500">${r.date}</td>
-                        <td class="px-3 py-3 font-bold text-slate-700 text-xs">
-                            <span class="mr-2 row-dot ${dotClass}">
-                                <span class="row-ping"></span>
-                            </span>
-                            <span class="text-indigo-600">${displayName}</span>
-                        </td>
-                        <td class="px-3 py-3 font-bold text-xs ${colorClass} whitespace-nowrap">${amtDisplay}</td>
-                        <td class="px-3 py-3 text-right">
-                             <button onclick="loadProfile(${i})" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-600 px-2 py-1 rounded text-[10px] font-bold mr-1">${t('load')}</button>
-                             <button onclick="delProfile(${i})" class="text-slate-300 hover:text-red-500 transition-colors p-1 text-lg leading-none align-middle">&times;</button>
-                        </td>
-                    </tr>
-                `;
-            });
-        }
-        
+		function renderProfiles() {
+			const p = JSON.parse(localStorage.getItem(PROFILES_KEY) || "[]"); 
+			const tbody = document.getElementById('profileTableBody'); 
+			tbody.innerHTML = '';
+			
+			let dotClass = "bg-indigo-400";
+			if (currentSyncStatus === 'success') dotClass = "bg-emerald-400";
+			else if (currentSyncStatus === 'error') dotClass = "bg-amber-400";
+		
+			p.forEach((r, i) => {
+				const displayName = r.name ? r.name : '-';
+				
+				// Retrieve YOLO specific amount (with backwards compatibility for old saves)
+				let amtYolo = r.amt_yolo || (r.app === 'yolo' ? r.amt : null);
+				let amtDisplay = amtYolo ? amtYolo : '-';
+				let colorClass = 'text-slate-500'; 
+				
+				if (amtDisplay !== '-') {
+					if (!String(amtDisplay).includes('TET')) amtDisplay += " TET";
+					if (String(amtDisplay).includes('+')) colorClass = 'text-emerald-500';
+					if (String(amtDisplay).includes('-')) colorClass = 'text-red-500';
+				}
+		
+				tbody.innerHTML += `
+					<tr class="border-b border-slate-50 last:border-0 hover:bg-slate-50/50 transition-colors">
+						<td class="px-3 py-3 text-[10px] leading-tight text-slate-500">${r.date || '-'}</td>
+						<td class="px-3 py-3 font-bold text-slate-700 text-xs whitespace-nowrap">
+							<span class="mr-2 row-dot ${dotClass}">
+								<span class="row-ping"></span>
+							</span>
+							<span class="text-indigo-600">${displayName}</span>
+						</td>
+						<td class="px-3 py-3 font-bold text-xs ${colorClass} whitespace-nowrap">${amtDisplay}</td>
+						<td class="px-3 py-3 text-right">
+							<button onclick="loadProfile(${i})" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-600 px-2 py-1 rounded text-[10px] font-bold mr-1">${t('load')}</button>
+							<button onclick="delProfile(${i})" class="text-slate-300 hover:text-red-500 transition-colors p-1 text-lg leading-none align-middle">&times;</button>
+						</td>
+					</tr>
+				`;
+			});
+		}  
+		
         function loadProfile(idx) {
             if(!confirm(t('confirm_load'))) return;
             let p = JSON.parse(localStorage.getItem(PROFILES_KEY) || "[]");
