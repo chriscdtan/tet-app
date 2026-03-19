@@ -4,12 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>TET 节点计算器</title>
-    <link rel="manifest" href="manifest.json">
 
+    <!-- App Icons & PWA Meta Tags -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="icon.png">
+    <link rel="apple-touch-icon" href="icon.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="TET 节点计算器">
-    <link rel="apple-touch-icon" href="icon.png">
     
     <meta name="theme-color" content="#4f46e5">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -98,7 +100,7 @@
                         <div class="sync-dot bg-indigo-500">
                             <div class="sync-dot-ping bg-indigo-400"></div>
                         </div>
-                        <span class="sync-status-text">Cloud Sync</span>
+                        <span class="sync-status-text" data-i18n="syncing">Cloud Sync</span>
                     </div>
                 </div>
                 
@@ -182,7 +184,7 @@
                         <div class="sync-dot bg-indigo-500">
                             <div class="sync-dot-ping bg-indigo-400"></div>
                         </div>
-                        <span class="sync-status-text">Cloud Sync</span>
+                        <span class="sync-status-text" data-i18n="syncing">Cloud Sync</span>
                     </div>
 
                     <span id="activeProfileBadge" class="hidden text-[9px] font-bold bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded border border-indigo-200 uppercase tracking-widest shadow-sm"></span>
@@ -199,43 +201,61 @@
             </div>
         </div>
 
-        <!-- 1. NODE SETTINGS (ACCORDION) -->
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            <details class="group" open>
-                <summary class="px-5 py-4 bg-slate-50 border-b border-slate-200 font-bold text-xs text-slate-600 uppercase flex justify-between items-center select-none">
-                    <span><span class="w-2 h-2 rounded-full bg-blue-500 inline-block mr-2"></span><span data-i18n="node_settings">Node Settings</span></span>
-                </summary>
-                <div class="p-4 bg-slate-50/50">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4" id="nodesContainer">
-                        <!-- Dynamic Nodes Injected Here -->
-                    </div>
-                </div>
-            </details>
-        </div>
-
-        <!-- 2. GLOBAL INPUTS -->
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 space-y-5">
-            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-                <div class="input-group">
-                    <label onclick="showHelp('tip_accel')"><span data-i18n="lbl_accel">Acceleration (TET)</span> <span class="info-btn">💡</span></label>
-                    <input type="number" id="accelToken" value="0" oninput="saveState(); refreshBadges()" class="w-full border-2 border-slate-100 rounded-xl px-3 py-3 text-lg font-bold outline-none focus:border-indigo-500 transition">
-                </div>
-                <div class="input-group">
-                    <label onclick="showHelp('tip_wallet')"><span data-i18n="lbl_wallet">Wallet (TET)</span> <span class="info-btn">💡</span></label>
-                    <input type="number" id="currentWallet" value="0" oninput="saveState()" class="w-full border-2 border-slate-100 rounded-xl px-3 py-3 text-lg font-bold outline-none focus:border-indigo-500 transition">
-                </div>
-                <div class="input-group">
-                    <label onclick="showHelp('tip_global_cycle')"><span data-i18n="lbl_global_cycle">Auto Cycle</span> <span class="info-btn">💡</span></label>
-                    <select id="globalCycleInput" onchange="saveState()" class="w-full border-2 border-slate-100 rounded-xl px-3 py-3 text-lg font-bold outline-none focus:border-indigo-500 transition bg-white appearance-none">
-                    </select>
+        <!-- FREEMIUM WRAPPER (Nodes & Global Inputs) -->
+        <div class="relative">
+            
+            <!-- PRO TEASER OVERLAY (Hidden for Pro Users) -->
+            <div id="proOverlay" class="absolute inset-[-16px] z-30 hidden flex-col items-center justify-center rounded-3xl bg-white/30 backdrop-blur-[3px] border border-white/60">
+                <div class="bg-slate-900/95 p-6 rounded-3xl text-center shadow-2xl transform transition-all flex flex-col items-center max-w-[260px]">
+                    <span class="text-4xl mb-3 drop-shadow-md">🔒</span>
+                    <h4 class="text-white font-black text-sm tracking-widest mb-1" data-i18n="pro_only">PRO ONLY</h4>
+                    <p class="text-slate-400 text-[10px] mb-5 leading-relaxed px-2" data-i18n="pro_desc">Unlock to customize node settings, adjust acceleration, and sync to the cloud.</p>
+                    <button onclick="window.parent.postMessage('open_activation', '*')" class="bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white text-xs font-bold py-3 px-6 rounded-xl shadow-lg shadow-indigo-500/30 active:scale-95 transition w-full" data-i18n="unlock_btn">
+                        Unlock Access
+                    </button>
                 </div>
             </div>
-            <button onclick="calculate()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl shadow-lg shadow-indigo-200 transition transform active:scale-95 flex items-center justify-center gap-2">
-                <span data-i18n="run_analysis">🔎 Run Analysis</span>
-            </button>
-            <button onclick="resetInputs()" class="w-full bg-white border-2 border-slate-200 text-slate-500 hover:text-red-500 hover:border-red-200 font-bold py-3 rounded-xl transition flex items-center justify-center gap-2 active:scale-95">
-                <span data-i18n="clear_inputs">Clear All Inputs</span>
-            </button>
+
+            <div id="freemiumInputs" class="space-y-6 transition-all duration-500">
+                <!-- 1. NODE SETTINGS (ACCORDION) -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                    <details class="group" open>
+                        <summary class="px-5 py-4 bg-slate-50 border-b border-slate-200 font-bold text-xs text-slate-600 uppercase flex justify-between items-center select-none">
+                            <span><span class="w-2 h-2 rounded-full bg-blue-500 inline-block mr-2"></span><span data-i18n="node_settings">Node Settings</span></span>
+                        </summary>
+                        <div class="p-4 bg-slate-50/50">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4" id="nodesContainer">
+                                <!-- Dynamic Nodes Injected Here -->
+                            </div>
+                        </div>
+                    </details>
+                </div>
+
+                <!-- 2. GLOBAL INPUTS -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 space-y-5">
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        <div class="input-group">
+                            <label onclick="showHelp('tip_accel')"><span data-i18n="lbl_accel">Acceleration (TET)</span> <span class="info-btn">💡</span></label>
+                            <input type="number" id="accelToken" value="0" oninput="saveState(); refreshBadges()" class="w-full border-2 border-slate-100 rounded-xl px-3 py-3 text-lg font-bold outline-none focus:border-indigo-500 transition">
+                        </div>
+                        <div class="input-group">
+                            <label onclick="showHelp('tip_wallet')"><span data-i18n="lbl_wallet">Wallet (TET)</span> <span class="info-btn">💡</span></label>
+                            <input type="number" id="currentWallet" value="0" oninput="saveState()" class="w-full border-2 border-slate-100 rounded-xl px-3 py-3 text-lg font-bold outline-none focus:border-indigo-500 transition">
+                        </div>
+                        <div class="input-group">
+                            <label onclick="showHelp('tip_global_cycle')"><span data-i18n="lbl_global_cycle">Auto Cycle</span> <span class="info-btn">💡</span></label>
+                            <select id="globalCycleInput" onchange="saveState()" class="w-full border-2 border-slate-100 rounded-xl px-3 py-3 text-lg font-bold outline-none focus:border-indigo-500 transition bg-white appearance-none">
+                            </select>
+                        </div>
+                    </div>
+                    <button onclick="calculate()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl shadow-lg shadow-indigo-200 transition transform active:scale-95 flex items-center justify-center gap-2">
+                        <span data-i18n="run_analysis">🔎 Run Analysis</span>
+                    </button>
+                    <button onclick="resetInputs()" class="w-full bg-white border-2 border-slate-200 text-slate-500 hover:text-red-500 hover:border-red-200 font-bold py-3 rounded-xl transition flex items-center justify-center gap-2 active:scale-95">
+                        <span data-i18n="clear_inputs">Clear All Inputs</span>
+                    </button>
+                </div>
+            </div>
         </div>
 
         <!-- 3. RESULT HERO CARD -->
@@ -317,11 +337,15 @@
         const PROFILES_KEY = 'tet_hub_shared_profiles'; 
         const INPUTS_KEY = 'tet_yolo_inputs_isolated'; 
         const LANG_KEY = 'tet_hub_shared_lang';
-        const ACTIVE_PROFILE_KEY = 'tet_yolo_active_profile_isolated'; // Fixed: Isolated active state
+        const ACTIVE_PROFILE_KEY = 'tet_yolo_active_profile_isolated'; 
         const DEVICE_ID_KEY = 'tet_ecosystem_id';
         const CLOUD_SYNC_URL = "/api/cloud-sync?app=hub"; 
         
         let activeProfileName = localStorage.getItem(ACTIVE_PROFILE_KEY) || '';
+
+        // --- NEW: License Parsing from Hub ---
+        const urlParams = new URLSearchParams(window.location.search);
+        const isPro = urlParams.get('pro') === 'true';
 
         document.addEventListener('input', function(e) {
             if (e.target.tagName.toLowerCase() === 'input' && e.target.type === 'number') {
@@ -363,7 +387,8 @@
                 title_name: '节点计算器',
                 clear_inputs: '清除所有输入', confirm_reset: '确定要清除所有输入吗？', reset_done: '已重置',
                 auto_restake: '自动复投/质押',
-                tip_accel: '输入你账户当前的加速总额 (TET)。', tip_wallet: '输入你钱包里目前可用的 TET 余额。', tip_global_cycle: '当节点自动复投或自动质押时，将默认使用此周期天数。', tip_harv: '该节点从质押至今已经运行了多少天。', tip_cyc: '节点的生命周期。默认为 55 天，复投后会增加。', tip_over: '【可选】如果你知道确切的已产出数量，在此输入以覆盖自动计算。', tip_restake: '开启后，该节点将在钱包余额充足时自动复投或自动质押。关闭则让其自然过期停止。'
+                tip_accel: '输入你账户当前的加速总额 (TET)。', tip_wallet: '输入你钱包里目前可用的 TET 余额。', tip_global_cycle: '当节点自动复投或自动质押时，将默认使用此周期天数。', tip_harv: '该节点从质押至今已经运行了多少天。', tip_cyc: '节点的生命周期。默认为 55 天，复投后会增加。', tip_over: '【可选】如果你知道确切的已产出数量，在此输入以覆盖自动计算。', tip_restake: '开启后，该节点将在钱包余额充足时自动复投或自动质押。关闭则让其自然过期停止。',
+                pro_only: '专业版专属', pro_desc: '解锁全功能以自定义节点、设置全局加速并开启云端同步。', unlock_btn: '解锁权限'
             },
             en: {
                 saved_profiles: 'Saved Profiles', date: 'Date', profile_name: 'Profile Name', result: 'Result', action: 'Action',
@@ -388,7 +413,8 @@
                 title_name: 'Node Calculator',
                 clear_inputs: 'Clear All Inputs', confirm_reset: 'Are you sure you want to clear all inputs?', reset_done: 'Reset Complete',
                 auto_restake: 'Auto Stake/Restake',
-                tip_accel: 'Enter your current total Acceleration (TET).', tip_wallet: 'Enter the current available TET in your account.', tip_global_cycle: 'When a node auto-restakes or auto-Stakes, it will default to this cycle length.', tip_harv: 'How many days this node has been running since purchase.', tip_cyc: 'Lifecycle of the node. Default 55, increases after restake.', tip_over: '[Optional] Enter exact harvested amount here to override calculation.', tip_restake: 'If enabled, this node will auto-restake or auto-Stake when funds are available. Disable to let it stop.'
+                tip_accel: 'Enter your current total Acceleration (TET).', tip_wallet: 'Enter the current available TET in your account.', tip_global_cycle: 'When a node auto-restakes or auto-Stakes, it will default to this cycle length.', tip_harv: 'How many days this node has been running since purchase.', tip_cyc: 'Lifecycle of the node. Default 55, increases after restake.', tip_over: '[Optional] Enter exact harvested amount here to override calculation.', tip_restake: 'If enabled, this node will auto-restake or auto-Stake when funds are available. Disable to let it stop.',
+                pro_only: 'PRO ONLY', pro_desc: 'Unlock to customize node settings, adjust acceleration, and sync to the cloud.', unlock_btn: 'Unlock Access'
             }
         };
 
@@ -407,19 +433,53 @@
             renderNodes();
             const savedToggle = localStorage.getItem('tet_yolo_auto_project');
             if (savedToggle !== null) { document.getElementById('autoProjectToggle').checked = (savedToggle === 'true'); }
-            loadState(); applyLanguage(); updateProfileDisplay();
-            setTimeout(autoRestoreProfiles, 1500); 
+            applyLanguage(); 
+
+            // --- FREEMIUM TEASER LOGIC ---
+            if (!isPro) {
+                document.getElementById('proOverlay').classList.remove('hidden');
+                document.getElementById('proOverlay').classList.add('flex');
+                
+                // Color is preserved, pointer events blocked, transparency at 50%
+                document.getElementById('freemiumInputs').classList.add('opacity-50', 'pointer-events-none');
+                
+                // Inject Preset Dummy Data to demonstrate the complex ledger/timeline
+                document.getElementById('accelToken').value = 500;
+                document.getElementById('currentWallet').value = 1200;
+                
+                // Uncheck all nodes first
+                nodeDefinitions.forEach(def => {
+                    document.getElementById(`active_${def.id}`).checked = false;
+                    document.getElementById(`harv_${def.id}`).value = '';
+                });
+
+                // Activate a couple of interesting nodes for the teaser
+                document.getElementById('active_5000').checked = true;
+                document.getElementById('harv_5000').value = 35;
+
+                document.getElementById('active_1000').checked = true;
+                document.getElementById('harv_1000').value = 20;
+
+                refreshBadges();
+                updateSyncStatus('error'); // Triggers 'Offline Mode' since local_free is removed
+                
+                // Slight delay to let UI settle before calculation so timeline renders smoothly
+                setTimeout(() => calculate(), 100);
+
+            } else {
+                // Standard Pro Logic
+                loadState(); 
+                updateProfileDisplay();
+                setTimeout(autoRestoreProfiles, 1500); 
+            }
         }
 
-		// --- STRATEGY STYLE SYNC UPDATER (BUG FIXED) ---
+        // --- STRATEGY STYLE SYNC UPDATER ---
         function updateSyncStatus(status) {
             currentSyncStatus = status;
             const badges = document.querySelectorAll('.sync-badge');
             badges.forEach(badge => {
                 const dot = badge.querySelector('.sync-dot');
-                
-                // THE FIX: Grab the ping animation by its position inside the dot, 
-                // immune to class name changes!
                 const ping = dot ? dot.firstElementChild : null;
                 const text = badge.querySelector('.sync-status-text');
 
@@ -427,17 +487,17 @@
                     badge.className = "sync-badge bg-indigo-50 text-indigo-500 border border-indigo-100 shadow-sm";
                     if (dot) dot.className = "sync-dot bg-indigo-500";
                     if (ping) ping.className = "sync-dot-ping bg-indigo-400";
-                    if (text) text.innerText = t('syncing');
+                    if (text) { text.setAttribute('data-i18n', 'syncing'); text.innerText = t('syncing'); }
                 } else if (status === 'success') {
                     badge.className = "sync-badge bg-emerald-50 text-emerald-600 border border-emerald-100 shadow-sm";
                     if (dot) dot.className = "sync-dot bg-emerald-500";
-                    if (ping) ping.className = "hidden"; // Hides safely
-                    if (text) text.innerText = t('sync_success');
+                    if (ping) ping.className = "hidden"; 
+                    if (text) { text.setAttribute('data-i18n', 'sync_success'); text.innerText = t('sync_success'); }
                 } else if (status === 'error') {
                     badge.className = "sync-badge bg-amber-50 text-amber-600 border border-amber-100 shadow-sm";
                     if (dot) dot.className = "sync-dot bg-amber-500";
-                    if (ping) ping.className = "hidden"; // Hides safely
-                    if (text) text.innerText = t('sync_fail');
+                    if (ping) ping.className = "hidden"; 
+                    if (text) { text.setAttribute('data-i18n', 'sync_fail'); text.innerText = t('sync_fail'); }
                 }
             });
 
@@ -445,114 +505,113 @@
                 if (typeof renderProfiles === 'function') renderProfiles();
             }
         }
-		
-		// STRICT TIMESTAMP OVERWRITE
-		function syncProfilesByTimestamp(cloudProfilesArray) {
-			if (!cloudProfilesArray || !Array.isArray(cloudProfilesArray)) return false;
-			
-			let localProfiles = JSON.parse(localStorage.getItem(PROFILES_KEY) || '[]');
-			if (!Array.isArray(localProfiles)) localProfiles = [];
-			
-			let hasChanges = false;
-			let localMap = {};
-			localProfiles.forEach(p => localMap[p.name] = p);
-		
-			cloudProfilesArray.forEach(cloudProf => {
-				if (!cloudProf || !cloudProf.name) return;
-				const localProf = localMap[cloudProf.name];
-				cloudProf.synced = true;
-				
-				if (!localProf) {
-					localMap[cloudProf.name] = cloudProf;
-					hasChanges = true;
-				} else {
-					const cloudTime = cloudProf.timestamp || 0;
-					const localTime = localProf.timestamp || 0;
-					
-					if (cloudTime > localTime) {
-						localMap[cloudProf.name] = cloudProf;
-						hasChanges = true;
-					}
-				}
-			});
-		
-			if (hasChanges) {
-				const mergedArray = Object.values(localMap).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-				localStorage.setItem(PROFILES_KEY, JSON.stringify(mergedArray));
-				return true;
-			}
-			return false;
-		}		
-		
-		// SAFE RESTORE FUNCTION
-		async function autoRestoreProfiles() {
-			const deviceId = localStorage.getItem(DEVICE_ID_KEY);
-			if (!deviceId) return;
-		
-			try {
-				updateSyncStatus('syncing'); 
-				
-                // ADDED CACHE-BUSTER: Forces browser to fetch the absolute newest data from Lark Base!
-				const res = await fetch(`${CLOUD_SYNC_URL}&deviceId=${deviceId}&_t=${Date.now()}`);
-				
-				if (res.status !== 200) { 
-					updateSyncStatus('error'); 
-					return; 
-				}
-		
-				const data = await res.json();
-				if (data.success) {
-					if (data.data) {
-						let cloudData = [];
-						try {
-							cloudData = typeof data.data === 'string' ? JSON.parse(data.data) : data.data;
-						} catch(e) { console.warn("Cloud parse error"); }
-						
-						const didUpdate = syncProfilesByTimestamp(cloudData);
-						if (didUpdate) {
-							if (typeof loadProfiles === 'function') loadProfiles();
-							if (typeof updateHubProfiles === 'function') updateHubProfiles();
-						}
-					}
-					updateSyncStatus('success'); 
-					autoBackupProfiles(true); 
-				} else {
-					updateSyncStatus('error');
-				}
-			} catch (err) { 
-				updateSyncStatus('error'); 
-			}
-		}
-		
-		async function autoBackupProfiles(isSilentBackground = false) {
-			const deviceId = localStorage.getItem(DEVICE_ID_KEY);
-			if (!deviceId) return;
-			try {
-				if (!isSilentBackground) updateSyncStatus('syncing');
-				const profiles = JSON.parse(localStorage.getItem(PROFILES_KEY) || "[]");
-				
-                // REMOVED keepalive: true which causes silent network crashes on some browsers
-				const res = await fetch(`${CLOUD_SYNC_URL}&deviceId=${deviceId}`, {
-					method: 'POST', headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ profiles: profiles })
-				});
-				
-				if (res.status === 200) {
-					// 1. Mark local profiles as synced FIRST
-					let currentProfiles = JSON.parse(localStorage.getItem(PROFILES_KEY) || "[]");
-					currentProfiles.forEach(p => p.synced = true);
-					localStorage.setItem(PROFILES_KEY, JSON.stringify(currentProfiles));
-					
-					// 2. Call success ONLY AFTER local storage is updated, so UI dots render green perfectly!
+        
+        // STRICT TIMESTAMP OVERWRITE
+        function syncProfilesByTimestamp(cloudProfilesArray) {
+            if (!cloudProfilesArray || !Array.isArray(cloudProfilesArray)) return false;
+            
+            let localProfiles = JSON.parse(localStorage.getItem(PROFILES_KEY) || '[]');
+            if (!Array.isArray(localProfiles)) localProfiles = [];
+            
+            let hasChanges = false;
+            let localMap = {};
+            localProfiles.forEach(p => localMap[p.name] = p);
+        
+            cloudProfilesArray.forEach(cloudProf => {
+                if (!cloudProf || !cloudProf.name) return;
+                const localProf = localMap[cloudProf.name];
+                cloudProf.synced = true;
+                
+                if (!localProf) {
+                    localMap[cloudProf.name] = cloudProf;
+                    hasChanges = true;
+                } else {
+                    const cloudTime = cloudProf.timestamp || 0;
+                    const localTime = localProf.timestamp || 0;
+                    
+                    if (cloudTime > localTime) {
+                        localMap[cloudProf.name] = cloudProf;
+                        hasChanges = true;
+                    }
+                }
+            });
+        
+            if (hasChanges) {
+                const mergedArray = Object.values(localMap).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                localStorage.setItem(PROFILES_KEY, JSON.stringify(mergedArray));
+                return true;
+            }
+            return false;
+        }       
+        
+        // SAFE RESTORE FUNCTION
+        async function autoRestoreProfiles() {
+            // Block sync if not Pro
+            if (!isPro) { updateSyncStatus('error'); return; }
+
+            const deviceId = localStorage.getItem(DEVICE_ID_KEY);
+            if (!deviceId) return;
+        
+            try {
+                updateSyncStatus('syncing'); 
+                const res = await fetch(`${CLOUD_SYNC_URL}&deviceId=${deviceId}&_t=${Date.now()}`);
+                
+                if (res.status !== 200) { 
+                    updateSyncStatus('error'); 
+                    return; 
+                }
+        
+                const data = await res.json();
+                if (data.success) {
+                    if (data.data) {
+                        let cloudData = [];
+                        try {
+                            cloudData = typeof data.data === 'string' ? JSON.parse(data.data) : data.data;
+                        } catch(e) { console.warn("Cloud parse error"); }
+                        
+                        const didUpdate = syncProfilesByTimestamp(cloudData);
+                        if (didUpdate) {
+                            if (typeof loadProfiles === 'function') loadProfiles();
+                            if (typeof updateHubProfiles === 'function') updateHubProfiles();
+                        }
+                    }
+                    updateSyncStatus('success'); 
+                    autoBackupProfiles(true); 
+                } else {
+                    updateSyncStatus('error');
+                }
+            } catch (err) { 
+                updateSyncStatus('error'); 
+            }
+        }
+        
+        async function autoBackupProfiles(isSilentBackground = false) {
+            // Block sync if not Pro
+            if (!isPro) return; 
+
+            const deviceId = localStorage.getItem(DEVICE_ID_KEY);
+            if (!deviceId) return;
+            try {
+                if (!isSilentBackground) updateSyncStatus('syncing');
+                const profiles = JSON.parse(localStorage.getItem(PROFILES_KEY) || "[]");
+                
+                const res = await fetch(`${CLOUD_SYNC_URL}&deviceId=${deviceId}`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ profiles: profiles })
+                });
+                
+                if (res.status === 200) {
+                    let currentProfiles = JSON.parse(localStorage.getItem(PROFILES_KEY) || "[]");
+                    currentProfiles.forEach(p => p.synced = true);
+                    localStorage.setItem(PROFILES_KEY, JSON.stringify(currentProfiles));
                     updateSyncStatus('success');
-					
-				} else {
-					if (!isSilentBackground) updateSyncStatus('error');
-				}
-			} catch (err) { 
-				if (!isSilentBackground) updateSyncStatus('error'); 
-			}
-		}
+                } else {
+                    if (!isSilentBackground) updateSyncStatus('error');
+                }
+            } catch (err) { 
+                if (!isSilentBackground) updateSyncStatus('error'); 
+            }
+        }
 
         function renderGlobalCycleOptions() {
             const select = document.getElementById('globalCycleInput');
@@ -565,8 +624,12 @@
         function toggleLanguage() {
             currentLang = currentLang === 'zh' ? 'en' : 'zh';
             localStorage.setItem(LANG_KEY, currentLang);
-            applyLanguage(); renderNodes(); loadState();
+            applyLanguage(); 
+            updateSyncStatus(currentSyncStatus); // Update badge instantly based on newly applied lang
+            renderNodes(); 
+            loadState();
             if (!document.getElementById('ledgerSection').classList.contains('hidden')) calculate();
+            if (!document.getElementById('profileModal').classList.contains('hidden')) renderProfiles(); // Updates modal list logic immediately
         }
 
         function applyLanguage() {
@@ -916,46 +979,46 @@
 
         function closeSaveProfileModal() { document.getElementById('saveProfileModal').classList.add('hidden'); }
 
-		function confirmSaveProfile() {
-			const name = document.getElementById('newProfileName').value.trim();
-			if (!name) return showToast(currentLang === 'zh' ? '请输入档案名称' : 'Please enter a name', null, true);
-			const data = getInputsData();
-			const isSafe = !document.getElementById('safeState').classList.contains('hidden');
-			const finalAmt = isSafe ? "+ " + document.getElementById('safeAmount').innerText + " TET" : "- " + document.getElementById('shortageAmount').innerText + " TET";
-			
-			let profiles = JSON.parse(localStorage.getItem(PROFILES_KEY) || "[]"); 
-			let existingIdx = profiles.findIndex(p => p.name === name);
-			
-			if (existingIdx >= 0) { 
-				if(confirm(t('confirm_overwrite'))) { 
-					// MERGE: Keep existing Simulator data, update shared inputs and YOLO amt
-					profiles[existingIdx].timestamp = Date.now();
-					profiles[existingIdx].synced = false;
-					profiles[existingIdx].data = data;
-					profiles[existingIdx].amt_yolo = finalAmt;
-					profiles[existingIdx].date = new Date().toLocaleString();
-				} else { return; } 
-			} 
-			else { 
-				// NEW PROFILE
-				profiles.unshift({
-					name: name, timestamp: Date.now(), synced: false, data: data,
-					amt_yolo: finalAmt, date: new Date().toLocaleString()
-				}); 
-			}
-			
-			profiles.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-			localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles)); 
-			activeProfileName = name; 
-			localStorage.setItem(ACTIVE_PROFILE_KEY, activeProfileName);
-			
-			updateProfileDisplay(); 
-			closeSaveProfileModal(); 
-			showToast(currentLang === 'zh' ? '档案保存成功' : 'Profile Saved!', null, true); 
-			renderProfiles();
-			autoBackupProfiles(); 
-		}
-		
+        function confirmSaveProfile() {
+            const name = document.getElementById('newProfileName').value.trim();
+            if (!name) return showToast(currentLang === 'zh' ? '请输入档案名称' : 'Please enter a name', null, true);
+            const data = getInputsData();
+            const isSafe = !document.getElementById('safeState').classList.contains('hidden');
+            const finalAmt = isSafe ? "+ " + document.getElementById('safeAmount').innerText + " TET" : "- " + document.getElementById('shortageAmount').innerText + " TET";
+            
+            let profiles = JSON.parse(localStorage.getItem(PROFILES_KEY) || "[]"); 
+            let existingIdx = profiles.findIndex(p => p.name === name);
+            
+            if (existingIdx >= 0) { 
+                if(confirm(t('confirm_overwrite'))) { 
+                    // MERGE: Keep existing Simulator data, update shared inputs and YOLO amt
+                    profiles[existingIdx].timestamp = Date.now();
+                    profiles[existingIdx].synced = false;
+                    profiles[existingIdx].data = data;
+                    profiles[existingIdx].amt_yolo = finalAmt;
+                    profiles[existingIdx].date = new Date().toLocaleString();
+                } else { return; } 
+            } 
+            else { 
+                // NEW PROFILE
+                profiles.unshift({
+                    name: name, timestamp: Date.now(), synced: false, data: data,
+                    amt_yolo: finalAmt, date: new Date().toLocaleString()
+                }); 
+            }
+            
+            profiles.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+            localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles)); 
+            activeProfileName = name; 
+            localStorage.setItem(ACTIVE_PROFILE_KEY, activeProfileName);
+            
+            updateProfileDisplay(); 
+            closeSaveProfileModal(); 
+            showToast(currentLang === 'zh' ? '档案保存成功' : 'Profile Saved!', null, true); 
+            renderProfiles();
+            autoBackupProfiles(); 
+        }
+        
         function updateProfileDisplay() {
             const badge = document.getElementById('activeProfileBadge');
             if (activeProfileName) { badge.innerText = activeProfileName; badge.classList.remove('hidden'); } else { badge.classList.add('hidden'); }
@@ -966,48 +1029,48 @@
             if(m.classList.contains('hidden')) { m.classList.remove('hidden'); renderProfiles(); } else { m.classList.add('hidden'); }
         }
 
-		function renderProfiles() {
-			const p = JSON.parse(localStorage.getItem(PROFILES_KEY) || "[]"); 
-			const tbody = document.getElementById('profileTableBody'); 
-			tbody.innerHTML = '';
-			
-			let dotClass = "bg-indigo-400";
-			if (currentSyncStatus === 'success') dotClass = "bg-emerald-400";
-			else if (currentSyncStatus === 'error') dotClass = "bg-amber-400";
-		
-			p.forEach((r, i) => {
-				const displayName = r.name ? r.name : '-';
-				
-				// Retrieve YOLO specific amount (with backwards compatibility for old saves)
-				let amtYolo = r.amt_yolo || (r.app === 'yolo' ? r.amt : null);
-				let amtDisplay = amtYolo ? amtYolo : '-';
-				let colorClass = 'text-slate-500'; 
-				
-				if (amtDisplay !== '-') {
-					if (!String(amtDisplay).includes('TET')) amtDisplay += " TET";
-					if (String(amtDisplay).includes('+')) colorClass = 'text-emerald-500';
-					if (String(amtDisplay).includes('-')) colorClass = 'text-red-500';
-				}
-		
-				tbody.innerHTML += `
-					<tr class="border-b border-slate-50 last:border-0 hover:bg-slate-50/50 transition-colors">
-						<td class="px-3 py-3 text-[10px] leading-tight text-slate-500">${r.date || '-'}</td>
-						<td class="px-3 py-3 font-bold text-slate-700 text-xs whitespace-nowrap">
-							<span class="mr-2 row-dot ${dotClass}">
-								<span class="row-ping"></span>
-							</span>
-							<span class="text-indigo-600">${displayName}</span>
-						</td>
-						<td class="px-3 py-3 font-bold text-xs ${colorClass} whitespace-nowrap">${amtDisplay}</td>
-						<td class="px-3 py-3 text-right">
-							<button onclick="loadProfile(${i})" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-600 px-2 py-1 rounded text-[10px] font-bold mr-1">${t('load')}</button>
-							<button onclick="delProfile(${i})" class="text-slate-300 hover:text-red-500 transition-colors p-1 text-lg leading-none align-middle">&times;</button>
-						</td>
-					</tr>
-				`;
-			});
-		}  
-		
+        function renderProfiles() {
+            const p = JSON.parse(localStorage.getItem(PROFILES_KEY) || "[]"); 
+            const tbody = document.getElementById('profileTableBody'); 
+            tbody.innerHTML = '';
+            
+            let dotClass = "bg-indigo-400";
+            if (currentSyncStatus === 'success') dotClass = "bg-emerald-400";
+            else if (currentSyncStatus === 'error') dotClass = "bg-amber-400";
+        
+            p.forEach((r, i) => {
+                const displayName = r.name ? r.name : '-';
+                
+                // Retrieve YOLO specific amount (with backwards compatibility for old saves)
+                let amtYolo = r.amt_yolo || (r.app === 'yolo' ? r.amt : null);
+                let amtDisplay = amtYolo ? amtYolo : '-';
+                let colorClass = 'text-slate-500'; 
+                
+                if (amtDisplay !== '-') {
+                    if (!String(amtDisplay).includes('TET')) amtDisplay += " TET";
+                    if (String(amtDisplay).includes('+')) colorClass = 'text-emerald-500';
+                    if (String(amtDisplay).includes('-')) colorClass = 'text-red-500';
+                }
+        
+                tbody.innerHTML += `
+                    <tr class="border-b border-slate-50 last:border-0 hover:bg-slate-50/50 transition-colors">
+                        <td class="px-3 py-3 text-[10px] leading-tight text-slate-500">${r.date || '-'}</td>
+                        <td class="px-3 py-3 font-bold text-slate-700 text-xs whitespace-nowrap">
+                            <span class="mr-2 row-dot ${dotClass}">
+                                <span class="row-ping"></span>
+                            </span>
+                            <span class="text-indigo-600">${displayName}</span>
+                        </td>
+                        <td class="px-3 py-3 font-bold text-xs ${colorClass} whitespace-nowrap">${amtDisplay}</td>
+                        <td class="px-3 py-3 text-right">
+                            <button onclick="loadProfile(${i})" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-600 px-2 py-1 rounded text-[10px] font-bold mr-1">${t('load')}</button>
+                            <button onclick="delProfile(${i})" class="text-slate-300 hover:text-red-500 transition-colors p-1 text-lg leading-none align-middle">&times;</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }  
+        
         function loadProfile(idx) {
             if(!confirm(t('confirm_load'))) return;
             let p = JSON.parse(localStorage.getItem(PROFILES_KEY) || "[]");
@@ -1101,10 +1164,10 @@
             c.appendChild(el);
             
             if (autoDismiss) {
-                overlay.style.display = 'none'; // No blocking background
+                overlay.style.display = 'none'; 
                 setTimeout(dismissAllToasts, 2500);
             } else {
-                overlay.style.display = 'block'; // Block interaction until dismissed
+                overlay.style.display = 'block'; 
             }
             
             setTimeout(() => el.classList.add('show'), 10);

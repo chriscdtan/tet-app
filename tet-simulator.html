@@ -4,12 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>TET 收益模拟器</title>
-    <link rel="manifest" href="manifest.json">
 
+    <!-- ANTI-FLICKER SCRIPT: Runs before the body renders -->
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const isPro = urlParams.get('pro') === 'true';
+        if (!isPro) { document.documentElement.classList.add('is-free'); }
+    </script>
+
+    <!-- App Icons & PWA Meta Tags -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="icon.png">
+    <link rel="apple-touch-icon" href="icon.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="TET 收益模拟器">
-    <link rel="apple-touch-icon" href="icon.png">
     
     <meta name="theme-color" content="#4f46e5">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -20,8 +29,15 @@
     
     <style>
         body { font-family: 'Roboto', 'PingFang SC', 'Microsoft YaHei', sans-serif; background-color: #f8fafc; -webkit-tap-highlight-color: transparent; }
-        .blur-lock { filter: blur(12px); pointer-events: none; user-select: none; transition: filter 0.5s ease; }
         
+        /* FREEMIUM STYLES - Handled instantly via HTML class (Aligned with YOLO) */
+        html.is-free #proOverlay { display: flex !important; }
+        html.is-free #freemiumInputs { 
+            opacity: 0.5; 
+            pointer-events: none; 
+            transition: none; 
+        }
+
         /* Scrollbar Styling */
         .log-container::-webkit-scrollbar { height: 6px; }
         .log-container::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
@@ -97,7 +113,7 @@
                         <div class="sync-dot bg-indigo-500">
                             <div class="sync-dot-ping bg-indigo-400"></div>
                         </div>
-                        <span class="sync-status-text">Cloud Sync</span>
+                        <span class="sync-status-text" data-i18n="syncing">Cloud Sync</span>
                     </div>
                 </div>
                 
@@ -172,7 +188,7 @@
                         <div class="sync-dot bg-indigo-500">
                             <div class="sync-dot-ping bg-indigo-400"></div>
                         </div>
-                        <span class="sync-status-text">Cloud Sync</span>
+                        <span class="sync-status-text" data-i18n="syncing">Cloud Sync</span>
                     </div>
 
                     <span id="activeProfileBadge" class="hidden text-[9px] font-bold bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded border border-indigo-200 uppercase tracking-widest shadow-sm"></span>
@@ -189,51 +205,70 @@
             </div>
         </div>
 
-        <!-- 1. NODE SETTINGS -->
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            <details class="group" open>
-                <summary class="px-5 py-4 bg-slate-50 border-b border-slate-200 font-bold text-xs text-slate-600 uppercase flex justify-between items-center select-none outline-none">
-                    <span><span class="w-2 h-2 rounded-full bg-blue-500 inline-block mr-2"></span><span data-i18n="node_settings">Node Settings</span></span>
-                </summary>
-                <div class="p-4 bg-slate-50/50">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4" id="nodesContainer">
-                        <!-- Dynamic Nodes -->
-                    </div>
-                </div>
-            </details>
-        </div>
-
-        <!-- 2. GLOBAL INPUTS -->
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 space-y-5">
-            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                <div class="input-group">
-                    <label onclick="showHelp('tip_accel')"><span data-i18n="lbl_accel">Acceleration (TET)</span> <span class="info-btn">💡</span></label>
-                    <input type="number" id="accelToken" value="0" oninput="saveState(); refreshNodes()" class="w-full border-2 border-slate-100 rounded-xl px-3 py-3 text-lg font-bold outline-none focus:border-indigo-500 transition">
-                </div>
-                <div class="input-group">
-                    <label onclick="showHelp('tip_wallet')"><span data-i18n="lbl_wallet">Wallet (TET)</span> <span class="info-btn">💡</span></label>
-                    <input type="number" id="currentWallet" value="0" oninput="saveState()" class="w-full border-2 border-slate-100 rounded-xl px-3 py-3 text-lg font-bold outline-none focus:border-indigo-500 transition">
-                </div>
-                <div class="input-group">
-                    <label onclick="showHelp('tip_simdays')"><span data-i18n="lbl_sim_days">Sim Days</span> <span class="info-btn">💡</span></label>
-                    <input type="number" id="simDaysInput" value="" placeholder="Max" oninput="saveState()" class="w-full border-2 border-slate-100 rounded-xl px-3 py-3 text-lg font-bold outline-none focus:border-indigo-500 transition">
-                </div>
-                <div class="input-group">
-                    <label onclick="showHelp('tip_price')"><span data-i18n="lbl_price">TET Price (USDT)</span> <span class="info-btn">💡</span></label>
-                    <input type="number" id="tetPriceInput" step="0.01" value="0.50" oninput="saveState()" class="w-full border-2 border-slate-100 rounded-xl px-3 py-3 text-lg font-bold outline-none focus:border-indigo-500 transition">
-                </div>
-                <div class="input-group">
-                    <label onclick="showHelp('tip_global_cycle')"><span data-i18n="lbl_global_cycle">Auto Stake Cycle</span> <span class="info-btn">💡</span></label>
-                    <select id="globalCycleInput" onchange="saveState()" class="w-full border-2 border-slate-100 rounded-xl px-3 py-3 text-lg font-bold outline-none focus:border-indigo-500 transition bg-white appearance-none">
-                    </select>
+        <!-- FREEMIUM WRAPPER (Nodes & Global Inputs) -->
+        <div class="relative">
+            
+            <!-- PRO TEASER OVERLAY (Hidden for Pro Users via CSS) -->
+            <div id="proOverlay" class="absolute inset-[-16px] z-30 hidden flex-col items-center justify-center rounded-3xl bg-white/30 backdrop-blur-[3px] border border-white/60">
+                <div class="bg-slate-900/95 p-6 rounded-3xl text-center shadow-2xl transform transition-all flex flex-col items-center max-w-[280px]">
+                    <span class="text-4xl mb-3 drop-shadow-md">🔒</span>
+                    <h4 class="text-white font-black text-sm tracking-widest mb-1" data-i18n="pro_only">PRO ONLY</h4>
+                    <p class="text-slate-400 text-[10px] mb-5 leading-relaxed px-2" data-i18n="pro_desc">Unlock full features to customize nodes, boost acceleration, and enable cloud sync.</p>
+                    <button onclick="window.parent.postMessage('open_activation', '*')" class="bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white text-xs font-bold py-3 px-6 rounded-xl shadow-lg shadow-indigo-500/30 active:scale-95 transition w-full" data-i18n="unlock_btn">
+                        Unlock Access
+                    </button>
                 </div>
             </div>
-            <button onclick="calculate()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl shadow-lg shadow-indigo-200 transition transform active:scale-95 flex items-center justify-center gap-2">
-                <span data-i18n="run_analysis">🔎 Run Analysis</span>
-            </button>
-            <button onclick="resetInputs()" class="w-full bg-white border-2 border-slate-200 text-slate-500 hover:text-red-500 hover:border-red-200 font-bold py-3 rounded-xl transition flex items-center justify-center gap-2 active:scale-95">
-                <span data-i18n="clear_inputs">Clear All Inputs</span>
-            </button>
+
+            <!-- Inputs container (Locked if Free) -->
+            <div id="freemiumInputs" class="space-y-6">
+                <!-- 1. NODE SETTINGS -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                    <details class="group" open>
+                        <summary class="px-5 py-4 bg-slate-50 border-b border-slate-200 font-bold text-xs text-slate-600 uppercase flex justify-between items-center select-none outline-none">
+                            <span><span class="w-2 h-2 rounded-full bg-blue-500 inline-block mr-2"></span><span data-i18n="node_settings">Node Settings</span></span>
+                        </summary>
+                        <div class="p-4 bg-slate-50/50">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4" id="nodesContainer">
+                                <!-- Dynamic Nodes -->
+                            </div>
+                        </div>
+                    </details>
+                </div>
+
+                <!-- 2. GLOBAL INPUTS -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 space-y-5">
+                    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                        <div class="input-group">
+                            <label onclick="showHelp('tip_accel')"><span data-i18n="lbl_accel">Acceleration (TET)</span> <span class="info-btn">💡</span></label>
+                            <input type="number" id="accelToken" value="0" oninput="saveState(); refreshNodes()" class="w-full border-2 border-slate-100 rounded-xl px-3 py-3 text-lg font-bold outline-none focus:border-indigo-500 transition">
+                        </div>
+                        <div class="input-group">
+                            <label onclick="showHelp('tip_wallet')"><span data-i18n="lbl_wallet">Wallet (TET)</span> <span class="info-btn">💡</span></label>
+                            <input type="number" id="currentWallet" value="0" oninput="saveState()" class="w-full border-2 border-slate-100 rounded-xl px-3 py-3 text-lg font-bold outline-none focus:border-indigo-500 transition">
+                        </div>
+                        <div class="input-group">
+                            <label onclick="showHelp('tip_simdays')"><span data-i18n="lbl_sim_days">Sim Days</span> <span class="info-btn">💡</span></label>
+                            <input type="number" id="simDaysInput" value="" placeholder="Max" oninput="saveState()" class="w-full border-2 border-slate-100 rounded-xl px-3 py-3 text-lg font-bold outline-none focus:border-indigo-500 transition">
+                        </div>
+                        <div class="input-group">
+                            <label onclick="showHelp('tip_price')"><span data-i18n="lbl_price">TET Price (USDT)</span> <span class="info-btn">💡</span></label>
+                            <input type="number" id="tetPriceInput" step="0.01" value="0.50" oninput="saveState()" class="w-full border-2 border-slate-100 rounded-xl px-3 py-3 text-lg font-bold outline-none focus:border-indigo-500 transition">
+                        </div>
+                        <div class="input-group">
+                            <label onclick="showHelp('tip_global_cycle')"><span data-i18n="lbl_global_cycle">Auto Stake Cycle</span> <span class="info-btn">💡</span></label>
+                            <select id="globalCycleInput" onchange="saveState()" class="w-full border-2 border-slate-100 rounded-xl px-3 py-3 text-lg font-bold outline-none focus:border-indigo-500 transition bg-white appearance-none">
+                            </select>
+                        </div>
+                    </div>
+                    <button onclick="calculate()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl shadow-lg shadow-indigo-200 transition transform active:scale-95 flex items-center justify-center gap-2">
+                        <span data-i18n="run_analysis">🔎 Run Analysis</span>
+                    </button>
+                    <button onclick="resetInputs()" class="w-full bg-white border-2 border-slate-200 text-slate-500 hover:text-red-500 hover:border-red-200 font-bold py-3 rounded-xl transition flex items-center justify-center gap-2 active:scale-95">
+                        <span data-i18n="clear_inputs">Clear All Inputs</span>
+                    </button>
+                </div>
+            </div>
         </div>
 
         <!-- 3. REPORT CONTAINER -->
@@ -353,7 +388,7 @@
                 run_analysis: '🔎 运行分析',
                 analysis_result: '流动性分析结果', 
                 final_desc: '这是在模拟期结束时，您账户中预计将拥有的最终 TET 余额。',
-                restaked_tet: '复投花费',
+                restaked_tet: '复投花费 (T)',
                 withdraw_tet: '提现数量 (扣15%)', usdt_value: 'USDT 价值 (扣10%)',
                 graph_title: 'TET 增长轨迹', export_report: '导出报告',
                 press_run: '请点击上方按钮运行分析...', save_profile: '保存档案', save: '保存', load: '加载', copy: '复制', ledger_title: '资金流向预测', days: '天',
@@ -376,7 +411,8 @@
                 tip_harv: '该节点从质押至今已经运行了多少天。',
                 tip_cyc: '节点的生命周期。默认为 55 天，复投后会增加。',
                 tip_over: '【可选】如果你知道确切的已产出数量，在此输入以覆盖自动计算。',
-                tip_restake: '开启后，该节点将在钱包余额充足时自动复投或自动质押。关闭则让其自然过期停止。'
+                tip_restake: '开启后，该节点将在钱包余额充足时自动复投或自动质押。关闭则让其自然过期停止。',
+                pro_only: '专业版专属', pro_desc: '解锁完整功能以自定义节点、加速并开启云端同步。', unlock_btn: '解锁权限'
             },
             en: {
                 saved_profiles: 'Saved Profiles', date: 'Date', profile_name: 'Profile Name',
@@ -388,7 +424,7 @@
                 run_analysis: '🔎 Run Analysis',
                 analysis_result: 'Liquidity Analysis',
                 final_desc: 'This is the estimated TET balance in your account at the end of the simulation period.',
-                restaked_tet: 'Restaked',
+                restaked_tet: 'Restaked (T)',
                 withdraw_tet: 'Withdrawal (15% Fee)', usdt_value: 'USDT Value (10% Fee)',
                 graph_title: 'Growth Trajectory', export_report: 'Export',
                 press_run: 'Tap button above to analyze...', save_profile: 'Save Profile', save: 'Save', load: 'Load', copy: 'Copy', ledger_title: 'Cashflow Forecast', days: 'Days',
@@ -411,7 +447,8 @@
                 tip_harv: 'How many days this node has been running since purchase.',
                 tip_cyc: 'Lifecycle of the node. Default 55, increases after restake.',
                 tip_over: '[Optional] Enter exact harvested amount here to override calculation.',
-                tip_restake: 'If enabled, this node will auto-restake or auto-Stake when funds are available. Disable to let it stop.'
+                tip_restake: 'If enabled, this node will auto-restake or auto-Stake when funds are available. Disable to let it stop.',
+                pro_only: 'PRO ONLY', pro_desc: 'Unlock full features to customize nodes, boost acceleration, and enable cloud sync.', unlock_btn: 'Unlock Access'
             }
         };
 
@@ -432,12 +469,37 @@
         function initApp() {
             renderGlobalCycleOptions();
             renderNodes();
-            loadState();
             applyLanguage();
-            updateProfileDisplay();
-            
-            // Wait 1.5 seconds to ensure parent iframe verifies license, then silently sync
-            setTimeout(autoRestoreProfiles, 1500); 
+
+            if (!isPro) {
+                // Freemium Teaser Logic
+                document.getElementById('accelToken').value = 500;
+                document.getElementById('currentWallet').value = 1200;
+                document.getElementById('simDaysInput').value = 90;
+                
+                nodeDefinitions.forEach(def => {
+                    document.getElementById(`active_${def.id}`).checked = false;
+                    document.getElementById(`harv_${def.id}`).value = '';
+                });
+
+                // Activate sample nodes for the teaser simulation
+                document.getElementById('active_5000').checked = true;
+                document.getElementById('harv_5000').value = 35;
+
+                document.getElementById('active_1000').checked = true;
+                document.getElementById('harv_1000').value = 20;
+
+                refreshNodes();
+                updateSyncStatus('error'); // Trigger offline mode
+                
+                // Allow DOM to settle before drawing charts
+                setTimeout(calculate, 100);
+            } else {
+                // Licensed Logic
+                loadState();
+                updateProfileDisplay();
+                setTimeout(autoRestoreProfiles, 1500); 
+            }
         }
 
         function renderGlobalCycleOptions() {
@@ -448,15 +510,12 @@
             select.innerHTML = options;
         }
 
-        // --- STRATEGY STYLE SYNC UPDATER (BUG FIXED) ---
+        // --- STRATEGY STYLE SYNC UPDATER ---
         function updateSyncStatus(status) {
             currentSyncStatus = status;
             const badges = document.querySelectorAll('.sync-badge');
             badges.forEach(badge => {
                 const dot = badge.querySelector('.sync-dot');
-                
-                // THE FIX: Grab the ping animation by its position inside the dot, 
-                // immune to class name changes!
                 const ping = dot ? dot.firstElementChild : null;
                 const text = badge.querySelector('.sync-status-text');
 
@@ -464,17 +523,17 @@
                     badge.className = "sync-badge bg-indigo-50 text-indigo-500 border border-indigo-100 shadow-sm";
                     if (dot) dot.className = "sync-dot bg-indigo-500";
                     if (ping) ping.className = "sync-dot-ping bg-indigo-400";
-                    if (text) text.innerText = t('syncing');
+                    if (text) { text.setAttribute('data-i18n', 'syncing'); text.innerText = t('syncing'); }
                 } else if (status === 'success') {
                     badge.className = "sync-badge bg-emerald-50 text-emerald-600 border border-emerald-100 shadow-sm";
                     if (dot) dot.className = "sync-dot bg-emerald-500";
-                    if (ping) ping.className = "hidden"; // Hides safely
-                    if (text) text.innerText = t('sync_success');
+                    if (ping) ping.className = "hidden"; 
+                    if (text) { text.setAttribute('data-i18n', 'sync_success'); text.innerText = t('sync_success'); }
                 } else if (status === 'error') {
                     badge.className = "sync-badge bg-amber-50 text-amber-600 border border-amber-100 shadow-sm";
                     if (dot) dot.className = "sync-dot bg-amber-500";
-                    if (ping) ping.className = "hidden"; // Hides safely
-                    if (text) text.innerText = t('sync_fail');
+                    if (ping) ping.className = "hidden"; 
+                    if (text) { text.setAttribute('data-i18n', 'sync_fail'); text.innerText = t('sync_fail'); }
                 }
             });
 
@@ -523,13 +582,13 @@
         
         // SAFE RESTORE FUNCTION
         async function autoRestoreProfiles() {
+            if (!isPro) { updateSyncStatus('error'); return; }
+
             const deviceId = localStorage.getItem(DEVICE_ID_KEY);
             if (!deviceId) return;
         
             try {
-                updateSyncStatus('syncing'); // Start UI spinner
-                
-                // CACHE BUSTER
+                updateSyncStatus('syncing');
                 const res = await fetch(`${CLOUD_SYNC_URL}&deviceId=${deviceId}&_t=${Date.now()}`);
                 
                 if (res.status !== 200) { 
@@ -551,9 +610,7 @@
                             if (typeof updateHubProfiles === 'function') updateHubProfiles();
                         }
                     }
-                    updateSyncStatus('success'); // Stop UI spinner
-                    
-                    // Perform silent background sync
+                    updateSyncStatus('success');
                     autoBackupProfiles(true); 
                 } else {
                     updateSyncStatus('error');
@@ -565,6 +622,8 @@
         }
         
         async function autoBackupProfiles(isSilentBackground = false) {
+            if (!isPro) return;
+
             const deviceId = localStorage.getItem(DEVICE_ID_KEY);
             if (!deviceId) return;
             try {
@@ -577,14 +636,12 @@
                 });
                 
                 if (res.status === 200) {
-                    // 1. Mark local profiles as synced FIRST
                     let currentProfiles = JSON.parse(localStorage.getItem(PROFILES_KEY) || "[]");
                     currentProfiles.forEach(p => p.synced = true);
                     localStorage.setItem(PROFILES_KEY, JSON.stringify(currentProfiles));
                     
                     updateSyncStatus('success');
                     
-                    // 2. FORCE UI RE-RENDER
                     if (typeof renderProfiles === 'function') renderProfiles();
                     if (typeof updateProfileDisplay === 'function') updateProfileDisplay();
                     if (typeof updateHubProfiles === 'function') updateHubProfiles();
@@ -600,10 +657,12 @@
         function toggleLanguage() {
             currentLang = currentLang === 'zh' ? 'en' : 'zh';
             localStorage.setItem(LANG_KEY, currentLang);
+            applyLanguage(); 
+            updateSyncStatus(currentSyncStatus); // Update badge instantly based on newly applied lang
             renderNodes(); 
-            applyLanguage();
-            loadState(); 
-            if (!document.getElementById('ledgerSection').classList.contains('hidden')) { calculate(); }
+            loadState();
+            if (!document.getElementById('ledgerSection').classList.contains('hidden')) calculate();
+            if (!document.getElementById('profileModal').classList.contains('hidden')) renderProfiles(); // Updates modal list logic immediately
         }
 
         function applyLanguage() {
@@ -1053,7 +1112,7 @@
             p.forEach((r, i) => {
                 const displayName = r.name ? r.name : '-';
                 
-                // Retrieve Simulator specific amount (with backwards compatibility)
+                // Retrieve Simulator specific amount
                 let amtSim = r.amt_sim || (r.app === 'simulator' ? r.amt : null);
                 let amtDisplay = amtSim ? amtSim : '-';
                 let colorClass = 'text-indigo-500'; 

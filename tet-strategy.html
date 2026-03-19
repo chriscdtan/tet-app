@@ -4,6 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>TET 战略布局图</title>
+
+    <!-- App Icons & PWA Meta Tags -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="icon.png">
+    <link rel="apple-touch-icon" href="icon.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="TET 战略布局图">
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
@@ -214,7 +222,7 @@
                         
                         <div class="ml-1 flex items-center justify-center cursor-help transition hover:scale-110 text-sm opacity-80 hover:opacity-100">💡</div>
                         
-                        <div id="syncTooltipContent" class="absolute left-full ml-2 top-1/2 -translate-y-1/2 w-[220px] bg-slate-800 text-white text-[10px] leading-relaxed p-2.5 rounded shadow-xl opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50">
+                        <div id="syncTooltipContent" class="absolute top-full left-0 mt-2 sm:left-full sm:ml-2 sm:top-1/2 sm:-translate-y-1/2 sm:mt-0 w-[240px] bg-slate-800 text-white text-[10px] leading-relaxed p-2.5 rounded shadow-xl opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-[100]">
                         </div>
                     </div>
                 </div>
@@ -1575,8 +1583,9 @@
             loadDraft(); 
             setTimeout(() => { isAppReady = true; }, 500);
             
+            // SEAMLESS FIX: Instead of waiting 1.5 seconds, check immediately.
             setSyncUI('FREE');
-            setTimeout(autoRestoreProfiles, 1500);
+            autoRestoreProfiles(); // Automatically and instantly trigger profile checks.
         };
 
         function addFloatingMember() {
