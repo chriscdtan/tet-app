@@ -101,6 +101,23 @@
         .lang-text { font-size: 13px; font-weight: 700; margin-left: 15px; opacity: 0; transition: opacity 0.2s; white-space: nowrap;}
         #sidebar.expanded .lang-text { opacity: 1; transition-delay: 0.1s;}
 
+        /* Support / Contact Info Styles */
+        .support-info {
+            padding: 12px 20px;
+            display: flex; align-items: center; background-color: rgba(0,0,0,0.15);
+            border-bottom: 1px solid rgba(255,255,255,0.02);
+            white-space: nowrap; flex-shrink: 0; min-height: 70px;
+        }
+        .sup-icon { font-size: 20px; min-width: 30px; text-align: center; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); opacity: 0.8;}
+        .sup-details {
+            margin-left: 15px; opacity: 0; transition: opacity 0.2s;
+            display: flex; flex-direction: column; gap: 2px;
+        }
+        #sidebar.expanded .sup-details { opacity: 1; transition-delay: 0.1s; }
+        .sup-label { font-size: 10px; color: var(--text-muted); font-weight: 700; letter-spacing: 0.5px;}
+        .sup-value { font-size: 12px; color: #cbd5e1; font-weight: 500; }
+
+        /* License Info Styles */
         .license-info {
             padding: 15px 20px; 
             display: flex; align-items: center; background-color: rgba(0,0,0,0.25);
@@ -170,6 +187,16 @@
             <div class="lang-toggle-btn" onclick="toggleLanguage()">
                 <span class="menu-icon">🌐</span>
                 <span class="lang-text" id="sidebarLangText">English</span>
+            </div>
+
+            <!-- Contact & Support Info -->
+            <div class="support-info group cursor-pointer" onclick="copyContactInfo()" title="Click to copy contact info">
+                <div class="sup-icon group-hover:scale-110 transition-transform">💬</div>
+                <div class="sup-details">
+                    <div class="sup-label group-hover:text-white transition-colors" data-i18n="support_title">SUPPORT (CLICK COPY)</div>
+                    <div class="sup-value group-hover:text-indigo-300 transition-colors">WeChatID: TET_FUSN</div>
+                    <div class="sup-value group-hover:text-indigo-300 transition-colors" style="font-size: 10px; margin-top: 1px;">tet.fusn@gmail.com</div>
+                </div>
             </div>
 
             <div class="license-info">
@@ -290,6 +317,7 @@
                 tag_free: 'FREE', unlicensed: 'Unregistered',
                 
                 contact_support: 'Need Help? Contact Support:', wechat_id: 'WeChat:', email_id: 'Email:',
+                support_title: 'SUPPORT (CLICK COPY)',
                 
                 err_fill_form: '⚠️ Please enter contact info and attach a screenshot!',
                 status_uploading: 'Uploading to Database...',
@@ -309,6 +337,7 @@
                 tag_free: '免费', unlicensed: '未授权设备',
                 
                 contact_support: '需要帮助？联系客服：', wechat_id: '微信：', email_id: '邮箱：',
+                support_title: '联系客服 (点击复制)',
                 
                 err_fill_form: '⚠️ 请填写联系方式并上传截图！',
                 status_uploading: '正在上传至系统...',
@@ -370,6 +399,21 @@
                 const tempInput = document.createElement('input'); tempInput.value = text;
                 document.body.appendChild(tempInput); tempInput.select(); document.execCommand('copy'); document.body.removeChild(tempInput);
                 showToast(msg);
+            }
+        }
+
+        function copyContactInfo() {
+            const text = "WeChat: TET_FUSN\nEmail: tet.fusn@gmail.com";
+            if (navigator.clipboard) { 
+                navigator.clipboard.writeText(text).then(() => showToast(t('addr_copied'))); 
+            } else {
+                const tempInput = document.createElement('textarea'); 
+                tempInput.value = text;
+                document.body.appendChild(tempInput); 
+                tempInput.select(); 
+                document.execCommand('copy'); 
+                document.body.removeChild(tempInput);
+                showToast(t('addr_copied'));
             }
         }
 
@@ -532,7 +576,6 @@
             }
         }
 
-        // --- UPDATED: App Loading passes PRO status to the child iframe ---
         function loadApp(element) {
             const urlPath = element.getAttribute('data-url');
             
@@ -543,7 +586,6 @@
             document.querySelectorAll('.menu-item').forEach(item => { item.classList.remove('active'); });
             element.classList.add('active');
 
-            // Do NOT block the iframe natively anymore!
             const modal = document.getElementById('licenseModal');
             modal.classList.add('hidden');
             frame.classList.remove('blur-lock', 'blur-sm');
@@ -555,7 +597,6 @@
             if(window.innerWidth <= 768) { sidebar.classList.remove('expanded'); }
         }
 
-        // --- UPDATED: Listen for Free Apps requesting to open the Activation Modal ---
         window.addEventListener('message', (event) => {
             if (event.data === 'open_activation') {
                 document.getElementById('licenseModal').classList.remove('hidden');
@@ -563,7 +604,6 @@
             }
         });
 
-        // Add function to explicitly close the Activation Modal and return to the freemium view
         function closeActivationModal() {
             document.getElementById('licenseModal').classList.add('hidden');
             document.getElementById('app-frame').classList.remove('blur-sm');

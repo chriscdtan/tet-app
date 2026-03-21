@@ -30,8 +30,9 @@
     <style>
         body { font-family: 'Roboto', 'PingFang SC', 'Microsoft YaHei', sans-serif; background-color: #f8fafc; -webkit-tap-highlight-color: transparent; }
         
-        /* FREEMIUM STYLES - Handled instantly via HTML class (Aligned with YOLO) */
-        html.is-free #proOverlay { display: flex !important; }
+        /* FREEMIUM STYLES */
+        html.is-free #proOverlay { display: block !important; }
+        html.is-free #sampleBadge { display: flex !important; }
         html.is-free #freemiumInputs { 
             opacity: 0.5; 
             pointer-events: none; 
@@ -128,19 +129,19 @@
                     <button onclick="toggleProfiles()" class="text-slate-500 text-xl font-bold hover:text-red-500 transition ml-2 hidden sm:block">&times;</button>
                 </div>
             </div>
-            <div class="flex-grow overflow-auto p-0">
-                <table class="w-full text-left border-collapse">
-                    <thead class="bg-slate-50 sticky top-0 z-10 shadow-sm">
-                        <tr class="text-[10px] text-slate-400 uppercase tracking-wider">
-                            <th class="px-3 py-3 font-bold w-[100px]" data-i18n="date">Date</th>
-                            <th class="px-3 py-3 font-bold text-left" data-i18n="profile_name">Profile Name</th>
-                            <th class="px-3 py-3 font-bold text-left" data-i18n="final_balance">Final Bal</th>
-                            <th class="px-3 py-3 font-bold text-right whitespace-nowrap" data-i18n="action">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="profileTableBody" class="text-xs font-mono text-slate-600 divide-y divide-slate-100"></tbody>
-                </table>
+            
+            <div class="flex-grow overflow-auto p-0 bg-white">
+                <!-- Desktop Header -->
+                <div class="hidden sm:flex items-center bg-slate-50 px-4 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider sticky top-0 z-10 shadow-sm border-b border-slate-200">
+                    <div class="w-[120px]" data-i18n="date">Date</div>
+                    <div class="flex-1" data-i18n="profile_name">Profile Name</div>
+                    <div class="w-[130px] text-right pr-4" data-i18n="final_balance">Final Bal</div>
+                    <div class="w-[90px] text-right" data-i18n="action">Action</div>
+                </div>
+                <!-- Profile List Items Injected Here -->
+                <div id="profileListContainer" class="flex flex-col"></div>
             </div>
+            
             <div class="sm:hidden p-3 border-t border-slate-200">
                 <button onclick="toggleProfiles()" class="w-full bg-slate-200 text-slate-600 font-bold py-2 rounded-lg">关闭 / Close</button>
             </div>
@@ -182,7 +183,7 @@
                     <h1 class="text-3xl font-black text-slate-800 tracking-tight">TET <span class="text-indigo-600" data-i18n="title_name">收益模拟器</span></h1>
                 </div>
                 <div class="flex items-center gap-2 mt-1">
-                    <p class="text-[10px] font-bold text-slate-400 uppercase">V2.1.0 • Hub Edition</p>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase">V2.3.1 • Hub Edition</p>
                     
                     <div class="sync-badge bg-indigo-50 text-indigo-500 border border-indigo-100 shadow-sm">
                         <div class="sync-dot bg-indigo-500">
@@ -208,9 +209,9 @@
         <!-- FREEMIUM WRAPPER (Nodes & Global Inputs) -->
         <div class="relative">
             
-            <!-- PRO TEASER OVERLAY (Hidden for Pro Users via CSS) -->
-            <div id="proOverlay" class="absolute inset-[-16px] z-30 hidden flex-col items-center justify-center rounded-3xl bg-white/30 backdrop-blur-[3px] border border-white/60">
-                <div class="bg-slate-900/95 p-6 rounded-3xl text-center shadow-2xl transform transition-all flex flex-col items-center max-w-[280px]">
+            <!-- PRO TEASER OVERLAY (Hidden for Pro Users, follows scroll when visible) -->
+            <div id="proOverlay" class="absolute inset-[-16px] z-30 hidden rounded-3xl bg-white/30 backdrop-blur-[3px] border border-white/60">
+                <div class="sticky top-[20vh] mx-auto mt-24 bg-slate-900/95 p-6 rounded-3xl text-center shadow-2xl transform transition-all flex flex-col items-center max-w-[280px]">
                     <span class="text-4xl mb-3 drop-shadow-md">🔒</span>
                     <h4 class="text-white font-black text-sm tracking-widest mb-1" data-i18n="pro_only">PRO ONLY</h4>
                     <p class="text-slate-400 text-[10px] mb-5 leading-relaxed px-2" data-i18n="pro_desc">Unlock full features to customize nodes, boost acceleration, and enable cloud sync.</p>
@@ -277,27 +278,33 @@
             <!-- Result Card -->
             <div id="resultCard" class="bg-gradient-to-br from-slate-800 to-indigo-950 text-white rounded-2xl shadow-xl overflow-hidden relative transition-all duration-700">
                 <div class="absolute top-0 right-0 w-64 h-64 bg-white rounded-full mix-blend-overlay filter blur-3xl opacity-10 pointer-events-none"></div>
+                
+                <!-- NEW SAMPLE DATA BADGE (Hidden in Pro via CSS) -->
+                <div id="sampleBadge" class="hidden absolute top-4 right-4 bg-red-500 text-white text-[9px] font-black px-2.5 py-1.5 rounded-lg shadow-lg border border-red-400 z-20 animate-pulse items-center gap-1 cursor-pointer" onclick="window.parent.postMessage('open_activation', '*')">
+                    ⚠️ <span data-i18n="sample_data">Sample Data</span>
+                </div>
+
                 <div class="p-6 text-center">
-                    <h2 class="text-[10px] font-bold uppercase tracking-widest opacity-70 mb-2" data-i18n="analysis_result">Analysis Result</h2>
+                    <h2 class="text-[10px] font-bold uppercase tracking-widest opacity-70 mb-2 mt-2" data-i18n="analysis_result">Analysis Result</h2>
                     
                     <div id="summaryState" class="hidden">
                         <p class="text-sm font-bold opacity-80" data-i18n="final_balance">Projected Final Balance</p>
-                        <div class="text-5xl font-black tracking-tighter my-2"><span id="finalAmount">0.00</span> <span class="text-lg">TET</span></div>
+                        <div class="text-4xl sm:text-5xl font-black tracking-tighter my-2 break-words"><span id="finalAmount">0.00</span> <span class="text-lg">TET</span></div>
                         <p class="text-[10px] opacity-75 max-w-md mx-auto mt-2 leading-relaxed" data-i18n="final_desc">This is the estimated TET balance in your account at the end of the simulation period.</p>
                         
                         <!-- RESTAKED / REINVESTED -->
-                        <div class="grid grid-cols-3 gap-2 mt-6 bg-black/20 rounded-xl p-3 md:p-4 border border-white/5 relative z-10">
-                            <div class="border-r border-white/10 pr-1 md:pr-2">
-                                <div class="text-[8px] md:text-[10px] uppercase opacity-70 font-bold tracking-wider truncate" data-i18n="restaked_tet">Restaked</div>
-                                <div class="text-base md:text-xl font-bold mt-1 text-sky-300 truncate" id="totalSpentAmount">0</div>
+                        <div class="grid grid-cols-3 gap-1 sm:gap-2 mt-6 bg-black/20 rounded-xl p-2 sm:p-3 md:p-4 border border-white/5 relative z-10">
+                            <div class="border-r border-white/10 px-1">
+                                <div class="text-[9px] sm:text-[10px] uppercase opacity-70 font-bold tracking-wider leading-tight" data-i18n="restaked_tet">Restaked</div>
+                                <div class="text-sm sm:text-base md:text-xl font-bold mt-1 text-sky-300 break-words" id="totalSpentAmount">0</div>
                             </div>
-                            <div class="border-r border-white/10 px-1 md:px-2">
-                                <div class="text-[8px] md:text-[10px] uppercase opacity-70 font-bold tracking-wider truncate" data-i18n="withdraw_tet">Withdraw (85%)</div>
-                                <div class="text-base md:text-xl font-bold mt-1 text-indigo-200 truncate" id="withdrawAmount">0</div>
+                            <div class="border-r border-white/10 px-1">
+                                <div class="text-[9px] sm:text-[10px] uppercase opacity-70 font-bold tracking-wider leading-tight" data-i18n="withdraw_tet">Withdraw (85%)</div>
+                                <div class="text-sm sm:text-base md:text-xl font-bold mt-1 text-indigo-200 break-words" id="withdrawAmount">0</div>
                             </div>
-                            <div class="pl-1 md:pl-2">
-                                <div class="text-[8px] md:text-[10px] uppercase opacity-70 font-bold tracking-wider truncate" data-i18n="usdt_value">USDT (90%)</div>
-                                <div class="text-base md:text-xl font-bold mt-1 text-emerald-300 truncate" id="usdtAmount">$0.00</div>
+                            <div class="px-1">
+                                <div class="text-[9px] sm:text-[10px] uppercase opacity-70 font-bold tracking-wider leading-tight" data-i18n="usdt_value">USDT (90%)</div>
+                                <div class="text-sm sm:text-base md:text-xl font-bold mt-1 text-emerald-300 break-words" id="usdtAmount">$0.00</div>
                             </div>
                         </div>
                     </div>
@@ -306,10 +313,16 @@
                         <p class="text-sm text-white/50 italic" data-i18n="press_run">Press button above to analyze...</p>
                     </div>
 
-                    <div class="mt-6 flex justify-center gap-3 no-print relative z-10">
-                        <button onclick="openSaveProfileModal()" class="text-[10px] bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg font-bold transition flex items-center gap-1 shadow-sm">💾 <span data-i18n="save_profile">Save Profile</span></button>
-                        <button onclick="shareResult()" class="text-[10px] bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg font-bold transition flex items-center gap-1 shadow-sm">📋 <span data-i18n="copy">Copy</span></button>
-                        <button onclick="exportReport()" class="text-[10px] bg-indigo-500 hover:bg-indigo-400 px-4 py-2 rounded-lg font-bold transition flex items-center gap-1 shadow-lg border border-indigo-400/30">📸 <span data-i18n="export_report">Export</span></button>
+                    <div class="mt-6 flex justify-center gap-2 sm:gap-3 no-print relative z-10 w-full max-w-sm mx-auto">
+                        <button onclick="openSaveProfileModal()" class="flex-1 text-[11px] bg-white/10 hover:bg-white/20 py-2.5 rounded-xl font-bold transition flex items-center justify-center gap-1.5 shadow-sm whitespace-nowrap">
+                            💾 <span data-i18n="btn_save">Save</span>
+                        </button>
+                        <button onclick="shareResult()" class="flex-1 text-[11px] bg-white/10 hover:bg-white/20 py-2.5 rounded-xl font-bold transition flex items-center justify-center gap-1.5 shadow-sm whitespace-nowrap">
+                            📋 <span data-i18n="btn_copy">Copy</span>
+                        </button>
+                        <button onclick="exportReport()" class="flex-1 text-[11px] bg-indigo-500 hover:bg-indigo-400 py-2.5 rounded-xl font-bold transition flex items-center justify-center gap-1.5 shadow-lg border border-indigo-400/30 whitespace-nowrap">
+                            📸 <span data-i18n="btn_export">Export</span>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -388,9 +401,11 @@
                 run_analysis: '🔎 运行分析',
                 analysis_result: '流动性分析结果', 
                 final_desc: '这是在模拟期结束时，您账户中预计将拥有的最终 TET 余额。',
-                restaked_tet: '复投花费 (T)',
-                withdraw_tet: '提现数量 (扣15%)', usdt_value: 'USDT 价值 (扣10%)',
+                restaked_tet: '复投 (TET)',
+                withdraw_tet: '提现 (85%)', usdt_value: 'USDT (90%)',
                 graph_title: 'TET 增长轨迹', export_report: '导出报告',
+                btn_save: '保存', btn_copy: '复制', btn_export: '导出',
+                sample_data: '演示数据 - 请解锁',
                 press_run: '请点击上方按钮运行分析...', save_profile: '保存档案', save: '保存', load: '加载', copy: '复制', ledger_title: '资金流向预测', days: '天',
                 node_n: '节点', days_harv: '已产天数', cycle_days: '周期天数', override: '覆盖(TET)',
                 th_day: '天数', th_bal: '余', th_prod: '产', th_acc: '加', th_wallet: '总余额',
@@ -424,9 +439,11 @@
                 run_analysis: '🔎 Run Analysis',
                 analysis_result: 'Liquidity Analysis',
                 final_desc: 'This is the estimated TET balance in your account at the end of the simulation period.',
-                restaked_tet: 'Restaked (T)',
-                withdraw_tet: 'Withdrawal (15% Fee)', usdt_value: 'USDT Value (10% Fee)',
+                restaked_tet: 'Restaked',
+                withdraw_tet: 'Withdraw (85%)', usdt_value: 'USDT (90%)',
                 graph_title: 'Growth Trajectory', export_report: 'Export',
+                btn_save: 'Save', btn_copy: 'Copy', btn_export: 'Export',
+                sample_data: 'Sample Data - Unlock',
                 press_run: 'Tap button above to analyze...', save_profile: 'Save Profile', save: 'Save', load: 'Load', copy: 'Copy', ledger_title: 'Cashflow Forecast', days: 'Days',
                 node_n: 'Node', days_harv: 'Harvested Days', cycle_days: 'Cycle Days', override: 'Override (TET)',
                 th_day: 'Day', th_bal: 'Bal', th_prod: 'Prd', th_acc: 'Acc', th_wallet: 'Account',
@@ -1102,13 +1119,18 @@
 
         function renderProfiles() {
             const p = JSON.parse(localStorage.getItem(PROFILES_KEY) || "[]"); 
-            const tbody = document.getElementById('profileTableBody'); 
-            tbody.innerHTML = '';
+            const container = document.getElementById('profileListContainer'); 
+            container.innerHTML = '';
             
             let dotClass = "bg-indigo-400";
             if (currentSyncStatus === 'success') dotClass = "bg-emerald-400";
             else if (currentSyncStatus === 'error') dotClass = "bg-amber-400";
         
+            if (p.length === 0) {
+                container.innerHTML = `<div class="p-8 text-center text-xs font-bold text-slate-400">${currentLang === 'zh' ? '暂无保存的档案' : 'No saved profiles'}</div>`;
+                return;
+            }
+
             p.forEach((r, i) => {
                 const displayName = r.name ? r.name : '-';
                 
@@ -1123,21 +1145,39 @@
                     colorClass = 'text-slate-500';
                 }
         
-                tbody.innerHTML += `
-                    <tr class="border-b border-slate-50 last:border-0 hover:bg-slate-50/50 transition-colors">
-                        <td class="px-3 py-3 text-[10px] leading-tight text-slate-500">${r.date || '-'}</td>
-                        <td class="px-3 py-3 font-bold text-slate-700 text-xs whitespace-nowrap">
-                            <span class="mr-2 row-dot ${dotClass}">
-                                <span class="row-ping"></span>
-                            </span>
-                            <span class="text-indigo-600">${displayName}</span>
-                        </td>
-                        <td class="px-3 py-3 font-bold text-xs ${colorClass} whitespace-nowrap">${amtDisplay}</td>
-                        <td class="px-3 py-3 text-right">
-                            <button onclick="loadProfile(${i})" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-600 px-2 py-1 rounded text-[10px] font-bold mr-1">${t('load')}</button>
-                            <button onclick="delProfile(${i})" class="text-slate-300 hover:text-red-500 transition-colors p-1 text-lg leading-none align-middle">&times;</button>
-                        </td>
-                    </tr>
+                container.innerHTML += `
+                    <div class="flex flex-col p-3 sm:px-4 sm:py-3 border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between w-full">
+                            
+                            <!-- Mobile Meta -->
+                            <div class="flex justify-between items-center sm:hidden mb-2">
+                                <span class="text-[10px] text-slate-400 font-mono">${r.date || '-'}</span>
+                            </div>
+
+                            <!-- Desktop Date -->
+                            <div class="hidden sm:block w-[120px] flex-shrink-0 text-[10px] text-slate-500 font-mono pr-2 truncate">
+                                ${r.date || '-'}
+                            </div>
+
+                            <!-- Profile Name & Result -->
+                            <div class="flex items-center justify-between w-full sm:flex-1 min-w-0 mb-3 sm:mb-0">
+                                <div class="font-bold text-slate-700 text-[13px] sm:text-sm flex items-center min-w-0 pr-3">
+                                    <span class="mr-2 row-dot flex-shrink-0 ${dotClass}"><span class="row-ping"></span></span>
+                                    <span class="text-indigo-600 truncate">${displayName}</span>
+                                </div>
+                                
+                                <div class="font-bold font-mono text-[13px] sm:text-sm ${colorClass} text-right whitespace-nowrap sm:w-[130px] sm:pr-4 flex-shrink-0">
+                                    ${amtDisplay}
+                                </div>
+                            </div>
+
+                            <!-- Actions -->
+                            <div class="flex items-center gap-2 w-full sm:w-[90px] sm:justify-end border-t sm:border-0 border-slate-100 pt-3 sm:pt-0">
+                                <button onclick="loadProfile(${i})" class="flex-1 sm:flex-none bg-indigo-50 hover:bg-indigo-100 text-indigo-600 py-2 sm:px-3 sm:py-1.5 rounded-lg text-xs sm:text-[10px] font-bold transition-colors text-center shadow-sm sm:shadow-none">${t('load')}</button>
+                                <button onclick="delProfile(${i})" class="bg-slate-50 hover:bg-red-50 text-slate-400 hover:text-red-500 px-4 py-2 sm:px-2 sm:py-1.5 rounded-lg text-base leading-none transition-colors border border-slate-200 sm:border-transparent">&times;</button>
+                            </div>
+                        </div>
+                    </div>
                 `;
             });
         }

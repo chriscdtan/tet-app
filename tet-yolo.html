@@ -19,6 +19,10 @@
         body { font-family: 'Roboto', 'PingFang SC', 'Microsoft YaHei', sans-serif; background-color: #f8fafc; -webkit-tap-highlight-color: transparent; }
         .blur-lock { filter: blur(12px); pointer-events: none; user-select: none; transition: filter 0.5s ease; }
         
+        /* FREEMIUM STYLES */
+        html.is-free #proOverlay { display: block !important; }
+        html.is-free #sampleBadge { display: flex !important; }
+        
         /* Scrollbar Styling */
         .log-container::-webkit-scrollbar, .timeline-scroll::-webkit-scrollbar { height: 6px; }
         .log-container::-webkit-scrollbar-thumb, .timeline-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
@@ -124,19 +128,18 @@
                 </div>
             </div>
 
-            <div class="flex-grow overflow-auto p-0">
-                <table class="w-full text-left border-collapse">
-                    <thead class="bg-slate-50 sticky top-0 z-10 shadow-sm">
-                        <tr class="text-[10px] text-slate-400 uppercase tracking-wider">
-                            <th class="px-3 py-3 font-bold w-[100px]" data-i18n="date">Date</th>
-                            <th class="px-3 py-3 font-bold text-left" data-i18n="profile_name">Profile Name</th>
-                            <th class="px-3 py-3 font-bold text-left" data-i18n="result">Result</th>
-                            <th class="px-3 py-3 font-bold text-right whitespace-nowrap" data-i18n="action">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="profileTableBody" class="text-xs font-mono text-slate-600 divide-y divide-slate-100"></tbody>
-                </table>
+            <div class="flex-grow overflow-auto p-0 bg-white">
+                <!-- Desktop Header -->
+                <div class="hidden sm:flex items-center bg-slate-50 px-4 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider sticky top-0 z-10 shadow-sm border-b border-slate-200">
+                    <div class="w-[120px]" data-i18n="date">Date</div>
+                    <div class="flex-1" data-i18n="profile_name">Profile Name</div>
+                    <div class="w-[130px] text-right pr-4" data-i18n="result">Result</div>
+                    <div class="w-[90px] text-right" data-i18n="action">Action</div>
+                </div>
+                <!-- Profile List Items Injected Here -->
+                <div id="profileListContainer" class="flex flex-col"></div>
             </div>
+
             <div class="sm:hidden p-3 border-t border-slate-200">
                 <button onclick="toggleProfiles()" class="w-full bg-slate-200 text-slate-600 font-bold py-2 rounded-lg">关闭 / Close</button>
             </div>
@@ -178,7 +181,7 @@
                     <h1 class="text-3xl font-black text-slate-800 tracking-tight">TET <span class="text-indigo-600" data-i18n="title_name">节点计算器</span></h1>
                 </div>
                 <div class="flex items-center gap-2 mt-1">
-                    <p class="text-[10px] font-bold text-slate-400 uppercase">V11.1.0 • Hub Edition</p>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase">V11.2.1 • Hub Edition</p>
                     
                     <div class="sync-badge bg-indigo-50 text-indigo-500 border border-indigo-100 shadow-sm">
                         <div class="sync-dot bg-indigo-500">
@@ -204,9 +207,9 @@
         <!-- FREEMIUM WRAPPER (Nodes & Global Inputs) -->
         <div class="relative">
             
-            <!-- PRO TEASER OVERLAY (Hidden for Pro Users) -->
-            <div id="proOverlay" class="absolute inset-[-16px] z-30 hidden flex-col items-center justify-center rounded-3xl bg-white/30 backdrop-blur-[3px] border border-white/60">
-                <div class="bg-slate-900/95 p-6 rounded-3xl text-center shadow-2xl transform transition-all flex flex-col items-center max-w-[260px]">
+            <!-- PRO TEASER OVERLAY (Hidden for Pro Users, follows scroll when visible) -->
+            <div id="proOverlay" class="absolute inset-[-16px] z-30 hidden rounded-3xl bg-white/30 backdrop-blur-[3px] border border-white/60">
+                <div class="sticky top-[20vh] mx-auto mt-24 bg-slate-900/95 p-6 rounded-3xl text-center shadow-2xl transform transition-all flex flex-col items-center max-w-[280px]">
                     <span class="text-4xl mb-3 drop-shadow-md">🔒</span>
                     <h4 class="text-white font-black text-sm tracking-widest mb-1" data-i18n="pro_only">PRO ONLY</h4>
                     <p class="text-slate-400 text-[10px] mb-5 leading-relaxed px-2" data-i18n="pro_desc">Unlock to customize node settings, adjust acceleration, and sync to the cloud.</p>
@@ -261,12 +264,18 @@
         <!-- 3. RESULT HERO CARD -->
         <div id="resultCard" class="bg-slate-800 text-white rounded-2xl shadow-xl overflow-hidden relative transition-colors duration-500">
             <div class="absolute top-0 right-0 w-64 h-64 bg-white rounded-full mix-blend-overlay filter blur-3xl opacity-10 pointer-events-none"></div>
+            
+            <!-- NEW SAMPLE DATA BADGE (Hidden in Pro via CSS) -->
+            <div id="sampleBadge" class="hidden absolute top-4 right-4 bg-red-500 text-white text-[9px] font-black px-2.5 py-1.5 rounded-lg shadow-lg border border-red-400 z-20 animate-pulse items-center gap-1 cursor-pointer" onclick="window.parent.postMessage('open_activation', '*')">
+                ⚠️ <span data-i18n="sample_data">Sample Data</span>
+            </div>
+
             <div class="p-6 text-center">
-                <h2 class="text-[10px] font-bold uppercase tracking-widest opacity-70 mb-2" data-i18n="analysis_result">Analysis Result</h2>
+                <h2 class="text-[10px] font-bold uppercase tracking-widest opacity-70 mb-2 mt-2" data-i18n="analysis_result">Analysis Result</h2>
                 
                 <div id="safeState" class="hidden">
                     <p class="text-sm font-bold opacity-80" data-i18n="safe_to_sell">Safe Withdrawal Amount</p>
-                    <div class="text-5xl font-black tracking-tighter my-2"><span id="safeAmount">0.00</span> <span class="text-lg">TET</span></div>
+                    <div class="text-4xl sm:text-5xl font-black tracking-tighter my-2 break-words"><span id="safeAmount">0.00</span> <span class="text-lg">TET</span></div>
                     <p class="text-[10px] opacity-75 max-w-md mx-auto mt-2 leading-relaxed" data-i18n="safe_desc">Even if you sell this amount, your future production will cover all restaking costs.</p>
                 </div>
 
@@ -277,7 +286,7 @@
                         </svg>
                         <div class="text-4xl font-black tracking-wide" data-i18n="warning_title">Shortage Risk</div>
                     </div>
-                    <p class="text-sm font-bold text-red-200 mb-1"><span data-i18n="shortage">Shortage:</span> <span id="shortageAmount">0.00</span> TET</p>
+                    <p class="text-sm sm:text-base font-bold text-red-200 mb-1 break-words"><span data-i18n="shortage">Shortage:</span> <span id="shortageAmount">0.00</span> TET</p>
                     <div class="inline-block bg-red-900/40 rounded-lg px-3 py-1 mb-2 mt-1">
                         <span class="text-xs font-bold text-red-200">⚠️ <span data-i18n="shortage_day">Happens on Day:</span> <span id="shortageDayDisplay">--</span></span>
                     </div>
@@ -288,9 +297,9 @@
                     <p class="text-sm text-slate-400 italic" data-i18n="press_run">Press button above to analyze...</p>
                 </div>
 
-                <div class="mt-6 flex justify-center gap-3 no-print relative z-10">
-                    <button onclick="openSaveProfileModal()" class="text-[10px] bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg font-bold transition flex items-center gap-1 shadow-sm">💾 <span data-i18n="save_profile">Save Profile</span></button>
-                    <button onclick="shareResult()" class="text-[10px] bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg font-bold transition flex items-center gap-1 shadow-sm">📋 <span data-i18n="copy">Copy</span></button>
+                <div class="mt-6 flex justify-center gap-2 sm:gap-3 no-print relative z-10 w-full max-w-sm mx-auto">
+                    <button onclick="openSaveProfileModal()" class="flex-1 text-[11px] bg-white/10 hover:bg-white/20 py-2.5 rounded-xl font-bold transition flex items-center justify-center gap-1.5 shadow-sm whitespace-nowrap">💾 <span data-i18n="btn_save">Save</span></button>
+                    <button onclick="shareResult()" class="flex-1 text-[11px] bg-white/10 hover:bg-white/20 py-2.5 rounded-xl font-bold transition flex items-center justify-center gap-1.5 shadow-sm whitespace-nowrap">📋 <span data-i18n="btn_copy">Copy</span></button>
                 </div>
             </div>
         </div>
@@ -346,6 +355,7 @@
         // --- NEW: License Parsing from Hub ---
         const urlParams = new URLSearchParams(window.location.search);
         const isPro = urlParams.get('pro') === 'true';
+        if (!isPro) { document.documentElement.classList.add('is-free'); }
 
         document.addEventListener('input', function(e) {
             if (e.target.tagName.toLowerCase() === 'input' && e.target.type === 'number') {
@@ -377,14 +387,14 @@
                 analysis_result: '流动性分析结果', safe_to_sell: '✅ 安全可售额度', 
                 safe_desc: '即使提现此额度，未来的产出也足以覆盖复投成本。但请注意：若未来增加【加速】，节点周期将提前结束。建议额外保留部分 TET 备用，以防因提前复投造成资金断链。',
                 warning_title: '资金紧张', shortage: '资金缺口:', danger_desc: '未来某个时间点的余额将不足以支付复投费用。请勿提现。', shortage_day: '发生于天数:',
-                press_run: '请点击上方按钮运行分析...', save: '保存', copy: '复制', ledger_title: '资金流向预测', days: '天',
+                press_run: '请点击上方按钮运行分析...', save: '保存', copy: '复制', btn_save: '保存', btn_copy: '复制', ledger_title: '资金流向预测', days: '天',
                 timeline_title: '节点生命周期图', legend_prod: '正常产出', legend_buy: '质押·复投', legend_wait: '资金不足·等待', legend_stop: '周期结束·停止',
                 node_n: '节点', days_harv: '已产天数', cycle_days: '周期天数', override: '覆盖(TET)', days_left: '天剩余',
                 th_day: '天数', th_bal: '余', th_prod: '产', th_acc: '加', th_wallet: '总余额', th_net: '净变', th_name: '名称',
                 msg_safe_copy: '✅ TET YOLO 安全提现分析\n💰 可售: *{amt} TET*\n📅 模拟时长: {days} 天\n----------------\n由 TET YOLO 生成',
                 msg_danger_copy: '🚫 TET YOLO 资金预警\n⚠️ 缺口: {amt} TET\n🛑 发生于: 第 {day} 天\n请保留资金以备复投。\n----------------\n由 TET YOLO 生成',
                 activate_node: '启用', harvested_val: '已产出:', enter_acc_name: '请输入账户名称',
-                title_name: '节点计算器',
+                title_name: '节点计算器', sample_data: '演示数据 - 请解锁',
                 clear_inputs: '清除所有输入', confirm_reset: '确定要清除所有输入吗？', reset_done: '已重置',
                 auto_restake: '自动复投/质押',
                 tip_accel: '输入你账户当前的加速总额 (TET)。', tip_wallet: '输入你钱包里目前可用的 TET 余额。', tip_global_cycle: '当节点自动复投或自动质押时，将默认使用此周期天数。', tip_harv: '该节点从质押至今已经运行了多少天。', tip_cyc: '节点的生命周期。默认为 55 天，复投后会增加。', tip_over: '【可选】如果你知道确切的已产出数量，在此输入以覆盖自动计算。', tip_restake: '开启后，该节点将在钱包余额充足时自动复投或自动质押。关闭则让其自然过期停止。',
@@ -403,14 +413,14 @@
                 analysis_result: 'Liquidity Analysis', safe_to_sell: '✅ Safe to Sell', 
                 safe_desc: 'Your future production will cover restaking costs. However, higher [acceleration] will cause cycles to end earlier. We advise keeping a TET reserve to prevent shortages from early restaking.',
                 warning_title: 'Shortage Risk', shortage: 'Shortage:', danger_desc: 'Your wallet will not have enough funds for a future restake. Do not withdraw.', shortage_day: 'Happens on Day:',
-                press_run: 'Tap button above to analyze...', save: 'Save', copy: 'Copy', ledger_title: 'Cashflow Forecast', days: 'Days',
+                press_run: 'Tap button above to analyze...', save: 'Save', copy: 'Copy', btn_save: 'Save', btn_copy: 'Copy', ledger_title: 'Cashflow Forecast', days: 'Days',
                 timeline_title: 'Node Timeline', legend_prod: 'Producing', legend_buy: 'Stake / Restake', legend_wait: 'Waiting (Shortage)', legend_stop: 'Stopped',
                 node_n: 'Node', days_harv: 'Harvested Days', cycle_days: 'Cycle Days', override: 'Override (TET)', days_left: 'Days Left',
                 th_day: 'Day', th_bal: 'Bal', th_prod: 'Prd', th_acc: 'Acc', th_wallet: 'Account', th_net: 'Net', th_name: 'Name',
                 msg_safe_copy: '✅ TET YOLO Safe Withdrawal\n💰 Sell: *{amt} TET*\n📅 Sim Days: {days}\n----------------\nGen by TET YOLO',
                 msg_danger_copy: '🚫 TET YOLO Shortage Warning\n⚠️ Shortage: {amt} TET\n🛑 On Day: {day}\nKeep funds for restaking.\n----------------\nGen by TET YOLO',
                 activate_node: 'Active', harvested_val: 'Harvested:', enter_acc_name: 'Enter Account Name',
-                title_name: 'Node Calculator',
+                title_name: 'Node Calculator', sample_data: 'Sample Data - Unlock',
                 clear_inputs: 'Clear All Inputs', confirm_reset: 'Are you sure you want to clear all inputs?', reset_done: 'Reset Complete',
                 auto_restake: 'Auto Stake/Restake',
                 tip_accel: 'Enter your current total Acceleration (TET).', tip_wallet: 'Enter the current available TET in your account.', tip_global_cycle: 'When a node auto-restakes or auto-Stakes, it will default to this cycle length.', tip_harv: 'How many days this node has been running since purchase.', tip_cyc: 'Lifecycle of the node. Default 55, increases after restake.', tip_over: '[Optional] Enter exact harvested amount here to override calculation.', tip_restake: 'If enabled, this node will auto-restake or auto-Stake when funds are available. Disable to let it stop.',
@@ -437,9 +447,6 @@
 
             // --- FREEMIUM TEASER LOGIC ---
             if (!isPro) {
-                document.getElementById('proOverlay').classList.remove('hidden');
-                document.getElementById('proOverlay').classList.add('flex');
-                
                 // Color is preserved, pointer events blocked, transparency at 50%
                 document.getElementById('freemiumInputs').classList.add('opacity-50', 'pointer-events-none');
                 
@@ -1031,13 +1038,18 @@
 
         function renderProfiles() {
             const p = JSON.parse(localStorage.getItem(PROFILES_KEY) || "[]"); 
-            const tbody = document.getElementById('profileTableBody'); 
-            tbody.innerHTML = '';
+            const container = document.getElementById('profileListContainer'); 
+            container.innerHTML = '';
             
             let dotClass = "bg-indigo-400";
             if (currentSyncStatus === 'success') dotClass = "bg-emerald-400";
             else if (currentSyncStatus === 'error') dotClass = "bg-amber-400";
         
+            if (p.length === 0) {
+                container.innerHTML = `<div class="p-8 text-center text-xs font-bold text-slate-400">${currentLang === 'zh' ? '暂无保存的档案' : 'No saved profiles'}</div>`;
+                return;
+            }
+
             p.forEach((r, i) => {
                 const displayName = r.name ? r.name : '-';
                 
@@ -1052,21 +1064,39 @@
                     if (String(amtDisplay).includes('-')) colorClass = 'text-red-500';
                 }
         
-                tbody.innerHTML += `
-                    <tr class="border-b border-slate-50 last:border-0 hover:bg-slate-50/50 transition-colors">
-                        <td class="px-3 py-3 text-[10px] leading-tight text-slate-500">${r.date || '-'}</td>
-                        <td class="px-3 py-3 font-bold text-slate-700 text-xs whitespace-nowrap">
-                            <span class="mr-2 row-dot ${dotClass}">
-                                <span class="row-ping"></span>
-                            </span>
-                            <span class="text-indigo-600">${displayName}</span>
-                        </td>
-                        <td class="px-3 py-3 font-bold text-xs ${colorClass} whitespace-nowrap">${amtDisplay}</td>
-                        <td class="px-3 py-3 text-right">
-                            <button onclick="loadProfile(${i})" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-600 px-2 py-1 rounded text-[10px] font-bold mr-1">${t('load')}</button>
-                            <button onclick="delProfile(${i})" class="text-slate-300 hover:text-red-500 transition-colors p-1 text-lg leading-none align-middle">&times;</button>
-                        </td>
-                    </tr>
+                container.innerHTML += `
+                    <div class="flex flex-col p-3 sm:px-4 sm:py-3 border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between w-full">
+                            
+                            <!-- Mobile Meta -->
+                            <div class="flex justify-between items-center sm:hidden mb-2">
+                                <span class="text-[10px] text-slate-400 font-mono">${r.date || '-'}</span>
+                            </div>
+
+                            <!-- Desktop Date -->
+                            <div class="hidden sm:block w-[120px] flex-shrink-0 text-[10px] text-slate-500 font-mono pr-2 truncate">
+                                ${r.date || '-'}
+                            </div>
+
+                            <!-- Profile Name & Result -->
+                            <div class="flex items-center justify-between w-full sm:flex-1 min-w-0 mb-3 sm:mb-0">
+                                <div class="font-bold text-slate-700 text-[13px] sm:text-sm flex items-center min-w-0 pr-3">
+                                    <span class="mr-2 row-dot flex-shrink-0 ${dotClass}"><span class="row-ping"></span></span>
+                                    <span class="text-indigo-600 truncate">${displayName}</span>
+                                </div>
+                                
+                                <div class="font-bold font-mono text-[13px] sm:text-sm ${colorClass} text-right whitespace-nowrap sm:w-[130px] sm:pr-4 flex-shrink-0">
+                                    ${amtDisplay}
+                                </div>
+                            </div>
+
+                            <!-- Actions -->
+                            <div class="flex items-center gap-2 w-full sm:w-[90px] sm:justify-end border-t sm:border-0 border-slate-100 pt-3 sm:pt-0">
+                                <button onclick="loadProfile(${i})" class="flex-1 sm:flex-none bg-indigo-50 hover:bg-indigo-100 text-indigo-600 py-2 sm:px-3 sm:py-1.5 rounded-lg text-xs sm:text-[10px] font-bold transition-colors text-center shadow-sm sm:shadow-none">${t('load')}</button>
+                                <button onclick="delProfile(${i})" class="bg-slate-50 hover:bg-red-50 text-slate-400 hover:text-red-500 px-4 py-2 sm:px-2 sm:py-1.5 rounded-lg text-base leading-none transition-colors border border-slate-200 sm:border-transparent">&times;</button>
+                            </div>
+                        </div>
+                    </div>
                 `;
             });
         }  
