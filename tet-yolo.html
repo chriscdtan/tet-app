@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TET 节点计算器</title>
+    <title>TET 节点计算器 (V11.2.5)</title>
 
     <!-- App Icons & PWA Meta Tags -->
     <link rel="manifest" href="manifest.json">
@@ -131,10 +131,10 @@
             <div class="flex-grow overflow-auto p-0 bg-white">
                 <!-- Desktop Header -->
                 <div class="hidden sm:flex items-center bg-slate-50 px-4 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider sticky top-0 z-10 shadow-sm border-b border-slate-200">
-                    <div class="w-[120px]" data-i18n="date">Date</div>
-                    <div class="flex-1" data-i18n="profile_name">Profile Name</div>
-                    <div class="w-[130px] text-right pr-4" data-i18n="result">Result</div>
-                    <div class="w-[90px] text-right" data-i18n="action">Action</div>
+                    <div class="w-[140px] lg:w-[170px] flex-shrink-0" data-i18n="date">Date</div>
+                    <div class="flex-1 min-w-0" data-i18n="profile_name">Profile Name</div>
+                    <div class="w-[160px] lg:w-[220px] flex-shrink-0 text-right pr-4 whitespace-nowrap" data-i18n="result">Result</div>
+                    <div class="w-[100px] lg:w-[120px] flex-shrink-0 text-right" data-i18n="action">Action</div>
                 </div>
                 <!-- Profile List Items Injected Here -->
                 <div id="profileListContainer" class="flex flex-col"></div>
@@ -181,7 +181,7 @@
                     <h1 class="text-3xl font-black text-slate-800 tracking-tight">TET <span class="text-indigo-600" data-i18n="title_name">节点计算器</span></h1>
                 </div>
                 <div class="flex items-center gap-2 mt-1">
-                    <p class="text-[10px] font-bold text-slate-400 uppercase">V11.2.1 • Hub Edition</p>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase">V11.2.5 • Sync Fix 4</p>
                     
                     <div class="sync-badge bg-indigo-50 text-indigo-500 border border-indigo-100 shadow-sm">
                         <div class="sync-dot bg-indigo-500">
@@ -481,6 +481,20 @@
             }
         }
 
+        // --- STRATEGY STYLE DICTIONARY PROFILES (Completely Unified) ---
+        function getProfiles() {
+            const data = localStorage.getItem(PROFILES_KEY);
+            let parsed = data ? JSON.parse(data) : {};
+            
+            if (Array.isArray(parsed)) {
+                let temp = {};
+                parsed.forEach(p => { if (p && p.name) temp[p.name] = p; });
+                localStorage.setItem(PROFILES_KEY, JSON.stringify(temp));
+                return temp;
+            }
+            return parsed;
+        }
+
         // --- STRATEGY STYLE SYNC UPDATER ---
         function updateSyncStatus(status) {
             currentSyncStatus = status;
@@ -513,47 +527,64 @@
             }
         }
         
-        // STRICT TIMESTAMP OVERWRITE
-        function syncProfilesByTimestamp(cloudProfilesArray) {
-            if (!cloudProfilesArray || !Array.isArray(cloudProfilesArray)) return false;
-            
-            let localProfiles = JSON.parse(localStorage.getItem(PROFILES_KEY) || '[]');
-            if (!Array.isArray(localProfiles)) localProfiles = [];
-            
+        // --- SMART DICTIONARY MERGE LOGIC WITH TOMBSTONES ---
+        function syncProfilesByTimestamp(cloudData) {
+            let cloudProfiles = {};
+            if (cloudData && typeof cloudData === 'object') {
+                if (Array.isArray(cloudData)) {
+                    cloudData.forEach(p => { if (p && p.name) cloudProfiles[p.name] = p; });
+                } else if (cloudData.profiles && typeof cloudData.profiles === 'object') {
+                    if (Array.isArray(cloudData.profiles)) {
+                        cloudData.profiles.forEach(p => { if (p && p.name) cloudProfiles[p.name] = p; });
+                    } else {
+                        for (let k in cloudData.profiles) {
+                            if (cloudData.profiles[k] && cloudData.profiles[k].name) {
+                                cloudProfiles[cloudData.profiles[k].name] = cloudData.profiles[k];
+                            }
+                        }
+                    }
+                } else {
+                    for (let k in cloudData) {
+                        if (cloudData[k] && cloudData[k].name) {
+                            cloudProfiles[cloudData[k].name] = cloudData[k];
+                        }
+                    }
+                }
+            }
+
+            if (Object.keys(cloudProfiles).length === 0) return false;
+
+            let localProfiles = getProfiles();
             let hasChanges = false;
-            let localMap = {};
-            localProfiles.forEach(p => localMap[p.name] = p);
-        
-            cloudProfilesArray.forEach(cloudProf => {
-                if (!cloudProf || !cloudProf.name) return;
-                const localProf = localMap[cloudProf.name];
+
+            for (let nameKey in cloudProfiles) {
+                const cloudProf = cloudProfiles[nameKey];
                 cloudProf.synced = true;
-                
+
+                const localProf = localProfiles[nameKey];
+
                 if (!localProf) {
-                    localMap[cloudProf.name] = cloudProf;
+                    localProfiles[nameKey] = cloudProf;
                     hasChanges = true;
                 } else {
                     const cloudTime = cloudProf.timestamp || 0;
                     const localTime = localProf.timestamp || 0;
-                    
+
                     if (cloudTime > localTime) {
-                        localMap[cloudProf.name] = cloudProf;
+                        localProfiles[nameKey] = cloudProf;
                         hasChanges = true;
                     }
                 }
-            });
-        
+            }
+
             if (hasChanges) {
-                const mergedArray = Object.values(localMap).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-                localStorage.setItem(PROFILES_KEY, JSON.stringify(mergedArray));
+                localStorage.setItem(PROFILES_KEY, JSON.stringify(localProfiles));
                 return true;
             }
             return false;
-        }       
+        }      
         
-        // SAFE RESTORE FUNCTION
         async function autoRestoreProfiles() {
-            // Block sync if not Pro
             if (!isPro) { updateSyncStatus('error'); return; }
 
             const deviceId = localStorage.getItem(DEVICE_ID_KEY);
@@ -569,17 +600,25 @@
                 }
         
                 const data = await res.json();
-                if (data.success) {
-                    if (data.data) {
-                        let cloudData = [];
-                        try {
-                            cloudData = typeof data.data === 'string' ? JSON.parse(data.data) : data.data;
-                        } catch(e) { console.warn("Cloud parse error"); }
+                if (data.success && data.data) {
+                    let cloudData = null;
+                    try {
+                        cloudData = typeof data.data === 'string' ? JSON.parse(data.data) : data.data;
+                    } catch(e) { console.warn("Cloud parse error"); }
+                    
+                    const didUpdate = syncProfilesByTimestamp(cloudData);
+                    if (didUpdate) {
+                        if (activeProfileName) {
+                            const profilesMap = getProfiles();
+                            if (!profilesMap[activeProfileName] || profilesMap[activeProfileName].deleted) {
+                                activeProfileName = '';
+                                localStorage.removeItem(ACTIVE_PROFILE_KEY);
+                                updateProfileDisplay();
+                            }
+                        }
                         
-                        const didUpdate = syncProfilesByTimestamp(cloudData);
-                        if (didUpdate) {
-                            if (typeof loadProfiles === 'function') loadProfiles();
-                            if (typeof updateHubProfiles === 'function') updateHubProfiles();
+                        if (!document.getElementById('profileModal').classList.contains('hidden')) {
+                            renderProfiles();
                         }
                     }
                     updateSyncStatus('success'); 
@@ -588,28 +627,28 @@
                     updateSyncStatus('error');
                 }
             } catch (err) { 
+                console.error(err);
                 updateSyncStatus('error'); 
             }
         }
         
         async function autoBackupProfiles(isSilentBackground = false) {
-            // Block sync if not Pro
             if (!isPro) return; 
 
             const deviceId = localStorage.getItem(DEVICE_ID_KEY);
             if (!deviceId) return;
             try {
                 if (!isSilentBackground) updateSyncStatus('syncing');
-                const profiles = JSON.parse(localStorage.getItem(PROFILES_KEY) || "[]");
+                const profilesMap = getProfiles(); 
                 
                 const res = await fetch(`${CLOUD_SYNC_URL}&deviceId=${deviceId}`, {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ profiles: profiles })
+                    body: JSON.stringify({ profiles: profilesMap })
                 });
                 
                 if (res.status === 200) {
-                    let currentProfiles = JSON.parse(localStorage.getItem(PROFILES_KEY) || "[]");
-                    currentProfiles.forEach(p => p.synced = true);
+                    let currentProfiles = getProfiles();
+                    for (let key in currentProfiles) { currentProfiles[key].synced = true; }
                     localStorage.setItem(PROFILES_KEY, JSON.stringify(currentProfiles));
                     updateSyncStatus('success');
                 } else {
@@ -632,11 +671,11 @@
             currentLang = currentLang === 'zh' ? 'en' : 'zh';
             localStorage.setItem(LANG_KEY, currentLang);
             applyLanguage(); 
-            updateSyncStatus(currentSyncStatus); // Update badge instantly based on newly applied lang
+            updateSyncStatus(currentSyncStatus); 
             renderNodes(); 
             loadState();
             if (!document.getElementById('ledgerSection').classList.contains('hidden')) calculate();
-            if (!document.getElementById('profileModal').classList.contains('hidden')) renderProfiles(); // Updates modal list logic immediately
+            if (!document.getElementById('profileModal').classList.contains('hidden')) renderProfiles(); 
         }
 
         function applyLanguage() {
@@ -973,10 +1012,14 @@
         function openSaveProfileModal() {
             const m = document.getElementById('saveProfileModal'); const listContainer = document.getElementById('existingProfilesList'); const nameInput = document.getElementById('newProfileName');
             nameInput.value = activeProfileName || (currentLang === 'zh' ? '我的档案' : 'My Profile');
-            const profiles = JSON.parse(localStorage.getItem(PROFILES_KEY) || "[]"); listContainer.innerHTML = '';
-            if (profiles.length === 0) { listContainer.innerHTML = `<div class="p-4 text-xs font-bold text-slate-400 text-center">${currentLang === 'zh' ? '暂无保存的档案' : 'No saved profiles'}</div>`; } 
+            
+            const pMap = getProfiles(); 
+            const profilesArray = Object.values(pMap).filter(p => !p.deleted).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+            listContainer.innerHTML = '';
+            
+            if (profilesArray.length === 0) { listContainer.innerHTML = `<div class="p-4 text-xs font-bold text-slate-400 text-center">${currentLang === 'zh' ? '暂无保存的档案' : 'No saved profiles'}</div>`; } 
             else {
-                profiles.forEach(p => {
+                profilesArray.forEach(p => {
                     const div = document.createElement('div'); div.className = "p-3 hover:bg-indigo-50 cursor-pointer flex justify-between items-center transition-colors text-sm font-bold text-slate-700"; div.onclick = () => { nameInput.value = p.name; };
                     div.innerHTML = `<span>${p.name}</span> <span class="text-[10px] text-slate-400 font-normal">${p.date}</span>`; listContainer.appendChild(div);
                 });
@@ -993,28 +1036,26 @@
             const isSafe = !document.getElementById('safeState').classList.contains('hidden');
             const finalAmt = isSafe ? "+ " + document.getElementById('safeAmount').innerText + " TET" : "- " + document.getElementById('shortageAmount').innerText + " TET";
             
-            let profiles = JSON.parse(localStorage.getItem(PROFILES_KEY) || "[]"); 
-            let existingIdx = profiles.findIndex(p => p.name === name);
+            let profiles = getProfiles(); 
+            let exists = !!profiles[name];
             
-            if (existingIdx >= 0) { 
+            if (exists && !profiles[name].deleted) { 
                 if(confirm(t('confirm_overwrite'))) { 
-                    // MERGE: Keep existing Simulator data, update shared inputs and YOLO amt
-                    profiles[existingIdx].timestamp = Date.now();
-                    profiles[existingIdx].synced = false;
-                    profiles[existingIdx].data = data;
-                    profiles[existingIdx].amt_yolo = finalAmt;
-                    profiles[existingIdx].date = new Date().toLocaleString();
+                    profiles[name].timestamp = Date.now();
+                    profiles[name].synced = false;
+                    profiles[name].data = data;
+                    profiles[name].amt_yolo = finalAmt;
+                    profiles[name].date = new Date().toLocaleString();
                 } else { return; } 
             } 
             else { 
                 // NEW PROFILE
-                profiles.unshift({
+                profiles[name] = {
                     name: name, timestamp: Date.now(), synced: false, data: data,
                     amt_yolo: finalAmt, date: new Date().toLocaleString()
-                }); 
+                }; 
             }
             
-            profiles.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
             localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles)); 
             activeProfileName = name; 
             localStorage.setItem(ACTIVE_PROFILE_KEY, activeProfileName);
@@ -1037,23 +1078,25 @@
         }
 
         function renderProfiles() {
-            const p = JSON.parse(localStorage.getItem(PROFILES_KEY) || "[]"); 
+            const pMap = getProfiles(); 
             const container = document.getElementById('profileListContainer'); 
             container.innerHTML = '';
+            
+            const pArray = Object.values(pMap).filter(p => !p.deleted).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
             
             let dotClass = "bg-indigo-400";
             if (currentSyncStatus === 'success') dotClass = "bg-emerald-400";
             else if (currentSyncStatus === 'error') dotClass = "bg-amber-400";
         
-            if (p.length === 0) {
+            if (pArray.length === 0) {
                 container.innerHTML = `<div class="p-8 text-center text-xs font-bold text-slate-400">${currentLang === 'zh' ? '暂无保存的档案' : 'No saved profiles'}</div>`;
                 return;
             }
 
-            p.forEach((r, i) => {
+            pArray.forEach((r) => {
                 const displayName = r.name ? r.name : '-';
+                const safeName = r.name ? r.name.replace(/'/g, "\\'").replace(/"/g, "&quot;") : '';
                 
-                // Retrieve YOLO specific amount (with backwards compatibility for old saves)
                 let amtYolo = r.amt_yolo || (r.app === 'yolo' ? r.amt : null);
                 let amtDisplay = amtYolo ? amtYolo : '-';
                 let colorClass = 'text-slate-500'; 
@@ -1067,33 +1110,27 @@
                 container.innerHTML += `
                     <div class="flex flex-col p-3 sm:px-4 sm:py-3 border-b border-slate-100 hover:bg-slate-50 transition-colors">
                         <div class="flex flex-col sm:flex-row sm:items-center justify-between w-full">
-                            
-                            <!-- Mobile Meta -->
                             <div class="flex justify-between items-center sm:hidden mb-2">
                                 <span class="text-[10px] text-slate-400 font-mono">${r.date || '-'}</span>
                             </div>
-
-                            <!-- Desktop Date -->
-                            <div class="hidden sm:block w-[120px] flex-shrink-0 text-[10px] text-slate-500 font-mono pr-2 truncate">
+                            <!-- PC Date -->
+                            <div class="hidden sm:block w-[140px] lg:w-[170px] flex-shrink-0 text-[10px] text-slate-500 font-mono pr-2 truncate">
                                 ${r.date || '-'}
                             </div>
-
-                            <!-- Profile Name & Result -->
                             <div class="flex items-center justify-between w-full sm:flex-1 min-w-0 mb-3 sm:mb-0">
                                 <div class="font-bold text-slate-700 text-[13px] sm:text-sm flex items-center min-w-0 pr-3">
                                     <span class="mr-2 row-dot flex-shrink-0 ${dotClass}"><span class="row-ping"></span></span>
                                     <span class="text-indigo-600 truncate">${displayName}</span>
                                 </div>
-                                
-                                <div class="font-bold font-mono text-[13px] sm:text-sm ${colorClass} text-right whitespace-nowrap sm:w-[130px] sm:pr-4 flex-shrink-0">
+                                <!-- PC Result -->
+                                <div class="font-bold font-mono text-[13px] sm:text-sm ${colorClass} text-right whitespace-nowrap sm:w-[160px] lg:w-[220px] sm:pr-4 flex-shrink-0">
                                     ${amtDisplay}
                                 </div>
                             </div>
-
                             <!-- Actions -->
-                            <div class="flex items-center gap-2 w-full sm:w-[90px] sm:justify-end border-t sm:border-0 border-slate-100 pt-3 sm:pt-0">
-                                <button onclick="loadProfile(${i})" class="flex-1 sm:flex-none bg-indigo-50 hover:bg-indigo-100 text-indigo-600 py-2 sm:px-3 sm:py-1.5 rounded-lg text-xs sm:text-[10px] font-bold transition-colors text-center shadow-sm sm:shadow-none">${t('load')}</button>
-                                <button onclick="delProfile(${i})" class="bg-slate-50 hover:bg-red-50 text-slate-400 hover:text-red-500 px-4 py-2 sm:px-2 sm:py-1.5 rounded-lg text-base leading-none transition-colors border border-slate-200 sm:border-transparent">&times;</button>
+                            <div class="flex items-center gap-2 w-full sm:w-[100px] lg:w-[120px] sm:justify-end border-t sm:border-0 border-slate-100 pt-3 sm:pt-0 flex-shrink-0">
+                                <button onclick="loadProfile('${safeName}')" class="flex-1 sm:flex-none bg-indigo-50 hover:bg-indigo-100 text-indigo-600 py-2 sm:px-3 sm:py-1.5 rounded-lg text-xs sm:text-[10px] font-bold transition-colors text-center shadow-sm sm:shadow-none">${t('load')}</button>
+                                <button onclick="delProfile('${safeName}')" class="bg-slate-50 hover:bg-red-50 text-slate-400 hover:text-red-500 px-4 py-2 sm:px-2 sm:py-1.5 rounded-lg text-base leading-none transition-colors border border-slate-200 sm:border-transparent">&times;</button>
                             </div>
                         </div>
                     </div>
@@ -1101,14 +1138,15 @@
             });
         }  
         
-        function loadProfile(idx) {
+        function loadProfile(name) {
             if(!confirm(t('confirm_load'))) return;
-            let p = JSON.parse(localStorage.getItem(PROFILES_KEY) || "[]");
-            if(p[idx]) {
-                let profileData = JSON.parse(JSON.stringify(p[idx].data)); 
+            let pMap = getProfiles();
+            if(pMap[name]) {
+                let p = pMap[name];
+                let profileData = JSON.parse(JSON.stringify(p.data)); 
                 if (document.getElementById('autoProjectToggle').checked) {
-                    let savedTimestamp = p[idx].timestamp;
-                    if (!savedTimestamp && p[idx].date) { const parsed = Date.parse(p[idx].date); if (!isNaN(parsed)) savedTimestamp = parsed; }
+                    let savedTimestamp = p.timestamp;
+                    if (!savedTimestamp && p.date) { const parsed = Date.parse(p.date); if (!isNaN(parsed)) savedTimestamp = parsed; }
                     if (savedTimestamp) {
                         const daysPassed = Math.floor((Date.now() - savedTimestamp) / (1000 * 60 * 60 * 24));
                         if (daysPassed > 0 && profileData.nodes) {
@@ -1127,23 +1165,40 @@
                         }
                     }
                 }
-                applyInputsData(profileData); activeProfileName = p[idx].name; localStorage.setItem(ACTIVE_PROFILE_KEY, activeProfileName);
+                applyInputsData(profileData); activeProfileName = name; localStorage.setItem(ACTIVE_PROFILE_KEY, activeProfileName);
                 updateProfileDisplay(); toggleProfiles(); calculate(); showToast(t('loaded_success'), null, true);
             }
         }
 
-        function delProfile(i) {
+        function delProfile(name) {
             if(!confirm(t('confirm_delete'))) return;
-            let p = JSON.parse(localStorage.getItem(PROFILES_KEY) || "[]");
-            if (activeProfileName === p[i].name) { activeProfileName = ''; localStorage.removeItem(ACTIVE_PROFILE_KEY); updateProfileDisplay(); }
-            p.splice(i, 1); localStorage.setItem(PROFILES_KEY, JSON.stringify(p)); renderProfiles();
+            let pMap = getProfiles();
+            if (activeProfileName === name) { activeProfileName = ''; localStorage.removeItem(ACTIVE_PROFILE_KEY); updateProfileDisplay(); }
+            
+            // SOFT DELETE (TOMBSTONE LOGIC)
+            if (pMap[name]) {
+                pMap[name].deleted = true;
+                pMap[name].timestamp = Date.now();
+                pMap[name].synced = false;
+            }
+             
+            localStorage.setItem(PROFILES_KEY, JSON.stringify(pMap)); 
+            renderProfiles();
             autoBackupProfiles();
         }
 
         function exportProfiles() {
-            const profiles = localStorage.getItem(PROFILES_KEY) || "[]";
-            if (profiles === "[]") return showToast(currentLang === 'zh' ? "没有可导出的档案" : "No profiles to export", null, true);
-            const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([profiles], { type: "application/json" }));
+            const pMap = getProfiles();
+            const exportData = {};
+            let hasProfiles = false;
+            for (let k in pMap) { 
+                if (!pMap[k].deleted) { 
+                    exportData[k] = pMap[k]; 
+                    hasProfiles = true;
+                } 
+            }
+            if (!hasProfiles) return showToast(currentLang === 'zh' ? "没有可导出的档案" : "No profiles to export", null, true);
+            const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(exportData)], { type: "application/json" }));
             a.download = `TET_Hub_Profiles_${new Date().toISOString().slice(0,10)}.json`; a.click(); URL.revokeObjectURL(a.href);
             showToast(currentLang === 'zh' ? "✅ 导出成功" : "✅ Export Successful", null, true);
         }
@@ -1154,9 +1209,15 @@
             reader.onload = function(e) {
                 try {
                     const imported = JSON.parse(e.target.result);
-                    if (Array.isArray(imported)) { 
+                    if (imported && typeof imported === 'object') { 
                         if (confirm(t('confirm_import'))) { 
-                            localStorage.setItem(PROFILES_KEY, JSON.stringify(imported)); 
+                            let newMap = {};
+                            if (Array.isArray(imported)) {
+                                imported.forEach(p => { if (p && p.name) newMap[p.name] = p; });
+                            } else {
+                                newMap = imported;
+                            }
+                            localStorage.setItem(PROFILES_KEY, JSON.stringify(newMap)); 
                             renderProfiles(); 
                             showToast(currentLang === 'zh' ? "✅ 导入成功" : "✅ Import Successful", null, true); 
                             autoBackupProfiles();

@@ -579,6 +579,10 @@
         
         let isProUser = false; 
 
+        // ADDED: Prevent Concurrent Lark Bitable Modifications
+        let syncLock = false;
+        let pendingSyncRequest = false;
+
         let toastTimeout;
         function showToast(msg) {
             const container = document.getElementById('toast-container');
@@ -674,7 +678,7 @@
                     return;
                 }
                 
-                if (res.status !== 200) { setSyncUI('OFFLINE'); return; }
+                if (!res.ok) { setSyncUI('OFFLINE'); return; }
 
                 const data = await res.json();
                 if (data.success) {
@@ -706,6 +710,13 @@
             const deviceId = localStorage.getItem(DEVICE_ID_KEY);
             if (!deviceId) return;
             
+            // ADDED: Sync Lock to prevent overlapping/conflicting API calls
+            if (syncLock) {
+                pendingSyncRequest = true;
+                return;
+            }
+            syncLock = true;
+
             if (!isSilentBackground) setSyncUI('SYNCING');
             
             try {
@@ -713,25 +724,37 @@
                 
                 const res = await fetch(`${CLOUD_SYNC_URL}&deviceId=${deviceId}`, {
                     method: 'POST',
-                    keepalive: true, 
+                    // REMOVED: keepalive: true -> It limits fetch to 64kb payloads, causing immediate failures for complex graphs!
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ profiles: profiles })
                 });
 
-                if (res.status === 200) {
+                if (res.ok) { // CHANGED: Now accepts 200, 201, 204
                     setSyncUI('SYNCED');
                     let currentProfiles = JSON.parse(localStorage.getItem('tetProfiles') || "{}");
                     for (let k in currentProfiles) { currentProfiles[k].synced = true; }
                     localStorage.setItem('tetProfiles', JSON.stringify(currentProfiles));
                     
+                    // Conditionally refresh UI if modals are open to reflect the Green Indicator
                     if (!document.getElementById('saveModal').classList.contains('hidden')) openSaveModal();
                     if (!document.getElementById('loadModal').classList.contains('hidden')) openLoadModal();
+                } else if (res.status === 401 || res.status === 403) {
+                    isProUser = false;
+                    setSyncUI('FREE');
                 } else {
+                    console.warn("Sync failed with status:", res.status);
                     setSyncUI('OFFLINE');
                 }
             } catch (err) {
                 console.error("Auto-backup failed:", err);
                 setSyncUI('OFFLINE');
+            } finally {
+                // ADDED: Release Lock & Trigger Queued Syncs
+                syncLock = false;
+                if (pendingSyncRequest) {
+                    pendingSyncRequest = false;
+                    setTimeout(() => autoBackupProfiles(true), 1000); // 1s buffer for Lark API breathing room
+                }
             }
         }
 
@@ -741,6 +764,17 @@
             let changed = false;
             for (let name in profiles) {
                 let p = profiles[name];
+                
+                // --- FIX: Repair corrupted tombstones that crash the backend API ---
+                if (p.deleted && (!p.p || !p.t)) {
+                    p.p = [];
+                    p.t = [];
+                    p.v = 3;
+                    changed = true;
+                }
+
+                if (p.deleted) continue; // Skip rendering deleted tombstones
+                
                 if (!p.v || p.v < 3) {
                     if (p.tree) {
                         let tempTree = document.createElement('ul'); tempTree.innerHTML = p.tree;
@@ -1451,24 +1485,14 @@
             document.getElementById('btnAdvisor').classList.remove('animate-pulse'); 
         }
 
-        // Feature: Jump to targeted node and highlight it
         function jumpToTargetNode(id) {
             closeAllModals();
-            
-            // Wait slightly for the modal disappear animation
             setTimeout(() => {
                 const targetCard = document.getElementById(id);
                 if (targetCard) {
-                    // Smooth scroll to element's center inside the scrolling canvas
                     targetCard.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
-                    
-                    // Trigger the CSS highlight pulse animation
                     targetCard.classList.add('radar-target');
-                    
-                    // Clean up highlight after animation finishes (1.5s * 2 pulses = 3000ms)
-                    setTimeout(() => {
-                        targetCard.classList.remove('radar-target');
-                    }, 3000);
+                    setTimeout(() => { targetCard.classList.remove('radar-target'); }, 3000);
                 }
             }, 300);
         }
@@ -1622,10 +1646,16 @@
             const listDiv = document.getElementById('saveProfileList');
             listDiv.innerHTML = "";
 
-            if(Object.keys(profiles).length === 0) {
+            let hasActiveProfiles = false;
+            for (let k in profiles) {
+                if (!profiles[k].deleted) { hasActiveProfiles = true; break; }
+            }
+
+            if(!hasActiveProfiles) {
                 listDiv.innerHTML = `<p class='text-xs text-slate-400 text-center py-4'>${i18n[currentLang].msgEmptyProfiles}</p>`;
             } else {
                 for(let name in profiles) {
+                    if (profiles[name].deleted) continue; // Hide tombstoned deleted profiles from list
                     let itemDiv = document.createElement('div');
                     itemDiv.className = 'flex justify-between items-center bg-slate-50 border border-slate-200 p-3 rounded-xl cursor-pointer hover:border-indigo-300 transition';
                     itemDiv.onclick = () => executeSave(name);
@@ -1659,7 +1689,7 @@
             if(!profileName) { alert(i18n[currentLang].msgAlertSave); return; }
             
             const profiles = getProfiles();
-            const isOverwrite = !!profiles[profileName];
+            const isOverwrite = !!profiles[profileName] && !profiles[profileName].deleted;
             
             if (isOverwrite) {
                 const confirmMsg = i18n[currentLang].msgConfirmOverwrite.replace('{name}', profileName);
@@ -1687,10 +1717,17 @@
             const profiles = getProfiles();
             const listDiv = document.getElementById('loadProfileList');
             listDiv.innerHTML = "";
-            if(Object.keys(profiles).length === 0) {
+            
+            let hasActiveProfiles = false;
+            for (let k in profiles) {
+                if (!profiles[k].deleted) { hasActiveProfiles = true; break; }
+            }
+
+            if(!hasActiveProfiles) {
                 listDiv.innerHTML = `<p class='text-xs text-slate-400 text-center py-4'>${i18n[currentLang].msgEmptyProfiles}</p>`;
             } else {
                 for(let name in profiles) {
+                    if (profiles[name].deleted) continue; // Hide tombstoned profiles
                     let itemDiv = document.createElement('div');
                     itemDiv.className = 'flex justify-between items-center bg-slate-50 border border-slate-200 p-3 rounded-xl cursor-pointer hover:border-indigo-300 transition';
                     itemDiv.onclick = () => executeLoad(name);
@@ -1718,7 +1755,7 @@
 
             const profiles = getProfiles();
             const profile = profiles[name];
-            if(!profile) return;
+            if(!profile || profile.deleted) return;
             
             if (profile.v >= 3) {
                 document.getElementById('holding-pool').innerHTML = buildPoolHTML(profile.p);
@@ -1738,7 +1775,9 @@
         function deleteProfile(name) {
             if(confirm(`${i18n[currentLang].msgAlertDel}: "${name}"?`)) {
                 const profiles = getProfiles();
-                delete profiles[name];
+                
+                // FIXED Tombstone: Padded with p and t arrays to prevent Backend API crash
+                profiles[name] = { deleted: true, timestamp: Date.now(), synced: false, v: 3, p: [], t: [] };
                 
                 localStorage.setItem('tetProfiles', JSON.stringify(profiles));
                 if (activeProfile === name) { setActiveProfile(null); }
@@ -1826,7 +1865,7 @@
         function generateShareCode(name) {
             const profiles = getProfiles();
             const profileData = profiles[name];
-            if (!profileData) return;
+            if (!profileData || profileData.deleted) return;
             
             try {
                 let pureData;

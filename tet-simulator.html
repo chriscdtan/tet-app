@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TET 收益模拟器</title>
+    <title>TET 收益模拟器 (V2.4.7)</title>
 
     <!-- ANTI-FLICKER SCRIPT: Runs before the body renders -->
     <script>
@@ -40,8 +40,8 @@
         }
 
         /* Scrollbar Styling */
-        .log-container::-webkit-scrollbar { height: 6px; }
-        .log-container::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .custom-scroll::-webkit-scrollbar, .log-container::-webkit-scrollbar { height: 6px; width: 6px; }
+        .custom-scroll::-webkit-scrollbar-thumb, .log-container::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         
         /* Accordion Styles */
         details > summary { list-style: none; cursor: pointer; transition: all 0.2s; }
@@ -52,7 +52,7 @@
 
         /* Custom Inputs */
         .input-group { position: relative; }
-        .input-group label { position: absolute; top: -8px; left: 10px; background: white; padding: 0 4px; font-size: 10px; font-weight: bold; color: #64748b; cursor: pointer; display: flex; align-items: center; gap: 4px; }
+        .input-group label { position: absolute; top: -8px; left: 10px; background: white; padding: 0 4px; font-size: 10px; font-weight: bold; color: #64748b; cursor: pointer; display: flex; align-items: center; gap: 4px; z-index: 10; }
         .input-group label:hover { color: #4f46e5; }
 
         /* Info Icon */
@@ -103,6 +103,30 @@
     <div id="toast-overlay" onclick="dismissAllToasts()"></div>
     <div id="toast-container"></div>
 
+    <!-- CALENDAR EXPORT MODAL -->
+    <div id="calendarOptionModal" class="hidden fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 transition-opacity duration-300 opacity-0">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-xs overflow-hidden transform scale-95 transition-transform duration-300" id="calendarModalInner">
+            <div class="bg-slate-50 border-b border-slate-100 p-4 text-center">
+                <div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-2 shadow-sm">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                </div>
+                <h3 class="font-black text-slate-800 tracking-tight text-lg" data-i18n="add_to_calendar">Add to Calendar</h3>
+                <p id="calEventPreviewTitle" class="text-xs text-slate-500 font-bold mt-1 truncate"></p>
+            </div>
+            <div class="p-4 flex flex-col gap-3">
+                <button onclick="calExportGoogle()" class="w-full flex items-center justify-center gap-2 bg-white border-2 border-slate-200 hover:border-blue-400 hover:bg-blue-50 text-slate-700 font-bold py-3 rounded-xl transition shadow-sm active:scale-95">
+                    🌐 <span data-i18n="google_cal">Google Calendar</span>
+                </button>
+                <button onclick="calExportICS()" class="w-full flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 rounded-xl transition shadow-sm active:scale-95">
+                    🍎 <span data-i18n="apple_cal">Apple / Outlook (.ics)</span>
+                </button>
+                <button onclick="closeCalModal()" class="w-full flex items-center justify-center mt-2 text-slate-400 hover:text-slate-600 text-sm font-bold py-2 transition">
+                    <span data-i18n="cancel">Cancel</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- PROFILE MODAL (Shared Hub System) -->
     <div id="profileModal" class="fixed inset-0 z-40 hidden flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 no-print">
         <div class="bg-white w-full max-w-4xl h-[80vh] rounded-2xl shadow-xl flex flex-col overflow-hidden">
@@ -133,9 +157,9 @@
             <div class="flex-grow overflow-auto p-0 bg-white">
                 <!-- Desktop Header -->
                 <div class="hidden sm:flex items-center bg-slate-50 px-4 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider sticky top-0 z-10 shadow-sm border-b border-slate-200">
-                    <div class="w-[120px]" data-i18n="date">Date</div>
+                    <div class="w-[145px]" data-i18n="date">Date</div>
                     <div class="flex-1" data-i18n="profile_name">Profile Name</div>
-                    <div class="w-[130px] text-right pr-4" data-i18n="final_balance">Final Bal</div>
+                    <div class="w-[130px] text-right pr-4" data-i18n="th_final_bal">Final Bal</div>
                     <div class="w-[90px] text-right" data-i18n="action">Action</div>
                 </div>
                 <!-- Profile List Items Injected Here -->
@@ -183,7 +207,7 @@
                     <h1 class="text-3xl font-black text-slate-800 tracking-tight">TET <span class="text-indigo-600" data-i18n="title_name">收益模拟器</span></h1>
                 </div>
                 <div class="flex items-center gap-2 mt-1">
-                    <p class="text-[10px] font-bold text-slate-400 uppercase">V2.3.1 • Hub Edition</p>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase">V2.4.7 • Hub Edition</p>
                     
                     <div class="sync-badge bg-indigo-50 text-indigo-500 border border-indigo-100 shadow-sm">
                         <div class="sync-dot bg-indigo-500">
@@ -239,26 +263,30 @@
 
                 <!-- 2. GLOBAL INPUTS -->
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 space-y-5">
-                    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                        <div class="input-group">
+                            <label onclick="showHelp('tip_start_date')"><span data-i18n="lbl_start_date">Start Date</span> <span class="info-btn">💡</span></label>
+                            <input type="date" id="startDateInput" oninput="saveState()" class="w-full border-2 border-slate-100 rounded-xl px-3 py-3 text-[13px] font-bold outline-none focus:border-indigo-500 transition text-slate-700">
+                        </div>
                         <div class="input-group">
                             <label onclick="showHelp('tip_accel')"><span data-i18n="lbl_accel">Acceleration (TET)</span> <span class="info-btn">💡</span></label>
-                            <input type="number" id="accelToken" value="0" oninput="saveState(); refreshNodes()" class="w-full border-2 border-slate-100 rounded-xl px-3 py-3 text-lg font-bold outline-none focus:border-indigo-500 transition">
+                            <input type="number" id="accelToken" value="0" oninput="saveState(); refreshNodes()" class="w-full border-2 border-slate-100 rounded-xl px-3 py-3 text-lg font-bold outline-none focus:border-indigo-500 transition text-slate-700">
                         </div>
                         <div class="input-group">
                             <label onclick="showHelp('tip_wallet')"><span data-i18n="lbl_wallet">Wallet (TET)</span> <span class="info-btn">💡</span></label>
-                            <input type="number" id="currentWallet" value="0" oninput="saveState()" class="w-full border-2 border-slate-100 rounded-xl px-3 py-3 text-lg font-bold outline-none focus:border-indigo-500 transition">
+                            <input type="number" id="currentWallet" value="0" oninput="saveState()" class="w-full border-2 border-slate-100 rounded-xl px-3 py-3 text-lg font-bold outline-none focus:border-indigo-500 transition text-slate-700">
                         </div>
                         <div class="input-group">
                             <label onclick="showHelp('tip_simdays')"><span data-i18n="lbl_sim_days">Sim Days</span> <span class="info-btn">💡</span></label>
-                            <input type="number" id="simDaysInput" value="" placeholder="Max" oninput="saveState()" class="w-full border-2 border-slate-100 rounded-xl px-3 py-3 text-lg font-bold outline-none focus:border-indigo-500 transition">
+                            <input type="number" id="simDaysInput" value="" placeholder="Max" oninput="saveState()" class="w-full border-2 border-slate-100 rounded-xl px-3 py-3 text-lg font-bold outline-none focus:border-indigo-500 transition text-slate-700">
                         </div>
                         <div class="input-group">
                             <label onclick="showHelp('tip_price')"><span data-i18n="lbl_price">TET Price (USDT)</span> <span class="info-btn">💡</span></label>
-                            <input type="number" id="tetPriceInput" step="0.01" value="0.50" oninput="saveState()" class="w-full border-2 border-slate-100 rounded-xl px-3 py-3 text-lg font-bold outline-none focus:border-indigo-500 transition">
+                            <input type="number" id="tetPriceInput" step="0.01" value="0.50" oninput="saveState()" class="w-full border-2 border-slate-100 rounded-xl px-3 py-3 text-lg font-bold outline-none focus:border-indigo-500 transition text-slate-700">
                         </div>
                         <div class="input-group">
                             <label onclick="showHelp('tip_global_cycle')"><span data-i18n="lbl_global_cycle">Auto Stake Cycle</span> <span class="info-btn">💡</span></label>
-                            <select id="globalCycleInput" onchange="saveState()" class="w-full border-2 border-slate-100 rounded-xl px-3 py-3 text-lg font-bold outline-none focus:border-indigo-500 transition bg-white appearance-none">
+                            <select id="globalCycleInput" onchange="saveState()" class="w-full border-2 border-slate-100 rounded-xl px-3 py-3 text-lg font-bold outline-none focus:border-indigo-500 transition bg-white appearance-none text-slate-700">
                             </select>
                         </div>
                     </div>
@@ -288,7 +316,7 @@
                     <h2 class="text-[10px] font-bold uppercase tracking-widest opacity-70 mb-2 mt-2" data-i18n="analysis_result">Analysis Result</h2>
                     
                     <div id="summaryState" class="hidden">
-                        <p class="text-sm font-bold opacity-80" data-i18n="final_balance">Projected Final Balance</p>
+                        <p class="text-sm font-bold opacity-80 whitespace-nowrap" data-i18n="final_balance">Projected Final Balance</p>
                         <div class="text-4xl sm:text-5xl font-black tracking-tighter my-2 break-words"><span id="finalAmount">0.00</span> <span class="text-lg">TET</span></div>
                         <p class="text-[10px] opacity-75 max-w-md mx-auto mt-2 leading-relaxed" data-i18n="final_desc">This is the estimated TET balance in your account at the end of the simulation period.</p>
                         
@@ -325,6 +353,20 @@
                         </button>
                     </div>
                 </div>
+            </div>
+
+            <!-- RESTAKE CALENDAR -->
+            <div id="calendarSection" class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden hidden transition-all">
+                <details class="group" open>
+                    <summary class="px-5 py-4 bg-slate-50 border-b border-slate-200 font-bold text-xs text-slate-600 uppercase flex justify-between items-center select-none outline-none">
+                        <span>📅 <span data-i18n="calendar_title">Restake Calendar</span></span>
+                    </summary>
+                    <div class="p-4 bg-white w-full">
+                        <div id="calendarContent" class="space-y-2 max-h-80 overflow-y-auto custom-scroll pr-2">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+                </details>
             </div>
 
             <div id="graphSection" class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden hidden">
@@ -366,7 +408,12 @@
         
         let activeProfileName = localStorage.getItem(ACTIVE_PROFILE_KEY) || '';
 
+        // Calendar Modal State
+        let currentCalEventTitle = '';
+        let currentCalEventTimestamp = 0;
+
         const HELP_IMAGES = {
+            tip_start_date: "",
             tip_accel: "acceleration",
             tip_wallet: "wallet",
             tip_simdays: "",
@@ -393,9 +440,9 @@
         const i18n = {
             zh: {
                 saved_profiles: '已保存的档案', date: '日期', profile_name: '档案名称',
-                final_balance: '预计期末总余额', action: '操作',
+                final_balance: '预计期末总余额', th_final_bal: '期末余额', action: '操作',
                 profiles_btn: '档案', node_settings: '节点设置 (点击展开/收起)',
-                lbl_accel: '加速 (TET)', lbl_wallet: '户口现有 (TET)', 
+                lbl_start_date: '开始日期', lbl_accel: '加速 (TET)', lbl_wallet: '户口现有 (TET)', 
                 lbl_sim_days: '模拟天数', lbl_price: 'TET 价格 (USDT)',
                 lbl_global_cycle: '自动质押周期',
                 run_analysis: '🔎 运行分析',
@@ -403,6 +450,9 @@
                 final_desc: '这是在模拟期结束时，您账户中预计将拥有的最终 TET 余额。',
                 restaked_tet: '复投 (TET)',
                 withdraw_tet: '提现 (85%)', usdt_value: 'USDT (90%)',
+                calendar_title: '复投日历', empty_calendar: '模拟期间无需复投。', restake_action: '复投节点 {id}', buy_action: '新增节点 {id}',
+                day_prefix: '第 ', day_suffix: ' 天', cal_event_prefix: 'TET 操作: ', cal_desc: '由 TET 收益模拟器生成的提醒。',
+                add_to_calendar: '添加到日历', google_cal: 'Google 日历', apple_cal: 'Apple / 离线日历 (.ics)', cancel: '取消',
                 graph_title: 'TET 增长轨迹', export_report: '导出报告',
                 btn_save: '保存', btn_copy: '复制', btn_export: '导出',
                 sample_data: '演示数据 - 请解锁',
@@ -418,6 +468,7 @@
                 export: '导出', import: '导入', confirm_import: '导入将覆盖现有档案。确定继续吗？',
                 syncing: '同步中...', sync_success: '云端已同步', sync_fail: '离线模式',
                 auto_restake: '自动复投/质押',
+                tip_start_date: '选择模拟开始的日期，系统将据此推算准确的复投日期。',
                 tip_accel: '输入你账户当前的加速总额 (TET)。',
                 tip_wallet: '输入你钱包里目前可用的 TET 余额。',
                 tip_simdays: '输入你想模拟的天数。如果留空，系统将自动计算最大剩余天数。',
@@ -431,9 +482,9 @@
             },
             en: {
                 saved_profiles: 'Saved Profiles', date: 'Date', profile_name: 'Profile Name',
-                final_balance: 'Projected Final Balance', action: 'Action',
+                final_balance: 'Projected Final Balance', th_final_bal: 'Final Bal', action: 'Action',
                 profiles_btn: 'Profiles', node_settings: 'Node Settings',
-                lbl_accel: 'Acceleration (TET)', lbl_wallet: 'Current Account (TET)', 
+                lbl_start_date: 'Start Date', lbl_accel: 'Acceleration (TET)', lbl_wallet: 'Current Account (TET)', 
                 lbl_sim_days: 'Sim Days', lbl_price: 'TET Price (USDT)',
                 lbl_global_cycle: 'Auto Stake Cycle (Days)',
                 run_analysis: '🔎 Run Analysis',
@@ -441,6 +492,9 @@
                 final_desc: 'This is the estimated TET balance in your account at the end of the simulation period.',
                 restaked_tet: 'Restaked',
                 withdraw_tet: 'Withdraw (85%)', usdt_value: 'USDT (90%)',
+                calendar_title: 'Restake Calendar', empty_calendar: 'No restakes required during simulation.', restake_action: 'Restake N{id}', buy_action: 'Buy N{id}',
+                day_prefix: 'Day ', day_suffix: '', cal_event_prefix: 'TET Action: ', cal_desc: 'Reminder generated by TET Simulator.',
+                add_to_calendar: 'Add to Calendar', google_cal: 'Google Calendar', apple_cal: 'Apple / Outlook (.ics)', cancel: 'Cancel',
                 graph_title: 'Growth Trajectory', export_report: 'Export',
                 btn_save: 'Save', btn_copy: 'Copy', btn_export: 'Export',
                 sample_data: 'Sample Data - Unlock',
@@ -456,6 +510,7 @@
                 export: 'Export', import: 'Import', confirm_import: 'Importing will overwrite existing profiles. Continue?',
                 syncing: 'Syncing...', sync_success: 'Cloud Synced', sync_fail: 'Offline Mode',
                 auto_restake: 'Auto Stake/Restake',
+                tip_start_date: 'Select the simulation start date to generate an exact restake calendar.',
                 tip_accel: 'Enter your current total Acceleration (TET).',
                 tip_wallet: 'Enter the current available TET in your account.',
                 tip_simdays: 'Enter the number of days you want to simulate. Leave blank to run until the max node lifecycle.',
@@ -469,7 +524,8 @@
             }
         };
 
-        function t(key) { return i18n[currentLang][key] || key; }
+        // BUG FIX: Properly handles empty strings (like day_suffix in English)
+        function t(key) { return i18n[currentLang][key] !== undefined ? i18n[currentLang][key] : key; }
 
         const nodeDefinitions = [
             { id: 5000, cost: 5000, reward: 6500 },
@@ -490,6 +546,7 @@
 
             if (!isPro) {
                 // Freemium Teaser Logic
+                document.getElementById('startDateInput').value = new Date().toISOString().split('T')[0];
                 document.getElementById('accelToken').value = 500;
                 document.getElementById('currentWallet').value = 1200;
                 document.getElementById('simDaysInput').value = 90;
@@ -514,9 +571,30 @@
             } else {
                 // Licensed Logic
                 loadState();
+                
+                // Initialize start date if empty
+                if (!document.getElementById('startDateInput').value) {
+                    document.getElementById('startDateInput').value = new Date().toISOString().split('T')[0];
+                }
+
                 updateProfileDisplay();
                 setTimeout(autoRestoreProfiles, 1500); 
             }
+        }
+
+        // --- STRATEGY STYLE DICTIONARY PROFILES (Completely Unified) ---
+        function getProfiles() {
+            const data = localStorage.getItem(PROFILES_KEY);
+            let parsed = data ? JSON.parse(data) : {};
+            
+            // Auto-migrate array to dictionary if somehow left behind
+            if (Array.isArray(parsed)) {
+                let temp = {};
+                parsed.forEach(p => { if (p && p.name) temp[p.name] = p; });
+                localStorage.setItem(PROFILES_KEY, JSON.stringify(temp));
+                return temp;
+            }
+            return parsed;
         }
 
         function renderGlobalCycleOptions() {
@@ -559,39 +637,58 @@
             }
         }
         
-        // STRICT TIMESTAMP OVERWRITE
-        function syncProfilesByTimestamp(cloudProfilesArray) {
-            if (!cloudProfilesArray || !Array.isArray(cloudProfilesArray)) return false;
-            
-            let localProfiles = JSON.parse(localStorage.getItem(PROFILES_KEY) || '[]');
-            if (!Array.isArray(localProfiles)) localProfiles = [];
-            
+        // --- SMART DICTIONARY MERGE LOGIC WITH TOMBSTONES ---
+        function syncProfilesByTimestamp(cloudData) {
+            let cloudProfiles = {};
+            if (cloudData && typeof cloudData === 'object') {
+                if (Array.isArray(cloudData)) {
+                    cloudData.forEach(p => { if (p && p.name) cloudProfiles[p.name] = p; });
+                } else if (cloudData.profiles && typeof cloudData.profiles === 'object') {
+                    if (Array.isArray(cloudData.profiles)) {
+                        cloudData.profiles.forEach(p => { if (p && p.name) cloudProfiles[p.name] = p; });
+                    } else {
+                        for (let k in cloudData.profiles) {
+                            if (cloudData.profiles[k] && cloudData.profiles[k].name) {
+                                cloudProfiles[cloudData.profiles[k].name] = cloudData.profiles[k];
+                            }
+                        }
+                    }
+                } else {
+                    for (let k in cloudData) {
+                        if (cloudData[k] && cloudData[k].name) {
+                            cloudProfiles[cloudData[k].name] = cloudData[k];
+                        }
+                    }
+                }
+            }
+
+            if (Object.keys(cloudProfiles).length === 0) return false;
+
+            let localProfiles = getProfiles();
             let hasChanges = false;
-            let localMap = {};
-            localProfiles.forEach(p => localMap[p.name] = p);
-        
-            cloudProfilesArray.forEach(cloudProf => {
-                if (!cloudProf || !cloudProf.name) return;
-                const localProf = localMap[cloudProf.name];
+
+            for (let nameKey in cloudProfiles) {
+                const cloudProf = cloudProfiles[nameKey];
                 cloudProf.synced = true;
-                
+
+                const localProf = localProfiles[nameKey];
+
                 if (!localProf) {
-                    localMap[cloudProf.name] = cloudProf;
+                    localProfiles[nameKey] = cloudProf;
                     hasChanges = true;
                 } else {
                     const cloudTime = cloudProf.timestamp || 0;
                     const localTime = localProf.timestamp || 0;
-                    
+
                     if (cloudTime > localTime) {
-                        localMap[cloudProf.name] = cloudProf;
+                        localProfiles[nameKey] = cloudProf;
                         hasChanges = true;
                     }
                 }
-            });
-        
+            }
+
             if (hasChanges) {
-                const mergedArray = Object.values(localMap).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-                localStorage.setItem(PROFILES_KEY, JSON.stringify(mergedArray));
+                localStorage.setItem(PROFILES_KEY, JSON.stringify(localProfiles));
                 return true;
             }
             return false;
@@ -614,18 +711,27 @@
                 }
         
                 const data = await res.json();
-                if (data.success) {
-                    if (data.data) {
-                        let cloudData = [];
-                        try {
-                            cloudData = typeof data.data === 'string' ? JSON.parse(data.data) : data.data;
-                        } catch(e) { console.warn("Cloud parse error"); }
-                        
-                        const didUpdate = syncProfilesByTimestamp(cloudData);
-                        if (didUpdate) {
-                            if (typeof loadProfiles === 'function') loadProfiles();
-                            if (typeof updateHubProfiles === 'function') updateHubProfiles();
+                if (data.success && data.data) {
+                    let cloudData = null;
+                    try {
+                        cloudData = typeof data.data === 'string' ? JSON.parse(data.data) : data.data;
+                    } catch(e) { console.warn("Cloud parse error"); }
+                    
+                    const didUpdate = syncProfilesByTimestamp(cloudData);
+                    if (didUpdate) {
+                        if (activeProfileName) {
+                            const profilesMap = getProfiles();
+                            if (!profilesMap[activeProfileName] || profilesMap[activeProfileName].deleted) {
+                                activeProfileName = '';
+                                localStorage.removeItem(ACTIVE_PROFILE_KEY);
+                                updateProfileDisplay();
+                            }
                         }
+
+                        if (!document.getElementById('profileModal').classList.contains('hidden')) {
+                            renderProfiles();
+                        }
+                        updateProfileDisplay();
                     }
                     updateSyncStatus('success');
                     autoBackupProfiles(true); 
@@ -645,24 +751,19 @@
             if (!deviceId) return;
             try {
                 if (!isSilentBackground) updateSyncStatus('syncing');
-                const profiles = JSON.parse(localStorage.getItem(PROFILES_KEY) || "[]");
+                const profilesMap = getProfiles();
                 
                 const res = await fetch(`${CLOUD_SYNC_URL}&deviceId=${deviceId}`, {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ profiles: profiles })
+                    body: JSON.stringify({ profiles: profilesMap })
                 });
                 
                 if (res.status === 200) {
-                    let currentProfiles = JSON.parse(localStorage.getItem(PROFILES_KEY) || "[]");
-                    currentProfiles.forEach(p => p.synced = true);
+                    let currentProfiles = getProfiles();
+                    for (let key in currentProfiles) { currentProfiles[key].synced = true; }
                     localStorage.setItem(PROFILES_KEY, JSON.stringify(currentProfiles));
                     
                     updateSyncStatus('success');
-                    
-                    if (typeof renderProfiles === 'function') renderProfiles();
-                    if (typeof updateProfileDisplay === 'function') updateProfileDisplay();
-                    if (typeof updateHubProfiles === 'function') updateHubProfiles();
-                    
                 } else {
                     if (!isSilentBackground) updateSyncStatus('error');
                 }
@@ -675,11 +776,11 @@
             currentLang = currentLang === 'zh' ? 'en' : 'zh';
             localStorage.setItem(LANG_KEY, currentLang);
             applyLanguage(); 
-            updateSyncStatus(currentSyncStatus); // Update badge instantly based on newly applied lang
+            updateSyncStatus(currentSyncStatus); 
             renderNodes(); 
             loadState();
             if (!document.getElementById('ledgerSection').classList.contains('hidden')) calculate();
-            if (!document.getElementById('profileModal').classList.contains('hidden')) renderProfiles(); // Updates modal list logic immediately
+            if (!document.getElementById('profileModal').classList.contains('hidden')) renderProfiles();
         }
 
         function applyLanguage() {
@@ -691,8 +792,101 @@
             const msg = t(key);
             const imgBase = HELP_IMAGES[key];
             let imgUrl = null;
-            if(imgBase) { imgUrl = `${imgBase}_${currentLang.toUpperCase()}.jpeg`; }
+            if(imgBase && imgBase !== "") { imgUrl = `${imgBase}_${currentLang.toUpperCase()}.jpeg`; }
             showToast("💡 " + msg, imgUrl, false);
+        }
+
+        // --- CALENDAR EXPORT FUNCTIONS ---
+        function openCalModal(title, timestamp) {
+            currentCalEventTitle = title;
+            currentCalEventTimestamp = parseInt(timestamp);
+            
+            document.getElementById('calEventPreviewTitle').innerText = title;
+            
+            const modal = document.getElementById('calendarOptionModal');
+            const inner = document.getElementById('calendarModalInner');
+            
+            modal.classList.remove('hidden');
+            // Trigger reflow for animation
+            void modal.offsetWidth; 
+            modal.classList.remove('opacity-0');
+            inner.classList.remove('scale-95');
+        }
+
+        function closeCalModal() {
+            const modal = document.getElementById('calendarOptionModal');
+            const inner = document.getElementById('calendarModalInner');
+            
+            modal.classList.add('opacity-0');
+            inner.classList.add('scale-95');
+            
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        function formatDateTimeLocal(d, hour) {
+            let month = '' + (d.getMonth() + 1), day = '' + d.getDate(), year = d.getFullYear();
+            let hh = '' + hour, mm = '00', ss = '00';
+            
+            if (month.length < 2) month = '0' + month;
+            if (day.length < 2) day = '0' + day;
+            if (hh.length < 2) hh = '0' + hh;
+            
+            return [year, month, day, 'T', hh, mm, ss].join('');
+        }
+
+        function calExportGoogle() {
+            const date = new Date(currentCalEventTimestamp);
+            const startStr = formatDateTimeLocal(date, 11); // 11:00 AM
+            
+            const endD = new Date(date);
+            const endStr = formatDateTimeLocal(endD, 12);   // 12:00 PM
+            
+            const desc = encodeURIComponent(t('cal_desc'));
+            const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(currentCalEventTitle)}&dates=${startStr}/${endStr}&details=${desc}`;
+            
+            window.open(url, '_blank');
+            closeCalModal();
+        }
+
+        function calExportICS() {
+            const date = new Date(currentCalEventTimestamp);
+            const startStr = formatDateTimeLocal(date, 11); // 11:00 AM
+            
+            const endD = new Date(date);
+            const endStr = formatDateTimeLocal(endD, 12);   // 12:00 PM
+
+            const icsContent = [
+                "BEGIN:VCALENDAR",
+                "VERSION:2.0",
+                "PRODID:-//TET Simulator//EN",
+                "BEGIN:VEVENT",
+                `DTSTART:${startStr}`,
+                `DTEND:${endStr}`,
+                `SUMMARY:${currentCalEventTitle}`,
+                `DESCRIPTION:${t('cal_desc')}`,
+                "BEGIN:VALARM",
+                "TRIGGER:-PT0M",
+                "ACTION:DISPLAY",
+                "DESCRIPTION:Reminder",
+                "END:VALARM",
+                "END:VEVENT",
+                "END:VCALENDAR"
+            ].join("\n");
+
+            const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `${currentCalEventTitle.replace(/\s+/g, '_')}.ics`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            
+            closeCalModal();
         }
 
         function renderNodes() {
@@ -778,6 +972,7 @@
 
         function getInputsData() {
             const data = {
+                startDate: document.getElementById('startDateInput').value,
                 accel: document.getElementById('accelToken').value, wallet: document.getElementById('currentWallet').value,
                 simDays: document.getElementById('simDaysInput').value, price: document.getElementById('tetPriceInput').value, 
                 globalCycle: document.getElementById('globalCycleInput') ? document.getElementById('globalCycleInput').value : 55,
@@ -832,11 +1027,15 @@
                 nodes.filter(n=>n.active).forEach(n => { if(n.cycleRemainingDays > maxRemaining) maxRemaining = n.cycleRemainingDays; });
                 if (maxRemaining > 0) simDays = maxRemaining; 
             }
+            
+            if (simDays > 3650) simDays = 3650; // Cap to 10 years to prevent freeze
+            
             return { simDays: simDays };
         }
 
         function calculateLedger(simDays) {
             let { accel, startWallet, globalCycle, nodes } = getInitialState();
+            let calendarEvents = [];
             
             document.getElementById('simDaysDisplay').innerText = simDays;
             let currentWallet = startWallet; let totalSpent = 0; let ledgerHTML = '';
@@ -913,6 +1112,12 @@
                     }
                 });
 
+                // Collect calendar events before rendering HTML
+                rowData.forEach((r) => {
+                    if (r.restake) calendarEvents.push({ day: d, id: r.id, type: 'restake' });
+                    if (r.justBought) calendarEvents.push({ day: d, id: r.id, type: 'buy' });
+                });
+
                 let rowNodesHTML = '';
                 rowData.forEach(r => {
                     let prodClass = "col-prod"; let restakeLabel = ""; let displayProd = ""; let displayBal = ""; let displayAcc = "-";
@@ -954,6 +1159,65 @@
             document.getElementById('logBody').innerHTML = ledgerHTML;
             updateResultCard(currentWallet, totalSpent);
             renderChart(chartLabels, chartData);
+            renderCalendar(calendarEvents);
+        }
+
+        function renderCalendar(events) {
+            const section = document.getElementById('calendarSection');
+            const content = document.getElementById('calendarContent');
+            let startDateStr = document.getElementById('startDateInput').value;
+
+            if (!startDateStr) {
+                startDateStr = new Date().toISOString().split('T')[0];
+                document.getElementById('startDateInput').value = startDateStr;
+            }
+
+            section.classList.remove('hidden');
+            content.innerHTML = '';
+
+            if (events.length === 0) {
+                content.innerHTML = `<p class="text-sm text-slate-500 italic p-2">${t('empty_calendar')}</p>`;
+                return;
+            }
+
+            // Parse start date accurately matching local timezone
+            const [year, month, day] = startDateStr.split('-').map(Number);
+            const startDate = new Date(year, month - 1, day);
+            
+            let html = '';
+            events.forEach(ev => {
+                let actionDate = new Date(startDate);
+                actionDate.setDate(actionDate.getDate() + ev.day);
+                
+                let dateOptions = { year: 'numeric', month: 'short', day: 'numeric', weekday: 'short' };
+                let dateStr = actionDate.toLocaleDateString(currentLang === 'zh' ? 'zh-CN' : 'en-US', dateOptions);
+                
+                let dayDisplay = `${t('day_prefix')}${ev.day}${t('day_suffix')}`;
+                let actionText = ev.type === 'restake' ? t('restake_action').replace('{id}', ev.id) : t('buy_action').replace('{id}', ev.id);
+                let colorClass = ev.type === 'restake' ? 'text-indigo-600 bg-indigo-50 border-indigo-100' : 'text-emerald-600 bg-emerald-50 border-emerald-100';
+                
+                let safeTitle = `${t('cal_event_prefix')}${actionText}`;
+                
+                // Redesigned to stack cleanly on mobile but align side-by-side on desktop
+                html += `
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 border border-slate-100 rounded-xl mb-2 hover:bg-slate-50 transition group gap-3 sm:gap-0">
+                        <div class="flex items-center gap-3 w-full sm:w-auto border-b sm:border-0 border-slate-50 pb-2 sm:pb-0">
+                            <div class="bg-slate-800 text-slate-100 font-mono text-[10px] px-2.5 py-1 rounded shadow-sm font-bold uppercase tracking-wider whitespace-nowrap">${dayDisplay}</div>
+                            <div class="font-bold text-[13px] sm:text-sm text-slate-700 truncate">${dateStr}</div>
+                        </div>
+                        <div class="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto mt-1 sm:mt-0">
+                            <div class="flex-grow sm:flex-grow-0 sm:w-[96px] text-center flex-shrink-0 text-[10px] sm:text-[11px] font-bold px-2 py-1.5 rounded-lg border shadow-sm ${colorClass}">
+                                ${actionText}
+                            </div>
+                            <button onclick="openCalModal('${safeTitle}', '${actionDate.getTime()}')" title="${t('add_to_calendar')}" class="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 border border-transparent hover:border-indigo-100 transition shadow-sm opacity-100 sm:opacity-50 sm:group-hover:opacity-100 active:scale-95 flex-shrink-0">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            content.innerHTML = html;
         }
 
         function renderChart(labels, data) {
@@ -1003,6 +1267,7 @@
         function saveState() { localStorage.setItem(INPUTS_KEY, JSON.stringify(getInputsData())); }
 
         function applyInputsData(data) {
+            document.getElementById('startDateInput').value = data.startDate || new Date().toISOString().split('T')[0];
             document.getElementById('accelToken').value = data.accel || 0; document.getElementById('currentWallet').value = data.wallet || 0;
             document.getElementById('simDaysInput').value = data.simDays || ''; document.getElementById('tetPriceInput').value = data.price || '0.50';
             if (document.getElementById('globalCycleInput')) { document.getElementById('globalCycleInput').value = data.globalCycle || 55; }
@@ -1025,6 +1290,7 @@
             
             localStorage.removeItem(INPUTS_KEY); activeProfileName = ''; localStorage.removeItem(ACTIVE_PROFILE_KEY);
             
+            document.getElementById('startDateInput').value = new Date().toISOString().split('T')[0];
             document.getElementById('accelToken').value = 0; document.getElementById('currentWallet').value = 0;
             document.getElementById('simDaysInput').value = ''; document.getElementById('tetPriceInput').value = '0.50';
             if (document.getElementById('globalCycleInput')) { document.getElementById('globalCycleInput').value = 55; }
@@ -1040,6 +1306,7 @@
 
             document.getElementById('summaryState').classList.add('hidden'); document.getElementById('initialState').classList.remove('hidden');
             document.getElementById('ledgerSection').classList.add('hidden'); document.getElementById('graphSection').classList.add('hidden');
+            document.getElementById('calendarSection').classList.add('hidden');
             
             saveState(); refreshNodes(); updateProfileDisplay(); showToast(t('reset_done'), null, true);
         }
@@ -1049,11 +1316,14 @@
             
             nameInput.value = activeProfileName || (currentLang === 'zh' ? '我的档案' : 'My Profile');
             
-            const profiles = JSON.parse(localStorage.getItem(PROFILES_KEY) || "[]"); listContainer.innerHTML = '';
+            const pMap = getProfiles();
+            const profilesArray = Object.values(pMap).filter(p => !p.deleted).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
             
-            if (profiles.length === 0) { listContainer.innerHTML = `<div class="p-4 text-xs font-bold text-slate-400 text-center">${currentLang === 'zh' ? '暂无保存的档案' : 'No saved profiles'}</div>`; } 
+            listContainer.innerHTML = '';
+            
+            if (profilesArray.length === 0) { listContainer.innerHTML = `<div class="p-4 text-xs font-bold text-slate-400 text-center">${currentLang === 'zh' ? '暂无保存的档案' : 'No saved profiles'}</div>`; } 
             else {
-                profiles.forEach(p => {
+                profilesArray.forEach(p => {
                     const div = document.createElement('div'); div.className = "p-3 hover:bg-indigo-50 cursor-pointer flex justify-between items-center transition-colors text-sm font-bold text-slate-700";
                     div.onclick = () => { nameInput.value = p.name; }; div.innerHTML = `<span>${p.name}</span> <span class="text-[10px] text-slate-400 font-normal">${p.date}</span>`;
                     listContainer.appendChild(div);
@@ -1072,28 +1342,26 @@
             const data = getInputsData(); 
             const finalAmt = document.getElementById('finalAmount').innerText;
             
-            let profiles = JSON.parse(localStorage.getItem(PROFILES_KEY) || "[]"); 
-            let existingIdx = profiles.findIndex(p => p.name === name);
+            let profiles = getProfiles(); 
+            let exists = !!profiles[name];
         
-            if (existingIdx >= 0) { 
+            if (exists && !profiles[name].deleted) { 
                 if(confirm(t('confirm_overwrite'))) { 
-                    // MERGE: Keep existing YOLO data, update shared inputs and Simulator amt
-                    profiles[existingIdx].timestamp = Date.now();
-                    profiles[existingIdx].synced = false;
-                    profiles[existingIdx].data = data;
-                    profiles[existingIdx].amt_sim = finalAmt;
-                    profiles[existingIdx].date = new Date().toLocaleString();
+                    profiles[name].timestamp = Date.now();
+                    profiles[name].synced = false;
+                    profiles[name].data = data; // Overwrite data structurally
+                    profiles[name].amt_sim = finalAmt;
+                    profiles[name].date = new Date().toLocaleString();
                 } else { return; } 
             } 
             else { 
                 // NEW PROFILE
-                profiles.unshift({
+                profiles[name] = {
                     name: name, timestamp: Date.now(), synced: false, data: data,
                     amt_sim: finalAmt, date: new Date().toLocaleString()
-                }); 
+                };
             }
         
-            profiles.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
             localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles)); 
             activeProfileName = name; 
             localStorage.setItem(ACTIVE_PROFILE_KEY, activeProfileName);
@@ -1118,21 +1386,24 @@
         }
 
         function renderProfiles() {
-            const p = JSON.parse(localStorage.getItem(PROFILES_KEY) || "[]"); 
+            const pMap = getProfiles(); 
             const container = document.getElementById('profileListContainer'); 
             container.innerHTML = '';
+            
+            const pArray = Object.values(pMap).filter(p => !p.deleted).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
             
             let dotClass = "bg-indigo-400";
             if (currentSyncStatus === 'success') dotClass = "bg-emerald-400";
             else if (currentSyncStatus === 'error') dotClass = "bg-amber-400";
         
-            if (p.length === 0) {
+            if (pArray.length === 0) {
                 container.innerHTML = `<div class="p-8 text-center text-xs font-bold text-slate-400">${currentLang === 'zh' ? '暂无保存的档案' : 'No saved profiles'}</div>`;
                 return;
             }
 
-            p.forEach((r, i) => {
+            pArray.forEach((r) => {
                 const displayName = r.name ? r.name : '-';
+                const safeName = r.name ? r.name.replace(/'/g, "\\'").replace(/"/g, "&quot;") : '';
                 
                 // Retrieve Simulator specific amount
                 let amtSim = r.amt_sim || (r.app === 'simulator' ? r.amt : null);
@@ -1155,7 +1426,7 @@
                             </div>
 
                             <!-- Desktop Date -->
-                            <div class="hidden sm:block w-[120px] flex-shrink-0 text-[10px] text-slate-500 font-mono pr-2 truncate">
+                            <div class="hidden sm:block w-[145px] flex-shrink-0 text-[10px] text-slate-500 font-mono pr-2 whitespace-nowrap">
                                 ${r.date || '-'}
                             </div>
 
@@ -1173,8 +1444,8 @@
 
                             <!-- Actions -->
                             <div class="flex items-center gap-2 w-full sm:w-[90px] sm:justify-end border-t sm:border-0 border-slate-100 pt-3 sm:pt-0">
-                                <button onclick="loadProfile(${i})" class="flex-1 sm:flex-none bg-indigo-50 hover:bg-indigo-100 text-indigo-600 py-2 sm:px-3 sm:py-1.5 rounded-lg text-xs sm:text-[10px] font-bold transition-colors text-center shadow-sm sm:shadow-none">${t('load')}</button>
-                                <button onclick="delProfile(${i})" class="bg-slate-50 hover:bg-red-50 text-slate-400 hover:text-red-500 px-4 py-2 sm:px-2 sm:py-1.5 rounded-lg text-base leading-none transition-colors border border-slate-200 sm:border-transparent">&times;</button>
+                                <button onclick="loadProfile('${safeName}')" class="flex-1 sm:flex-none bg-indigo-50 hover:bg-indigo-100 text-indigo-600 py-2 sm:px-3 sm:py-1.5 rounded-lg text-xs sm:text-[10px] font-bold transition-colors text-center shadow-sm sm:shadow-none">${t('load')}</button>
+                                <button onclick="delProfile('${safeName}')" class="bg-slate-50 hover:bg-red-50 text-slate-400 hover:text-red-500 px-4 py-2 sm:px-2 sm:py-1.5 rounded-lg text-base leading-none transition-colors border border-slate-200 sm:border-transparent">&times;</button>
                             </div>
                         </div>
                     </div>
@@ -1182,27 +1453,42 @@
             });
         }
         
-        function loadProfile(idx) {
+        function loadProfile(name) {
             if(!confirm(t('confirm_load'))) return;
-            let p = JSON.parse(localStorage.getItem(PROFILES_KEY) || "[]");
-            if(p[idx]) {
-                applyInputsData(p[idx].data); activeProfileName = p[idx].name; localStorage.setItem(ACTIVE_PROFILE_KEY, activeProfileName);
+            let pMap = getProfiles();
+            if(pMap[name]) {
+                applyInputsData(pMap[name].data); activeProfileName = name; localStorage.setItem(ACTIVE_PROFILE_KEY, activeProfileName);
                 updateProfileDisplay(); toggleProfiles(); calculate(); showToast(t('loaded_success'), null, true);
             }
         }
 
-        function delProfile(i) {
+        function delProfile(name) {
             if(!confirm(t('confirm_delete'))) return;
-            let p = JSON.parse(localStorage.getItem(PROFILES_KEY) || "[]");
-            if (activeProfileName === p[i].name) { activeProfileName = ''; localStorage.removeItem(ACTIVE_PROFILE_KEY); updateProfileDisplay(); }
-            p.splice(i, 1); localStorage.setItem(PROFILES_KEY, JSON.stringify(p)); renderProfiles();
+            let pMap = getProfiles();
+            if (activeProfileName === name) { activeProfileName = ''; localStorage.removeItem(ACTIVE_PROFILE_KEY); updateProfileDisplay(); }
+            
+            if (pMap[name]) {
+                pMap[name].deleted = true;
+                pMap[name].timestamp = Date.now();
+                pMap[name].synced = false;
+            }
+            
+            localStorage.setItem(PROFILES_KEY, JSON.stringify(pMap)); renderProfiles();
             autoBackupProfiles();
         }
 
         function exportProfiles() {
-            const profiles = localStorage.getItem(PROFILES_KEY) || "[]";
-            if (profiles === "[]") return showToast(currentLang === 'zh' ? "没有可导出的档案" : "No profiles to export", null, true);
-            const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([profiles], { type: "application/json" }));
+            const pMap = getProfiles();
+            const exportData = {};
+            let hasProfiles = false;
+            for (let k in pMap) { 
+                if (!pMap[k].deleted) { 
+                    exportData[k] = pMap[k]; 
+                    hasProfiles = true;
+                } 
+            }
+            if (!hasProfiles) return showToast(currentLang === 'zh' ? "没有可导出的档案" : "No profiles to export", null, true);
+            const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(exportData)], { type: "application/json" }));
             a.download = `TET_Hub_Profiles_${new Date().toISOString().slice(0,10)}.json`; a.click(); URL.revokeObjectURL(a.href);
             showToast(currentLang === 'zh' ? "✅ 导出成功" : "✅ Export Successful", null, true);
         }
@@ -1213,10 +1499,18 @@
             reader.onload = function(e) {
                 try {
                     const imported = JSON.parse(e.target.result);
-                    if (Array.isArray(imported)) { 
+                    if (imported && typeof imported === 'object') { 
                         if (confirm(t('confirm_import'))) { 
-                            localStorage.setItem(PROFILES_KEY, JSON.stringify(imported)); renderProfiles(); 
-                            showToast(currentLang === 'zh' ? "✅ 导入成功" : "✅ Import Successful", null, true); autoBackupProfiles();
+                            let newMap = {};
+                            if (Array.isArray(imported)) {
+                                imported.forEach(p => { if (p && p.name) newMap[p.name] = p; });
+                            } else {
+                                newMap = imported;
+                            }
+                            localStorage.setItem(PROFILES_KEY, JSON.stringify(newMap)); 
+                            renderProfiles(); 
+                            showToast(currentLang === 'zh' ? "✅ 导入成功" : "✅ Import Successful", null, true); 
+                            autoBackupProfiles();
                         } 
                     } else throw new Error("Invalid format");
                 } catch (err) { showToast("❌ " + (currentLang === 'zh' ? "文件格式错误" : "Invalid file format"), null, true); }
@@ -1234,16 +1528,28 @@
         }
 
         async function exportReport() {
-            const wrapper = document.getElementById('reportWrapper'); const details = wrapper.querySelector('details');
-            const wasClosed = !details.hasAttribute('open'); if (wasClosed) details.setAttribute('open', '');
+            const wrapper = document.getElementById('reportWrapper'); 
+            
+            // Handle multiple detail tabs
+            const allDetails = wrapper.querySelectorAll('details');
+            const detailStates = [];
+            allDetails.forEach(d => {
+                detailStates.push(d.hasAttribute('open'));
+                d.setAttribute('open', '');
+            });
             
             const ledgerSec = document.getElementById('ledgerSection'); const logContainer = document.querySelector('.log-container');
+            const calContent = document.getElementById('calendarContent');
             
             const originalMaxHeight = logContainer.style.maxHeight; const originalOverflow = logContainer.style.overflow; const originalDisplay = logContainer.style.display;
+            const originalCalMaxHeight = calContent.style.maxHeight; const originalCalOverflow = calContent.style.overflow;
+            
             const originalWrapperWidth = wrapper.style.width; const originalWrapperMinWidth = wrapper.style.minWidth; const originalWrapperPadding = wrapper.style.padding;
             const originalWrapperBg = wrapper.style.backgroundColor; const originalLedgerWidth = ledgerSec.style.width;
             
+            // Expand scrollable elements for screenshot
             ledgerSec.classList.remove('overflow-hidden'); logContainer.style.maxHeight = 'none'; logContainer.style.overflow = 'visible'; logContainer.style.display = 'block'; 
+            calContent.style.maxHeight = 'none'; calContent.style.overflow = 'visible';
             
             wrapper.style.width = 'max-content'; wrapper.style.minWidth = '100%'; wrapper.style.padding = '24px'; wrapper.style.backgroundColor = '#f8fafc'; ledgerSec.style.width = '100%';
             
@@ -1269,10 +1575,16 @@
                 }
             } catch (err) { console.error("Export failed:", err); showToast("❌ Report generation failed!", null, true); } 
             finally {
+                // Restore layout
                 logContainer.style.maxHeight = originalMaxHeight; logContainer.style.overflow = originalOverflow; logContainer.style.display = originalDisplay;
+                calContent.style.maxHeight = originalCalMaxHeight; calContent.style.overflow = originalCalOverflow;
+                
                 wrapper.style.width = originalWrapperWidth; wrapper.style.minWidth = originalWrapperMinWidth; wrapper.style.padding = originalWrapperPadding; wrapper.style.backgroundColor = originalWrapperBg;
                 ledgerSec.style.width = originalLedgerWidth; ledgerSec.classList.add('overflow-hidden');
-                if (wasClosed) details.removeAttribute('open');
+                
+                allDetails.forEach((d, index) => {
+                    if (!detailStates[index]) d.removeAttribute('open');
+                });
             }
         }
 

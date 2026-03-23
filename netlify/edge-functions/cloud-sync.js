@@ -1,9 +1,12 @@
 export default async (request, context) => {
-    // 1. Setup CORS
+    // 1. Setup CORS & Prevent Caching (Crucial for real-time sync across devices)
     const corsHeaders = {
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
         "Access-Control-Allow-Headers": "Content-Type",
+        "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+        "Pragma": "no-cache",
+        "Expires": "0",
     };
 
     if (request.method === "OPTIONS") {
@@ -12,6 +15,8 @@ export default async (request, context) => {
 
     const url = new URL(request.url);
     const deviceId = url.searchParams.get("deviceId");
+    
+    // Kept exactly as your working code
     const appName = url.searchParams.get("app") || "yolo";
 
     if (!deviceId) {
@@ -39,6 +44,14 @@ export default async (request, context) => {
         const tokenData = await tokenRes.json();
         const token = tokenData.tenant_access_token;
 
+        // HELPER: Safely extract text from Lark's complex field formats (fixes the alias extraction bug)
+        const extractLarkText = (fieldData) => {
+            if (!fieldData) return "";
+            if (Array.isArray(fieldData)) return fieldData.map(item => item.text || "").join("").trim();
+            if (typeof fieldData === "object" && fieldData !== null) return (fieldData.text || "").trim();
+            return String(fieldData).trim();
+        };
+
         // 4. SECURITY CHECK: Verify License
         const licenseRes = await fetch(`https://open.larksuite.com/open-apis/bitable/v1/apps/${LARK_APP_TOKEN}/tables/${LARK_LICENSE_TABLE_ID}/records/search`, {
             method: "POST",
@@ -51,17 +64,28 @@ export default async (request, context) => {
         const licenseRecord = licenseData.data?.items?.[0];
 
         let isLicensed = false;
+        let effectiveDeviceId = deviceId; // Defaults to the user's own ID
+
         if (licenseRecord) {
-            const statusRaw = licenseRecord.fields["Status"];
-            let statusStr = typeof statusRaw === 'object' && statusRaw !== null ? (statusRaw.text || JSON.stringify(statusRaw)) : String(statusRaw || "");
-            if (statusStr.toLowerCase().includes("active")) isLicensed = true;
+            const statusStr = extractLarkText(licenseRecord.fields["Status"]);
+            if (statusStr.toLowerCase().includes("active")) {
+                isLicensed = true;
+
+                // --- MASTER ALIAS LOGIC ---
+                // If you set a "Master Device ID" in the License table, it safely extracts it and swaps IDs.
+                const masterStr = extractLarkText(licenseRecord.fields["Master Device ID"]);
+                if (masterStr !== "" && masterStr.toLowerCase() !== "undefined") {
+                    effectiveDeviceId = masterStr;
+                }
+            }
         }
 
         if (!isLicensed) {
             return new Response(JSON.stringify({success: false, msg: "Unauthorized"}), { status: 403, headers: corsHeaders });
         }
 
-        // 5. Search for existing backup
+        // 5. Search for existing backup (using the Effective ID)
+        // BUG FIX: Removed 'App Name' from Lark's strict filter. We fetch all records for the device and filter in JS to bypass Case-Sensitivity issues.
         const searchRes = await fetch(`https://open.larksuite.com/open-apis/bitable/v1/apps/${LARK_APP_TOKEN}/tables/${LARK_SYNC_TABLE_ID}/records/search`, {
             method: "POST",
             headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
@@ -69,14 +93,19 @@ export default async (request, context) => {
                 filter: { 
                     conjunction: "and", 
                     conditions: [
-                        { field_name: "Device ID", operator: "is", value: [deviceId] },
-                        { field_name: "App Name", operator: "is", value: [appName] }
+                        { field_name: "Device ID", operator: "is", value: [effectiveDeviceId] }
                     ] 
                 } 
             })
         });
         const searchData = await searchRes.json();
-        const existingRecord = searchData.data?.items?.[0];
+        const allRecords = searchData.data?.items || [];
+
+        // Case-insensitive match for the app name ("Hub" === "hub")
+        const existingRecord = allRecords.find(r => {
+            const rAppName = extractLarkText(r.fields["App Name"]);
+            return rAppName.toLowerCase() === appName.toLowerCase();
+        });
 
         // --- HANDLE RESTORE (GET) ---
         if (request.method === "GET") {
@@ -153,8 +182,8 @@ export default async (request, context) => {
 
             let payload = {
                 fields: {
-                    "Device ID": deviceId,
-                    "App Name": appName,
+                    "Device ID": effectiveDeviceId, // Writes explicitly to effective ID
+                    "App Name": existingRecord ? extractLarkText(existingRecord.fields["App Name"]) : appName, // Keep original case if it exists
                     "Profiles Data": [{ "file_token": fileToken }],
                     "Last Synced": readableDate
                 }

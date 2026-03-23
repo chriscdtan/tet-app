@@ -38,6 +38,113 @@
             100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
         }
         .urgent-pulse { animation: subtle-pulse 2s infinite; }
+        
+        /* Disabled Card Transitions */
+        .card-disabled { filter: grayscale(80%); opacity: 0.7; background-color: #f8fafc !important; }
+
+        /* 3D Realistic Neumorphic Toggle (Josetxu Style) */
+        .switch-3d {
+            position: relative;
+            display: inline-block;
+            width: 64px;
+            height: 30px;
+            margin: 4px 0; /* Accounts for the taller thumb */
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .switch-3d input { display: none; }
+
+        .switch-3d-track {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: #e2e8f0;
+            border-radius: 15px;
+            box-shadow: 
+                inset 0 3px 5px rgba(0,0,0,0.15),
+                inset 0 -1px 2px rgba(255,255,255,0.8),
+                0 1px 2px rgba(255,255,255,0.8);
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            overflow: hidden;
+        }
+        .switch-3d input:checked ~ .switch-3d-track {
+            background: #15d6ed; /* Bright cyan background */
+            box-shadow: 
+                inset 0 3px 6px rgba(0,100,120,0.3),
+                inset 0 -1px 2px rgba(255,255,255,0.5),
+                0 1px 2px rgba(255,255,255,0.8);
+        }
+
+        /* 3D Embossed Text */
+        .switch-3d-text-on, .switch-3d-text-off {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 11px;
+            font-weight: 800;
+            font-family: 'Arial', sans-serif;
+            transition: opacity 0.3s ease;
+        }
+        .switch-3d-text-on {
+            left: 10px;
+            color: #0b8092;
+            text-shadow: 0 1px 1px rgba(255,255,255,0.4);
+            opacity: 0;
+        }
+        .switch-3d-text-off {
+            right: 8px;
+            color: #94a3b8;
+            text-shadow: 0 1px 1px rgba(255,255,255,0.8);
+            opacity: 1;
+        }
+        .switch-3d input:checked ~ .switch-3d-track .switch-3d-text-on { opacity: 1; }
+        .switch-3d input:checked ~ .switch-3d-track .switch-3d-text-off { opacity: 0; }
+
+        /* Oversized Silver Thumb */
+        .switch-3d-thumb {
+            position: absolute;
+            top: -4px;
+            left: -2px;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #ffffff 0%, #f1f5f9 30%, #cbd5e1 80%, #94a3b8 100%);
+            box-shadow: 
+                2px 0 5px rgba(0,0,0,0.15),
+                0 4px 6px rgba(0,0,0,0.2),
+                inset 0 2px 3px rgba(255,255,255,0.9),
+                inset 0 -2px 3px rgba(0,0,0,0.1);
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2;
+        }
+        .switch-3d input:checked ~ .switch-3d-thumb {
+            transform: translateX(30px);
+            box-shadow: 
+                -2px 0 5px rgba(0,0,0,0.15),
+                0 4px 6px rgba(0,0,0,0.2),
+                inset 0 2px 3px rgba(255,255,255,0.9),
+                inset 0 -2px 3px rgba(0,0,0,0.1);
+        }
+
+        /* Glowing Ridges */
+        .switch-3d-ridges {
+            display: flex;
+            gap: 3px;
+        }
+        .switch-3d-ridges span {
+            width: 2px;
+            height: 12px;
+            border-radius: 1px;
+            background: #94a3b8;
+            box-shadow: inset 0 1px 1px rgba(0,0,0,0.3), 0 1px 0 rgba(255,255,255,0.8);
+            transition: all 0.4s ease;
+        }
+        .switch-3d input:checked ~ .switch-3d-thumb .switch-3d-ridges span {
+            background: #0ef4ff; /* Glowing neon cyan */
+            box-shadow: 0 0 5px #0ef4ff, inset 0 1px 1px rgba(255,255,255,0.8);
+        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 pb-24">
@@ -52,7 +159,7 @@
                     <h1 class="text-3xl font-black text-slate-800 tracking-tight">TET <span class="text-indigo-600" data-i18n="app_title">数据看板</span></h1>
                 </div>
                 <div class="flex items-center gap-2 mt-1">
-                    <p class="text-[10px] font-bold text-slate-400 uppercase">V1.2.0 • Hub Edition</p>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase">V1.3.0 • Hub Edition</p>
                 </div>
             </div>
             
@@ -93,7 +200,7 @@
                             <span id="heroTotalSafe">0.00</span> <span class="text-2xl md:text-3xl text-indigo-300">TET</span>
                         </div>
                         <div class="mt-4 inline-flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-lg border border-white/10">
-                            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" id="heroPulseIndicator"></span>
                             <span class="text-xs text-indigo-100 font-bold"><span id="activeAccountsCount">0</span> <span data-i18n="accounts_monitored">个账户监测中</span></span>
                         </div>
                     </div>
@@ -160,8 +267,10 @@
         const PROFILES_KEY = 'tet_hub_shared_profiles'; 
         const LANG_KEY = 'tet_hub_shared_lang';
         const AUTO_PROJECT_KEY = 'tet_yolo_auto_project'; 
+        const DISABLED_PROFILES_KEY = 'tet_dashboard_disabled'; // New Key for Toggle States
         
         let currentLang = localStorage.getItem(LANG_KEY) || 'zh';
+        let disabledProfiles = JSON.parse(localStorage.getItem(DISABLED_PROFILES_KEY) || '[]');
         let ecosystemChart = null;
         let processedProfiles = [];
 
@@ -181,7 +290,8 @@
                 no_data_title: '暂无档案数据', no_data_desc: '数据看板需要读取您的节点数据。请先在 TET 节点计算器 或 收益模拟器 中保存您的档案。', refresh: '刷新数据',
                 combined_chart: '合并产出趋势 (60天)', account_health: '各账户健康状态',
                 rescue_strategy: '跨账户救援策略', shortage_detected: '检测到资金缺口风险',
-                status_safe: '健康', status_danger: '风险', safe_sell: '可售出', shortage_lbl: '资金缺口', 
+                status_safe: '健康', status_danger: '风险', status_disabled: '未参与', toggle_monitor: '开启/关闭看板统计',
+                safe_sell: '可售出', shortage_lbl: '资金缺口', 
                 shortage_at_day: '在第 {d} 天',
                 rescue_req: '⚠️ <span class="font-black">{name}</span> <span class="text-slate-500 font-normal ml-1">需要 {amt} TET ({day})</span>',
                 rescue_action: '建议：从账户 <strong class="text-emerald-600">{src}</strong> 划转 <strong class="text-indigo-600">{amt} TET</strong> 至 <strong class="text-red-600">{target}</strong>。',
@@ -196,7 +306,8 @@
                 no_data_title: 'No Profiles Found', no_data_desc: 'The Dashboard needs data to analyze. Please save your profiles in TET Node Calculator or Profit Simulator first.', refresh: 'Refresh Data',
                 combined_chart: 'Combined Production Trend (60 Days)', account_health: 'Account Health Status',
                 rescue_strategy: 'Cross-Account Rescue Strategy', shortage_detected: 'Shortage Risk Detected',
-                status_safe: 'Healthy', status_danger: 'Risk', safe_sell: 'Safe Sell', shortage_lbl: 'Shortage', 
+                status_safe: 'Healthy', status_danger: 'Risk', status_disabled: 'Excluded', toggle_monitor: 'Include/Exclude from Dashboard',
+                safe_sell: 'Safe Sell', shortage_lbl: 'Shortage', 
                 shortage_at_day: 'At Day {d}',
                 rescue_req: '⚠️ <span class="font-black">{name}</span> <span class="text-slate-500 font-normal ml-1">Needs {amt} TET ({day})</span>',
                 rescue_action: 'Action: Transfer <strong class="text-indigo-600">{amt} TET</strong> from <strong class="text-emerald-600">{src}</strong> to <strong class="text-red-600">{target}</strong>.',
@@ -213,7 +324,9 @@
             currentLang = currentLang === 'zh' ? 'en' : 'zh';
             localStorage.setItem(LANG_KEY, currentLang);
             applyLanguage();
-            renderDashboard(); // Re-render text injects
+            // Re-render EVERYTHING when language changes
+            renderAccountGrid();
+            renderDashboardGlobals();
         }
 
         function applyLanguage() {
@@ -233,10 +346,73 @@
             loadAndProcessData();
         }
 
+        // Action Handler for Toggle Switch
+        window.toggleProfile = function(profileName, checkboxElement) {
+            if (disabledProfiles.includes(profileName)) {
+                disabledProfiles = disabledProfiles.filter(n => n !== profileName);
+            } else {
+                disabledProfiles.push(profileName);
+            }
+            localStorage.setItem(DISABLED_PROFILES_KEY, JSON.stringify(disabledProfiles));
+
+            // Update in-memory state
+            let p = processedProfiles.find(x => x.name === profileName);
+            if (p) p.isEnabled = !disabledProfiles.includes(profileName);
+
+            // 1. VISUALLY UPDATE THE CARD (Without destroying the DOM to keep CSS animation smooth)
+            if (checkboxElement) {
+                const card = checkboxElement.closest('.profile-card');
+                const isEnabled = checkboxElement.checked;
+                
+                if (isEnabled) {
+                    card.classList.remove('card-disabled');
+                    card.classList.add('bg-white');
+                    
+                    card.querySelector('.badge-enabled').classList.remove('hidden');
+                    card.querySelector('.badge-disabled').classList.add('hidden');
+                    
+                    const valueEl = card.querySelector('.card-value');
+                    valueEl.classList.remove('text-slate-400');
+                    valueEl.classList.add(card.dataset.activeColor);
+                    
+                    const decorEl = card.querySelector('.card-corner-decor');
+                    if (decorEl) decorEl.classList.remove('hidden');
+                } else {
+                    card.classList.add('card-disabled');
+                    card.classList.remove('bg-white');
+                    
+                    card.querySelector('.badge-enabled').classList.add('hidden');
+                    card.querySelector('.badge-disabled').classList.remove('hidden');
+                    
+                    const valueEl = card.querySelector('.card-value');
+                    valueEl.classList.remove(card.dataset.activeColor);
+                    valueEl.classList.add('text-slate-400');
+                    
+                    const decorEl = card.querySelector('.card-corner-decor');
+                    if (decorEl) decorEl.classList.add('hidden');
+                }
+            }
+
+            // 2. RECALCULATE GLOBALS ONLY
+            renderDashboardGlobals();
+        }
+
         // Step 2: Load profiles and run simulation
         function loadAndProcessData() {
             const raw = localStorage.getItem(PROFILES_KEY);
-            let profiles = raw ? JSON.parse(raw) : [];
+            let parsed = raw ? JSON.parse(raw) : {};
+
+            let profilesMap = {};
+            // Auto-migrate to dictionary format if needed
+            if (Array.isArray(parsed)) {
+                parsed.forEach(p => { if (p && p.name) profilesMap[p.name] = p; });
+                localStorage.setItem(PROFILES_KEY, JSON.stringify(profilesMap)); 
+            } else {
+                profilesMap = parsed;
+            }
+
+            // Filter out deleted tombstones
+            let profiles = Object.values(profilesMap).filter(p => !p.deleted);
 
             if (profiles.length === 0) {
                 document.getElementById('emptyState').classList.remove('hidden');
@@ -290,6 +466,7 @@
                 
                 processedProfiles.push({
                     name: p.name,
+                    isEnabled: !disabledProfiles.includes(p.name),
                     rawAccel: parseFloat(data.accel) || 0,
                     rawWallet: parseFloat(data.wallet) || 0,
                     safeAmt: simResult.safe,
@@ -304,7 +481,9 @@
             // Smooth fade in
             setTimeout(() => { dashboard.classList.remove('opacity-0'); }, 50);
 
-            renderDashboard();
+            // Render both sections initially
+            renderAccountGrid();
+            renderDashboardGlobals();
         }
 
         // Standard 60-Day Simulator Engine
@@ -418,7 +597,7 @@
         }
 
         // Step 3: Render View
-        function renderDashboard() {
+        function renderDashboardGlobals() {
             let totalSafe = 0;
             let totalShortage = 0;
             let totalStartWallet = 0;
@@ -428,21 +607,26 @@
             let surplusAccounts = [];
             let shortageAccounts = [];
             let hasOutdatedProfiles = false;
+            let activeCount = 0;
 
             processedProfiles.forEach(p => {
-                totalSafe += p.safeAmt;
-                totalShortage += p.shortageAmt;
-                totalStartWallet += p.rawWallet;
-                totalAccel += p.rawAccel;
+                // Aggregations only run for accounts that are Toggled ON
+                if (p.isEnabled) {
+                    totalSafe += p.safeAmt;
+                    totalShortage += p.shortageAmt;
+                    totalStartWallet += p.rawWallet;
+                    totalAccel += p.rawAccel;
+                    activeCount++;
 
-                if (p.safeAmt > 0) surplusAccounts.push({ name: p.name, amt: p.safeAmt });
-                if (p.shortageAmt > 0) shortageAccounts.push({ name: p.name, amt: p.shortageAmt, day: p.shortageDay });
+                    if (p.safeAmt > 0) surplusAccounts.push({ name: p.name, amt: p.safeAmt });
+                    if (p.shortageAmt > 0) shortageAccounts.push({ name: p.name, amt: p.shortageAmt, day: p.shortageDay });
 
-                for(let i=0; i<60; i++) {
-                    combinedChartData[i] += p.dailyWallets[i];
+                    for(let i=0; i<60; i++) {
+                        combinedChartData[i] += p.dailyWallets[i];
+                    }
                 }
 
-                // Check outdated status for Global Banner
+                // Check outdated status globally (even for disabled ones, as a heads up)
                 if (p.timestamp) {
                     if ((Date.now() - p.timestamp) > (24 * 60 * 60 * 1000)) hasOutdatedProfiles = true;
                 } else {
@@ -462,11 +646,103 @@
             document.getElementById('heroTotalSafe').innerText = totalSafe.toFixed(2);
             document.getElementById('heroCurrentWallet').innerText = totalStartWallet.toFixed(2);
             document.getElementById('heroTotalAccel').innerText = totalAccel.toFixed(2);
-            document.getElementById('activeAccountsCount').innerText = processedProfiles.length;
+            document.getElementById('activeAccountsCount').innerText = activeCount;
+            
+            let indicator = document.getElementById('heroPulseIndicator');
+            if (activeCount > 0) { indicator.className = "w-2 h-2 rounded-full bg-emerald-400 animate-pulse"; } 
+            else { indicator.className = "w-2 h-2 rounded-full bg-slate-400"; }
 
             renderRescueStrategy(surplusAccounts, shortageAccounts);
             renderChart(combinedChartData);
-            renderAccountGrid();
+        }
+
+        function renderAccountGrid() {
+            const grid = document.getElementById('accountsGrid');
+            grid.innerHTML = ''; // This only happens on load/language toggle now!
+
+            processedProfiles.forEach(p => {
+                const isSafe = p.shortageAmt === 0;
+                const isEnabled = p.isEnabled;
+                
+                let valueLabel = isSafe ? t('safe_sell') : t('shortage_lbl');
+                let activeColorClass = isSafe ? 'text-emerald-500' : 'text-red-500';
+                let valueColor = isEnabled ? activeColorClass : 'text-slate-400';
+                let valueAmt = isSafe ? p.safeAmt : p.shortageAmt;
+                let dayNote = (!isSafe && isEnabled) ? `<span class="text-[10px] text-red-500 font-bold ml-1 block mt-1">${t('shortage_at_day').replace('{d}', p.shortageDay)}</span>` : '';
+
+                // Outdated Warning
+                let savedDate = p.date || '-';
+                let isOutdated = false;
+                if (p.timestamp) {
+                    isOutdated = (Date.now() - p.timestamp) > (24 * 60 * 60 * 1000);
+                } else {
+                    let today = new Date().toLocaleDateString();
+                    if (!savedDate.includes(today)) isOutdated = true;
+                }
+                
+                let outdatedHTML = (isOutdated) ? `
+                    <div class="mt-3 bg-red-100 border border-red-300 text-red-700 text-xs font-bold px-3 py-2 rounded-lg text-center flex justify-center items-center shadow-sm urgent-pulse">
+                        ${t('outdated')}
+                    </div>
+                ` : '';
+
+                let dateHTML = `
+                    <div class="mt-4 pt-3 border-t border-slate-100 flex flex-col justify-between text-[10px] text-slate-400">
+                        <div class="flex justify-between items-center w-full">
+                            <span>📅 ${t('saved_date').replace('{date}', savedDate)}</span>
+                        </div>
+                        ${outdatedHTML}
+                    </div>
+                `;
+
+                let bgClasses = isEnabled ? 'bg-white' : 'card-disabled';
+
+                let html = `
+                    <div class="profile-card ${bgClasses} border border-slate-200 rounded-2xl p-5 shadow-sm transition-all duration-300 relative overflow-hidden group flex flex-col justify-between" data-active-color="${activeColorClass}">
+                        <div>
+                            <div class="card-corner-decor absolute top-0 right-0 w-16 h-16 rounded-bl-full bg-slate-50 transition-colors group-hover:bg-indigo-50/50 -z-0 ${isEnabled ? '' : 'hidden'}"></div>
+                            
+                            <!-- Header with 3D Josetxu Neumorphic Switch -->
+                            <div class="flex justify-between items-start mb-4 relative z-10">
+                                <h4 class="font-black text-slate-800 text-lg tracking-tight truncate pr-2 flex-1">${p.name}</h4>
+                                <div class="flex flex-col items-end gap-1.5 min-w-[65px]">
+                                    <label class="switch-3d" title="${t('toggle_monitor')}">
+                                        <!-- Note: passed 'this' to toggleProfile to target the specific DOM node -->
+                                        <input type="checkbox" ${isEnabled ? 'checked' : ''} onchange="toggleProfile('${p.name.replace(/'/g, "\\'")}', this)">
+                                        <div class="switch-3d-track">
+                                            <span class="switch-3d-text-on">ON</span>
+                                            <span class="switch-3d-text-off">OFF</span>
+                                        </div>
+                                        <div class="switch-3d-thumb">
+                                            <div class="switch-3d-ridges">
+                                                <span></span><span></span><span></span>
+                                            </div>
+                                        </div>
+                                    </label>
+                                    
+                                    <!-- Badges Pre-rendered and toggled via CSS classes -->
+                                    <div class="badge-enabled ${isEnabled ? '' : 'hidden'}">
+                                        ${isSafe 
+                                            ? `<span class="bg-emerald-100 text-emerald-700 text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wider">${t('status_safe')}</span>`
+                                            : `<span class="bg-red-100 text-red-700 text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wider urgent-pulse">${t('status_danger')}</span>`
+                                        }
+                                    </div>
+                                    <div class="badge-disabled ${isEnabled ? 'hidden' : ''}">
+                                        <span class="bg-slate-200 text-slate-500 text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wider">${t('status_disabled')}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="relative z-10">
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">${valueLabel}</p>
+                                <p class="card-value text-2xl font-black ${valueColor} tracking-tighter transition-colors duration-300">${valueAmt.toFixed(2)} ${dayNote}</p>
+                            </div>
+                        </div>
+                        ${dateHTML}
+                    </div>
+                `;
+                grid.innerHTML += html;
+            });
         }
 
         function renderRescueStrategy(surplusList, shortageList) {
@@ -484,8 +760,6 @@
 
             let surpluses = JSON.parse(JSON.stringify(surplusList)).sort((a,b) => b.amt - a.amt);
             
-            // Priority: Sort shortages so the accounts starving EARLIEST get rescued first.
-            // If the day is identical, sort by amount descending.
             let sortedShortages = JSON.parse(JSON.stringify(shortageList)).sort((a,b) => {
                 if (a.day !== b.day) return a.day - b.day;
                 return b.amt - a.amt;
@@ -532,68 +806,6 @@
                     p.innerHTML = `<span class="text-indigo-400 mt-0.5">↳</span> <span>${txt}</span>`;
                     container.appendChild(p);
                 });
-            });
-        }
-
-        function renderAccountGrid() {
-            const grid = document.getElementById('accountsGrid');
-            grid.innerHTML = '';
-
-            processedProfiles.forEach(p => {
-                const isSafe = p.shortageAmt === 0;
-                
-                let statusBadge = isSafe 
-                    ? `<span class="bg-emerald-100 text-emerald-700 text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wider">${t('status_safe')}</span>`
-                    : `<span class="bg-red-100 text-red-700 text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wider urgent-pulse">${t('status_danger')}</span>`;
-                
-                let valueLabel = isSafe ? t('safe_sell') : t('shortage_lbl');
-                let valueColor = isSafe ? 'text-emerald-500' : 'text-red-500';
-                let valueAmt = isSafe ? p.safeAmt : p.shortageAmt;
-                
-                let dayNote = !isSafe ? `<span class="text-[10px] text-red-500 font-bold ml-1 block mt-1">${t('shortage_at_day').replace('{d}', p.shortageDay)}</span>` : '';
-
-                // Calculate Date/Outdated Warning
-                let savedDate = p.date || '-';
-                let isOutdated = false;
-                if (p.timestamp) {
-                    isOutdated = (Date.now() - p.timestamp) > (24 * 60 * 60 * 1000);
-                } else {
-                    let today = new Date().toLocaleDateString();
-                    if (!savedDate.includes(today)) isOutdated = true;
-                }
-                
-                let outdatedHTML = isOutdated ? `
-                    <div class="mt-3 bg-red-100 border border-red-300 text-red-700 text-xs font-bold px-3 py-2 rounded-lg text-center flex justify-center items-center shadow-sm urgent-pulse">
-                        ${t('outdated')}
-                    </div>
-                ` : '';
-
-                let dateHTML = `
-                    <div class="mt-4 pt-3 border-t border-slate-100 flex flex-col justify-between text-[10px] text-slate-400">
-                        <div class="flex justify-between items-center w-full">
-                            <span>📅 ${t('saved_date').replace('{date}', savedDate)}</span>
-                        </div>
-                        ${outdatedHTML}
-                    </div>
-                `;
-
-                let html = `
-                    <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group flex flex-col justify-between">
-                        <div>
-                            <div class="absolute top-0 right-0 w-16 h-16 rounded-bl-full bg-slate-50 transition-colors group-hover:bg-indigo-50/50 -z-0"></div>
-                            <div class="flex justify-between items-start mb-4 relative z-10">
-                                <h4 class="font-black text-slate-800 text-lg tracking-tight truncate pr-4">${p.name}</h4>
-                                ${statusBadge}
-                            </div>
-                            <div class="relative z-10">
-                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">${valueLabel}</p>
-                                <p class="text-2xl font-black ${valueColor} tracking-tighter">${valueAmt.toFixed(2)} ${dayNote}</p>
-                            </div>
-                        </div>
-                        ${dateHTML}
-                    </div>
-                `;
-                grid.innerHTML += html;
             });
         }
 
