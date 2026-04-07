@@ -43,20 +43,42 @@
         .custom-scroll::-webkit-scrollbar, .log-container::-webkit-scrollbar { height: 6px; width: 6px; }
         .custom-scroll::-webkit-scrollbar-thumb, .log-container::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
         /* Accordion Styles */
         details > summary { list-style: none; cursor: pointer; transition: all 0.2s; }
         details > summary::-webkit-details-marker { display: none; }
-        details[open] > summary { border-bottom-color: #e2e8f0; margin-bottom: 0; }
+        details[open] > summary { border-bottom-color: #f1f5f9; margin-bottom: 0; }
         details > summary:after { content: '+'; float: right; font-weight: bold; font-size: 1.2em; color: #64748b; }
         details[open] > summary:after { content: '-'; color: #4f46e5; }
 
         /* Custom Inputs */
         .input-group { position: relative; }
-        .input-group label { position: absolute; top: -8px; left: 10px; background: white; padding: 0 4px; font-size: 10px; font-weight: bold; color: #64748b; cursor: pointer; display: flex; align-items: center; gap: 4px; z-index: 10; }
+        .input-group label { 
+            position: absolute; 
+            top: -8px; 
+            left: 10px; 
+            background: white; 
+            padding: 0 4px; 
+            font-size: 10px; 
+            font-weight: bold; 
+            color: #64748b; 
+            cursor: pointer; 
+            display: flex; 
+            align-items: center; 
+            gap: 4px; 
+            z-index: 10; 
+            border-radius: 4px;
+            white-space: nowrap; /* Fixes label wrapping on mobile */
+            max-width: 90%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
         .input-group label:hover { color: #4f46e5; }
 
         /* Info Icon */
-        .info-btn { display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; border-radius: 50%; background-color: #e2e8f0; color: #64748b; font-size: 9px; transition: all 0.2s; }
+        .info-btn { display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; border-radius: 50%; background-color: #e2e8f0; color: #64748b; font-size: 9px; transition: all 0.2s; flex-shrink: 0;}
         .input-group label:hover .info-btn { background-color: #4f46e5; color: white; }
         label:hover .info-btn { background-color: #4f46e5; color: white; }
         
@@ -74,8 +96,8 @@
 
         /* Ledger Table Styles */
         .col-bal { color: #64748b; font-family: monospace; }
-        .col-prod { color: #16a34a; font-weight: bold; font-family: monospace; }
-        .col-prod-red { color: #ef4444; font-weight: bold; font-family: monospace; }
+        .col-prod { color: #10b981; font-weight: bold; font-family: monospace; }
+        .col-prod-red { color: #f43f5e; font-weight: bold; font-family: monospace; }
         .col-acc { color: #f59e0b; font-size: 9px; font-family: monospace; }
         
         /* Sticky Column Fixes */
@@ -85,7 +107,7 @@
         .sticky-right { position: sticky; right: 0; z-index: 20; background-color: inherit; border-left: 2px solid #f1f5f9; }
 
         /* Sync Indicator Badge Styles */
-        .sync-badge { display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px; border-radius: 9999px; font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; transition: all 0.3s; }
+        .sync-badge { display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px; border-radius: 9999px; font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; transition: all 0.3s; flex-shrink: 0; }
         .sync-dot { width: 6px; height: 6px; border-radius: 50%; position: relative; }
         .sync-dot-ping { position: absolute; width: 100%; height: 100%; border-radius: 50%; opacity: 0.75; animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite; }
         @keyframes ping { 75%, 100% { transform: scale(2.5); opacity: 0; } }
@@ -105,15 +127,15 @@
 
     <!-- CALENDAR EXPORT MODAL -->
     <div id="calendarOptionModal" class="hidden fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 transition-opacity duration-300 opacity-0">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-xs overflow-hidden transform scale-95 transition-transform duration-300" id="calendarModalInner">
-            <div class="bg-slate-50 border-b border-slate-100 p-4 text-center">
-                <div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-2 shadow-sm">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-xs overflow-hidden transform scale-95 transition-transform duration-300 border border-slate-100" id="calendarModalInner">
+            <div class="bg-slate-50 border-b border-slate-100 p-5 text-center">
+                <div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-sm transform rotate-3">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                 </div>
                 <h3 class="font-black text-slate-800 tracking-tight text-lg" data-i18n="add_to_calendar">Add to Calendar</h3>
                 <p id="calEventPreviewTitle" class="text-xs text-slate-500 font-bold mt-1 truncate"></p>
             </div>
-            <div class="p-4 flex flex-col gap-3">
+            <div class="p-5 flex flex-col gap-3">
                 <button onclick="calExportGoogle()" class="w-full flex items-center justify-center gap-2 bg-white border-2 border-slate-200 hover:border-blue-400 hover:bg-blue-50 text-slate-700 font-bold py-3 rounded-xl transition shadow-sm active:scale-95">
                     🌐 <span data-i18n="google_cal">Google Calendar</span>
                 </button>
@@ -129,10 +151,10 @@
 
     <!-- PROFILE MODAL (Shared Hub System) -->
     <div id="profileModal" class="fixed inset-0 z-40 hidden flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 no-print">
-        <div class="bg-white w-full max-w-4xl h-[80vh] rounded-2xl shadow-xl flex flex-col overflow-hidden">
-            <div class="bg-slate-100 p-4 border-b border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+        <div class="bg-white w-full max-w-4xl h-[80vh] rounded-3xl shadow-xl flex flex-col overflow-hidden">
+            <div class="bg-slate-50 p-5 border-b border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <div class="flex items-center gap-4">
-                    <h3 class="font-black text-slate-700 uppercase" data-i18n="saved_profiles">Saved Profiles</h3>
+                    <h3 class="font-black text-slate-700 uppercase whitespace-nowrap" data-i18n="saved_profiles">Saved Profiles</h3>
                     
                     <div class="sync-badge bg-indigo-50 text-indigo-500 border border-indigo-100 shadow-sm">
                         <div class="sync-dot bg-indigo-500">
@@ -143,20 +165,20 @@
                 </div>
                 
                 <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-                    <button onclick="exportProfiles()" class="flex-1 sm:flex-none justify-center text-[10px] bg-white border border-slate-300 hover:bg-slate-50 text-slate-600 px-2 py-1.5 rounded-lg shadow-sm font-bold transition flex items-center gap-1">
+                    <button onclick="exportProfiles()" class="flex-1 sm:flex-none justify-center text-[10px] bg-white border border-slate-300 hover:bg-slate-50 text-slate-600 px-3 py-2 rounded-xl shadow-sm font-bold transition flex items-center gap-1">
                         ⬇️ <span data-i18n="export">Export</span>
                     </button>
-                    <label class="flex-1 sm:flex-none justify-center text-[10px] bg-white border border-slate-300 hover:bg-slate-50 text-slate-600 px-2 py-1.5 rounded-lg shadow-sm font-bold transition cursor-pointer flex items-center gap-1 m-0">
+                    <label class="flex-1 sm:flex-none justify-center text-[10px] bg-white border border-slate-300 hover:bg-slate-50 text-slate-600 px-3 py-2 rounded-xl shadow-sm font-bold transition cursor-pointer flex items-center gap-1 m-0">
                         ⬆️ <span data-i18n="import">Import</span>
                         <input type="file" class="hidden" accept=".json" onchange="importProfiles(event)">
                     </label>
-                    <button onclick="toggleProfiles()" class="text-slate-500 text-xl font-bold hover:text-red-500 transition ml-2 hidden sm:block">&times;</button>
+                    <button onclick="toggleProfiles()" class="text-slate-400 bg-slate-100 hover:bg-slate-200 w-8 h-8 rounded-full text-lg font-bold hover:text-red-500 transition ml-2 hidden sm:flex items-center justify-center">&times;</button>
                 </div>
             </div>
             
             <div class="flex-grow overflow-auto p-0 bg-white">
                 <!-- Desktop Header -->
-                <div class="hidden sm:flex items-center bg-slate-50 px-4 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider sticky top-0 z-10 shadow-sm border-b border-slate-200">
+                <div class="hidden sm:flex items-center bg-slate-50 px-5 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider sticky top-0 z-10 shadow-sm border-b border-slate-100">
                     <div class="w-[145px]" data-i18n="date">Date</div>
                     <div class="flex-1" data-i18n="profile_name">Profile Name</div>
                     <div class="w-[130px] text-right pr-4" data-i18n="th_final_bal">Final Bal</div>
@@ -166,27 +188,27 @@
                 <div id="profileListContainer" class="flex flex-col"></div>
             </div>
             
-            <div class="sm:hidden p-3 border-t border-slate-200">
-                <button onclick="toggleProfiles()" class="w-full bg-slate-200 text-slate-600 font-bold py-2 rounded-lg">关闭 / Close</button>
+            <div class="sm:hidden p-4 border-t border-slate-100 bg-slate-50">
+                <button onclick="toggleProfiles()" class="w-full bg-slate-200 text-slate-600 font-bold py-3 rounded-xl active:scale-95 transition">关闭 / Close</button>
             </div>
         </div>
     </div>
 
     <!-- SAVE PROFILE MODAL -->
     <div id="saveProfileModal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 no-print">
-        <div class="bg-white w-full max-w-md rounded-2xl shadow-xl flex flex-col overflow-hidden">
-            <div class="bg-slate-100 p-4 border-b border-slate-200 flex justify-between items-center">
+        <div class="bg-white w-full max-w-md rounded-3xl shadow-xl flex flex-col overflow-hidden">
+            <div class="bg-slate-50 p-5 border-b border-slate-100 flex justify-between items-center">
                 <h3 class="font-black text-slate-700 uppercase" data-i18n="save_profile">Save Profile</h3>
-                <button onclick="closeSaveProfileModal()" class="text-slate-500 text-xl font-bold hover:text-red-500 transition">&times;</button>
+                <button onclick="closeSaveProfileModal()" class="text-slate-400 bg-slate-100 hover:bg-slate-200 w-8 h-8 rounded-full text-lg font-bold hover:text-red-500 transition flex items-center justify-center">&times;</button>
             </div>
-            <div class="p-5 flex flex-col gap-5 bg-slate-50/50">
+            <div class="p-6 flex flex-col gap-6 bg-white">
                 <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1" data-i18n="profile_name">Profile Name</label>
-                    <input type="text" id="newProfileName" class="w-full border-2 border-slate-200 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-indigo-500 shadow-sm transition" placeholder="Enter name...">
+                    <label class="block text-[11px] font-black text-slate-400 uppercase mb-2" data-i18n="profile_name">Profile Name</label>
+                    <input type="text" id="newProfileName" class="w-full border-2 border-slate-200 rounded-xl px-4 py-3.5 text-sm font-bold outline-none focus:border-indigo-500 shadow-sm transition bg-slate-50 focus:bg-white" placeholder="Enter name...">
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-2" data-i18n="overwrite_existing">Or Overwrite Existing:</label>
-                    <div id="existingProfilesList" class="max-h-48 overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-sm divide-y divide-slate-100">
+                    <label class="block text-[11px] font-black text-slate-400 uppercase mb-2" data-i18n="overwrite_existing">Or Overwrite Existing:</label>
+                    <div id="existingProfilesList" class="max-h-48 overflow-y-auto bg-slate-50 border-2 border-slate-100 rounded-xl shadow-inner divide-y divide-slate-200/60 custom-scroll">
                         <!-- Populated dynamically -->
                     </div>
                 </div>
@@ -202,29 +224,30 @@
         
         <!-- HEADER -->
         <div class="flex flex-wrap justify-between items-start gap-4 no-print mb-2">
-            <div class="flex flex-col">
+            <div class="flex flex-col w-full sm:w-auto">
                 <div class="flex items-center gap-2">
-                    <h1 class="text-3xl font-black text-slate-800 tracking-tight">TET <span class="text-indigo-600" data-i18n="title_name">收益模拟器</span></h1>
+                    <h1 class="text-3xl sm:text-4xl font-black text-slate-800 tracking-tight">TET <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-500" data-i18n="title_name">收益模拟器</span></h1>
                 </div>
-                <div class="flex items-center gap-2 mt-1">
-                    <p class="text-[10px] font-bold text-slate-400 uppercase">V2.4.7 • Hub Edition</p>
+                <!-- MOBILE WRAPPING FIX applied here -->
+                <div class="flex items-center gap-1.5 mt-2 overflow-x-auto no-scrollbar pb-1 w-full max-w-[100vw]">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-100 px-2 py-0.5 rounded-md whitespace-nowrap flex-shrink-0">V2.4.7 • Hub Edition</span>
                     
-                    <div class="sync-badge bg-indigo-50 text-indigo-500 border border-indigo-100 shadow-sm">
+                    <div class="sync-badge bg-indigo-50 text-indigo-500 border border-indigo-100 shadow-sm flex-shrink-0 whitespace-nowrap">
                         <div class="sync-dot bg-indigo-500">
                             <div class="sync-dot-ping bg-indigo-400"></div>
                         </div>
                         <span class="sync-status-text" data-i18n="syncing">Cloud Sync</span>
                     </div>
 
-                    <span id="activeProfileBadge" class="hidden text-[9px] font-bold bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded border border-indigo-200 uppercase tracking-widest shadow-sm"></span>
+                    <span id="activeProfileBadge" class="hidden text-[9px] font-bold bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-md border border-indigo-200 uppercase tracking-widest shadow-sm whitespace-nowrap flex-shrink-0"></span>
                 </div>
             </div>
             
             <div id="topControls" class="flex gap-2 transition-opacity duration-300">
-                <button onclick="toggleProfiles()" class="bg-white/90 backdrop-blur border border-slate-300 shadow-sm text-indigo-600 font-bold text-xs px-3 py-2 rounded-full hover:bg-slate-50 transition flex items-center gap-1">
+                <button onclick="toggleProfiles()" class="bg-white/90 backdrop-blur border-2 border-slate-100 shadow-sm text-indigo-600 font-bold text-xs px-4 py-2 rounded-xl hover:bg-slate-50 hover:border-indigo-200 transition flex items-center gap-1.5">
                     📂 <span data-i18n="profiles_btn">Profiles</span>
                 </button>
-                <button onclick="toggleLanguage()" class="bg-white/90 backdrop-blur border border-slate-300 shadow-sm text-slate-700 font-bold text-xs px-3 py-2 rounded-full hover:bg-slate-50 transition flex items-center gap-1">
+                <button onclick="toggleLanguage()" class="bg-white/90 backdrop-blur border-2 border-slate-100 shadow-sm text-slate-700 font-bold text-xs px-4 py-2 rounded-xl hover:bg-slate-50 hover:border-slate-200 transition flex items-center gap-1.5">
                     🌐 <span id="langBtnText">EN / 中</span>
                 </button>
             </div>
@@ -234,12 +257,12 @@
         <div class="relative">
             
             <!-- PRO TEASER OVERLAY (Hidden for Pro Users, follows scroll when visible) -->
-            <div id="proOverlay" class="absolute inset-[-16px] z-30 hidden rounded-3xl bg-white/30 backdrop-blur-[3px] border border-white/60">
-                <div class="sticky top-[20vh] mx-auto mt-24 bg-slate-900/95 p-6 rounded-3xl text-center shadow-2xl transform transition-all flex flex-col items-center max-w-[280px]">
-                    <span class="text-4xl mb-3 drop-shadow-md">🔒</span>
-                    <h4 class="text-white font-black text-sm tracking-widest mb-1" data-i18n="pro_only">PRO ONLY</h4>
-                    <p class="text-slate-400 text-[10px] mb-5 leading-relaxed px-2" data-i18n="pro_desc">Unlock full features to customize nodes, boost acceleration, and enable cloud sync.</p>
-                    <button onclick="window.parent.postMessage('open_activation', '*')" class="bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white text-xs font-bold py-3 px-6 rounded-xl shadow-lg shadow-indigo-500/30 active:scale-95 transition w-full" data-i18n="unlock_btn">
+            <div id="proOverlay" class="absolute inset-[-16px] z-30 hidden rounded-[2.5rem] bg-white/40 backdrop-blur-[4px] border border-white/60">
+                <div class="sticky top-[20vh] mx-auto mt-24 bg-slate-900/95 p-8 rounded-3xl text-center shadow-2xl transform transition-all flex flex-col items-center max-w-[300px] border border-slate-700">
+                    <span class="text-5xl mb-4 drop-shadow-md">🔒</span>
+                    <h4 class="text-white font-black text-sm tracking-widest mb-2" data-i18n="pro_only">PRO ONLY</h4>
+                    <p class="text-slate-400 text-[11px] mb-6 leading-relaxed px-2 font-medium" data-i18n="pro_desc">Unlock full features to customize nodes, boost acceleration, and enable cloud sync.</p>
+                    <button onclick="window.parent.postMessage('open_activation', '*')" class="bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white text-xs font-bold py-3.5 px-8 rounded-xl shadow-[0_0_20px_rgba(99,102,241,0.4)] active:scale-95 transition w-full" data-i18n="unlock_btn">
                         Unlock Access
                     </button>
                 </div>
@@ -248,13 +271,16 @@
             <!-- Inputs container (Locked if Free) -->
             <div id="freemiumInputs" class="space-y-6">
                 <!-- 1. NODE SETTINGS -->
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
                     <details class="group" open>
-                        <summary class="px-5 py-4 bg-slate-50 border-b border-slate-200 font-bold text-xs text-slate-600 uppercase flex justify-between items-center select-none outline-none">
-                            <span><span class="w-2 h-2 rounded-full bg-blue-500 inline-block mr-2"></span><span data-i18n="node_settings">Node Settings</span></span>
+                        <summary class="px-6 py-5 bg-white border-b border-slate-100 font-black text-sm text-slate-700 uppercase flex justify-between items-center select-none outline-none cursor-pointer hover:bg-slate-50 transition-colors">
+                            <span class="flex items-center gap-2.5">
+                                <span class="p-1.5 rounded-lg bg-blue-50 text-blue-600 shadow-sm border border-blue-100 leading-none flex items-center justify-center w-8 h-8">🎛️</span>
+                                <span data-i18n="node_settings">Node Settings</span>
+                            </span>
                         </summary>
-                        <div class="p-4 bg-slate-50/50">
-                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4" id="nodesContainer">
+                        <div class="p-5 sm:p-6 bg-slate-50/50">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 sm:gap-5" id="nodesContainer">
                                 <!-- Dynamic Nodes -->
                             </div>
                         </div>
@@ -262,40 +288,43 @@
                 </div>
 
                 <!-- 2. GLOBAL INPUTS -->
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 space-y-5">
-                    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                <div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 sm:p-8 space-y-6">
+                    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-5">
                         <div class="input-group">
                             <label onclick="showHelp('tip_start_date')"><span data-i18n="lbl_start_date">Start Date</span> <span class="info-btn">💡</span></label>
-                            <input type="date" id="startDateInput" oninput="saveState()" class="w-full border-2 border-slate-100 rounded-xl px-3 py-3 text-[13px] font-bold outline-none focus:border-indigo-500 transition text-slate-700">
+                            <input type="date" id="startDateInput" oninput="saveState()" class="w-full border-2 border-slate-100 bg-slate-50/50 focus:bg-white rounded-xl px-4 py-3 text-[13px] font-bold outline-none focus:border-indigo-500 transition-all text-slate-700 shadow-sm">
                         </div>
                         <div class="input-group">
                             <label onclick="showHelp('tip_accel')"><span data-i18n="lbl_accel">Acceleration (TET)</span> <span class="info-btn">💡</span></label>
-                            <input type="number" id="accelToken" value="0" oninput="saveState(); refreshNodes()" class="w-full border-2 border-slate-100 rounded-xl px-3 py-3 text-lg font-bold outline-none focus:border-indigo-500 transition text-slate-700">
+                            <input type="number" id="accelToken" value="0" oninput="saveState(); refreshNodes()" class="w-full border-2 border-slate-100 bg-slate-50/50 focus:bg-white rounded-xl px-4 py-3 text-lg font-bold outline-none focus:border-indigo-500 transition-all text-slate-700 shadow-sm">
                         </div>
                         <div class="input-group">
                             <label onclick="showHelp('tip_wallet')"><span data-i18n="lbl_wallet">Wallet (TET)</span> <span class="info-btn">💡</span></label>
-                            <input type="number" id="currentWallet" value="0" oninput="saveState()" class="w-full border-2 border-slate-100 rounded-xl px-3 py-3 text-lg font-bold outline-none focus:border-indigo-500 transition text-slate-700">
+                            <input type="number" id="currentWallet" value="0" oninput="saveState()" class="w-full border-2 border-slate-100 bg-slate-50/50 focus:bg-white rounded-xl px-4 py-3 text-lg font-bold outline-none focus:border-indigo-500 transition-all text-slate-700 shadow-sm">
                         </div>
                         <div class="input-group">
                             <label onclick="showHelp('tip_simdays')"><span data-i18n="lbl_sim_days">Sim Days</span> <span class="info-btn">💡</span></label>
-                            <input type="number" id="simDaysInput" value="" placeholder="Max" oninput="saveState()" class="w-full border-2 border-slate-100 rounded-xl px-3 py-3 text-lg font-bold outline-none focus:border-indigo-500 transition text-slate-700">
+                            <input type="number" id="simDaysInput" value="" placeholder="Max" oninput="saveState()" class="w-full border-2 border-slate-100 bg-slate-50/50 focus:bg-white rounded-xl px-4 py-3 text-lg font-bold outline-none focus:border-indigo-500 transition-all text-slate-700 shadow-sm">
                         </div>
                         <div class="input-group">
                             <label onclick="showHelp('tip_price')"><span data-i18n="lbl_price">TET Price (USDT)</span> <span class="info-btn">💡</span></label>
-                            <input type="number" id="tetPriceInput" step="0.01" value="0.50" oninput="saveState()" class="w-full border-2 border-slate-100 rounded-xl px-3 py-3 text-lg font-bold outline-none focus:border-indigo-500 transition text-slate-700">
+                            <input type="number" id="tetPriceInput" step="0.01" value="0.50" oninput="saveState()" class="w-full border-2 border-slate-100 bg-slate-50/50 focus:bg-white rounded-xl px-4 py-3 text-lg font-bold outline-none focus:border-indigo-500 transition-all text-slate-700 shadow-sm">
                         </div>
                         <div class="input-group">
                             <label onclick="showHelp('tip_global_cycle')"><span data-i18n="lbl_global_cycle">Auto Stake Cycle</span> <span class="info-btn">💡</span></label>
-                            <select id="globalCycleInput" onchange="saveState()" class="w-full border-2 border-slate-100 rounded-xl px-3 py-3 text-lg font-bold outline-none focus:border-indigo-500 transition bg-white appearance-none text-slate-700">
+                            <select id="globalCycleInput" onchange="saveState()" class="w-full border-2 border-slate-100 bg-slate-50/50 focus:bg-white rounded-xl px-4 py-3 text-lg font-bold outline-none focus:border-indigo-500 transition-all appearance-none text-slate-700 shadow-sm">
                             </select>
                         </div>
                     </div>
-                    <button onclick="calculate()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl shadow-lg shadow-indigo-200 transition transform active:scale-95 flex items-center justify-center gap-2">
-                        <span data-i18n="run_analysis">🔎 Run Analysis</span>
-                    </button>
-                    <button onclick="resetInputs()" class="w-full bg-white border-2 border-slate-200 text-slate-500 hover:text-red-500 hover:border-red-200 font-bold py-3 rounded-xl transition flex items-center justify-center gap-2 active:scale-95">
-                        <span data-i18n="clear_inputs">Clear All Inputs</span>
-                    </button>
+                    
+                    <div class="flex flex-col sm:flex-row gap-3 pt-2">
+                        <button onclick="calculate()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl shadow-[0_4px_14px_0_rgba(99,102,241,0.39)] transition-transform transform active:scale-95 flex items-center justify-center gap-2">
+                            <span data-i18n="run_analysis">🔎 Run Analysis</span>
+                        </button>
+                        <button onclick="resetInputs()" class="sm:w-32 bg-white border-2 border-slate-200 text-slate-500 hover:text-red-500 hover:border-red-200 hover:bg-red-50 font-bold py-4 rounded-xl transition-all flex items-center justify-center gap-2 active:scale-95">
+                            <span data-i18n="clear_inputs">Reset</span>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -304,85 +333,100 @@
         <div id="reportWrapper" class="space-y-6 transition-all duration-300">
             
             <!-- Result Card -->
-            <div id="resultCard" class="bg-gradient-to-br from-slate-800 to-indigo-950 text-white rounded-2xl shadow-xl overflow-hidden relative transition-all duration-700">
-                <div class="absolute top-0 right-0 w-64 h-64 bg-white rounded-full mix-blend-overlay filter blur-3xl opacity-10 pointer-events-none"></div>
+            <div id="resultCard" class="bg-gradient-to-br from-slate-800 to-indigo-950 text-white rounded-3xl shadow-2xl overflow-hidden relative transition-all duration-700 border border-slate-800">
+                <!-- Ambient glows for aesthetic -->
+                <div class="absolute top-[-20%] left-[-10%] w-72 h-72 bg-indigo-500 rounded-full mix-blend-screen filter blur-[80px] opacity-30 pointer-events-none"></div>
+                <div class="absolute bottom-[-20%] right-[-10%] w-72 h-72 bg-purple-500 rounded-full mix-blend-screen filter blur-[80px] opacity-30 pointer-events-none"></div>
                 
                 <!-- NEW SAMPLE DATA BADGE (Hidden in Pro via CSS) -->
-                <div id="sampleBadge" class="hidden absolute top-4 right-4 bg-red-500 text-white text-[9px] font-black px-2.5 py-1.5 rounded-lg shadow-lg border border-red-400 z-20 animate-pulse items-center gap-1 cursor-pointer" onclick="window.parent.postMessage('open_activation', '*')">
+                <div id="sampleBadge" class="hidden absolute top-5 right-5 bg-red-500 text-white text-[10px] font-black px-3 py-1.5 rounded-lg shadow-lg border border-red-400 z-20 animate-pulse items-center gap-1.5 cursor-pointer" onclick="window.parent.postMessage('open_activation', '*')">
                     ⚠️ <span data-i18n="sample_data">Sample Data</span>
                 </div>
 
-                <div class="p-6 text-center">
-                    <h2 class="text-[10px] font-bold uppercase tracking-widest opacity-70 mb-2 mt-2" data-i18n="analysis_result">Analysis Result</h2>
+                <div class="p-5 md:p-8 text-center relative z-10">
+                    <h2 class="text-[11px] font-black uppercase tracking-[0.2em] text-white/60 mb-2" data-i18n="analysis_result">Analysis Result</h2>
                     
                     <div id="summaryState" class="hidden">
-                        <p class="text-sm font-bold opacity-80 whitespace-nowrap" data-i18n="final_balance">Projected Final Balance</p>
-                        <div class="text-4xl sm:text-5xl font-black tracking-tighter my-2 break-words"><span id="finalAmount">0.00</span> <span class="text-lg">TET</span></div>
-                        <p class="text-[10px] opacity-75 max-w-md mx-auto mt-2 leading-relaxed" data-i18n="final_desc">This is the estimated TET balance in your account at the end of the simulation period.</p>
+                        <p class="text-sm font-bold text-white/80 whitespace-nowrap mt-4" data-i18n="final_balance">Projected Final Balance</p>
+                        <div class="text-5xl sm:text-6xl font-black tracking-tighter my-3 break-words drop-shadow-lg"><span id="finalAmount">0.00</span> <span class="text-2xl text-white/70">TET</span></div>
+                        <p class="text-[11px] text-white/60 max-w-sm mx-auto mt-2 leading-relaxed" data-i18n="final_desc">This is the estimated TET balance in your account at the end of the simulation period.</p>
                         
-                        <!-- RESTAKED / REINVESTED -->
-                        <div class="grid grid-cols-3 gap-1 sm:gap-2 mt-6 bg-black/20 rounded-xl p-2 sm:p-3 md:p-4 border border-white/5 relative z-10">
-                            <div class="border-r border-white/10 px-1">
-                                <div class="text-[9px] sm:text-[10px] uppercase opacity-70 font-bold tracking-wider leading-tight" data-i18n="restaked_tet">Restaked</div>
-                                <div class="text-sm sm:text-base md:text-xl font-bold mt-1 text-sky-300 break-words" id="totalSpentAmount">0</div>
+                        <!-- RESTAKED / REINVESTED Grid -->
+                        <div class="grid grid-cols-3 gap-2 mt-8 bg-white/10 backdrop-blur-md rounded-2xl p-3 sm:p-4 border border-white/10 shadow-inner">
+                            <div class="border-r border-white/10 px-1 text-center overflow-hidden">
+                                <div class="text-[8px] sm:text-[10px] uppercase text-white/60 font-black tracking-wider whitespace-nowrap truncate" data-i18n="restaked_tet">Restaked</div>
+                                <div class="text-sm sm:text-lg md:text-xl font-bold mt-1.5 text-sky-300 drop-shadow truncate" id="totalSpentAmount">0</div>
                             </div>
-                            <div class="border-r border-white/10 px-1">
-                                <div class="text-[9px] sm:text-[10px] uppercase opacity-70 font-bold tracking-wider leading-tight" data-i18n="withdraw_tet">Withdraw (85%)</div>
-                                <div class="text-sm sm:text-base md:text-xl font-bold mt-1 text-indigo-200 break-words" id="withdrawAmount">0</div>
+                            <div class="border-r border-white/10 px-1 text-center overflow-hidden">
+                                <div class="text-[8px] sm:text-[10px] uppercase text-white/60 font-black tracking-wider whitespace-nowrap truncate" data-i18n="withdraw_tet">Withdraw (85%)</div>
+                                <div class="text-sm sm:text-lg md:text-xl font-bold mt-1.5 text-indigo-200 drop-shadow truncate" id="withdrawAmount">0</div>
                             </div>
-                            <div class="px-1">
-                                <div class="text-[9px] sm:text-[10px] uppercase opacity-70 font-bold tracking-wider leading-tight" data-i18n="usdt_value">USDT (90%)</div>
-                                <div class="text-sm sm:text-base md:text-xl font-bold mt-1 text-emerald-300 break-words" id="usdtAmount">$0.00</div>
+                            <div class="px-1 text-center overflow-hidden">
+                                <div class="text-[8px] sm:text-[10px] uppercase text-white/60 font-black tracking-wider whitespace-nowrap truncate" data-i18n="usdt_value">USDT (90%)</div>
+                                <div class="text-sm sm:text-lg md:text-xl font-bold mt-1.5 text-emerald-300 drop-shadow truncate" id="usdtAmount">$0.00</div>
                             </div>
                         </div>
                     </div>
                     
-                    <div id="initialState">
-                        <p class="text-sm text-white/50 italic" data-i18n="press_run">Press button above to analyze...</p>
+                    <div id="initialState" class="py-10">
+                        <p class="text-sm text-white/50 italic font-bold" data-i18n="press_run">Press button above to analyze...</p>
                     </div>
 
-                    <div class="mt-6 flex justify-center gap-2 sm:gap-3 no-print relative z-10 w-full max-w-sm mx-auto">
-                        <button onclick="openSaveProfileModal()" class="flex-1 text-[11px] bg-white/10 hover:bg-white/20 py-2.5 rounded-xl font-bold transition flex items-center justify-center gap-1.5 shadow-sm whitespace-nowrap">
+                    <div class="mt-8 flex justify-center gap-3 no-print relative z-10 w-full max-w-md mx-auto">
+                        <button onclick="openSaveProfileModal()" class="flex-1 text-xs bg-white/10 hover:bg-white/20 backdrop-blur-sm py-3.5 rounded-xl font-bold transition flex items-center justify-center gap-2 shadow-sm border border-white/10 whitespace-nowrap">
                             💾 <span data-i18n="btn_save">Save</span>
                         </button>
-                        <button onclick="shareResult()" class="flex-1 text-[11px] bg-white/10 hover:bg-white/20 py-2.5 rounded-xl font-bold transition flex items-center justify-center gap-1.5 shadow-sm whitespace-nowrap">
+                        <button onclick="shareResult()" class="flex-1 text-xs bg-white/10 hover:bg-white/20 backdrop-blur-sm py-3.5 rounded-xl font-bold transition flex items-center justify-center gap-2 shadow-sm border border-white/10 whitespace-nowrap">
                             📋 <span data-i18n="btn_copy">Copy</span>
                         </button>
-                        <button onclick="exportReport()" class="flex-1 text-[11px] bg-indigo-500 hover:bg-indigo-400 py-2.5 rounded-xl font-bold transition flex items-center justify-center gap-1.5 shadow-lg border border-indigo-400/30 whitespace-nowrap">
+                        <button onclick="exportReport()" class="flex-1 text-xs bg-indigo-500 hover:bg-indigo-400 py-3.5 rounded-xl font-bold transition flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(99,102,241,0.4)] border border-indigo-400/50 whitespace-nowrap">
                             📸 <span data-i18n="btn_export">Export</span>
                         </button>
                     </div>
                 </div>
             </div>
 
-            <!-- RESTAKE CALENDAR -->
-            <div id="calendarSection" class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden hidden transition-all">
+            <!-- RESTAKE CALENDAR (Redesigned Timeline) -->
+            <div id="calendarSection" class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden hidden transition-all">
                 <details class="group" open>
-                    <summary class="px-5 py-4 bg-slate-50 border-b border-slate-200 font-bold text-xs text-slate-600 uppercase flex justify-between items-center select-none outline-none">
-                        <span>📅 <span data-i18n="calendar_title">Restake Calendar</span></span>
+                    <summary class="px-6 py-5 bg-white border-b border-slate-100 font-black text-sm text-slate-700 uppercase flex justify-between items-center select-none outline-none cursor-pointer hover:bg-slate-50 transition-colors">
+                        <span class="flex items-center gap-2.5">
+                            <span class="p-1.5 rounded-lg bg-emerald-50 text-emerald-600 shadow-sm border border-emerald-100 leading-none flex items-center justify-center w-8 h-8">📅</span>
+                            <span data-i18n="calendar_title">Restake Calendar</span>
+                        </span>
                     </summary>
-                    <div class="p-4 bg-white w-full">
-                        <div id="calendarContent" class="space-y-2 max-h-80 overflow-y-auto custom-scroll pr-2">
-                            <!-- Populated dynamically -->
+                    <div class="p-5 sm:p-8 bg-slate-50/30 w-full">
+                        <div id="calendarContent" class="max-h-[32rem] overflow-y-auto custom-scroll pr-4">
+                            <!-- Populated dynamically with timeline -->
                         </div>
                     </div>
                 </details>
             </div>
 
-            <div id="graphSection" class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden hidden">
+            <!-- GRAPH SECTION -->
+            <div id="graphSection" class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden hidden">
                 <details class="group" open>
-                    <summary class="px-5 py-4 bg-slate-50 border-b border-slate-200 font-bold text-xs text-slate-600 uppercase flex justify-between items-center select-none outline-none">
-                        <span>📈 <span data-i18n="graph_title">Growth Trajectory</span></span>
+                    <summary class="px-6 py-5 bg-white border-b border-slate-100 font-black text-sm text-slate-700 uppercase flex justify-between items-center select-none outline-none cursor-pointer hover:bg-slate-50 transition-colors">
+                        <span class="flex items-center gap-2.5">
+                            <span class="p-1.5 rounded-lg bg-purple-50 text-purple-600 shadow-sm border border-purple-100 leading-none flex items-center justify-center w-8 h-8">📈</span>
+                            <span data-i18n="graph_title">Growth Trajectory</span>
+                        </span>
                     </summary>
-                    <div class="p-4 bg-white h-72 w-full relative">
-                        <canvas id="tetChart"></canvas>
+                    <div class="p-0 sm:p-5 bg-white w-full overflow-x-auto custom-scroll">
+                        <div class="p-4 sm:p-0 relative h-72 min-w-[600px] sm:min-w-full w-full">
+                            <canvas id="tetChart"></canvas>
+                        </div>
                     </div>
                 </details>
             </div>
             
-            <div id="ledgerSection" class="bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col min-h-[500px] overflow-hidden hidden transition-all">
-                <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center sticky top-0 z-20">
-                    <h3 class="font-bold text-xs text-slate-700 uppercase"><span data-i18n="ledger_title">Cashflow Forecast</span> (<span id="simDaysDisplay">0</span> <span data-i18n="days">Days</span>)</h3>
+            <!-- LEDGER SECTION -->
+            <div id="ledgerSection" class="bg-white rounded-3xl shadow-sm border border-slate-200 flex flex-col min-h-[500px] overflow-hidden hidden transition-all">
+                <div class="px-6 py-5 bg-white border-b border-slate-200 flex justify-between items-center sticky top-0 z-20 shadow-sm">
+                    <h3 class="font-black text-sm text-slate-700 uppercase flex items-center gap-2.5">
+                        <span class="p-1.5 rounded-lg bg-orange-50 text-orange-600 shadow-sm border border-orange-100 leading-none flex items-center justify-center w-8 h-8">📊</span>
+                        <span><span data-i18n="ledger_title">Cashflow Forecast</span> (<span id="simDaysDisplay">0</span> <span data-i18n="days">Days</span>)</span>
+                    </h3>
                 </div>
                 <div class="overflow-auto log-container flex-grow bg-white w-full">
                     <table id="mainLogTable" class="text-[10px] text-right font-mono border-collapse min-w-full whitespace-nowrap">
@@ -441,7 +485,7 @@
             zh: {
                 saved_profiles: '已保存的档案', date: '日期', profile_name: '档案名称',
                 final_balance: '预计期末总余额', th_final_bal: '期末余额', action: '操作',
-                profiles_btn: '档案', node_settings: '节点设置 (点击展开/收起)',
+                profiles_btn: '档案', node_settings: '节点设置',
                 lbl_start_date: '开始日期', lbl_accel: '加速 (TET)', lbl_wallet: '户口现有 (TET)', 
                 lbl_sim_days: '模拟天数', lbl_price: 'TET 价格 (USDT)',
                 lbl_global_cycle: '自动质押周期',
@@ -450,7 +494,7 @@
                 final_desc: '这是在模拟期结束时，您账户中预计将拥有的最终 TET 余额。',
                 restaked_tet: '复投 (TET)',
                 withdraw_tet: '提现 (85%)', usdt_value: 'USDT (90%)',
-                calendar_title: '复投日历', empty_calendar: '模拟期间无需复投。', restake_action: '复投节点 {id}', buy_action: '新增节点 {id}',
+                calendar_title: '复投日历', empty_calendar: '模拟期间无需复投', restake_action: '复投节点 {id}', buy_action: '新增节点 {id}',
                 day_prefix: '第 ', day_suffix: ' 天', cal_event_prefix: 'TET 操作: ', cal_desc: '由 TET 收益模拟器生成的提醒。',
                 add_to_calendar: '添加到日历', google_cal: 'Google 日历', apple_cal: 'Apple / 离线日历 (.ics)', cancel: '取消',
                 graph_title: 'TET 增长轨迹', export_report: '导出报告',
@@ -492,7 +536,7 @@
                 final_desc: 'This is the estimated TET balance in your account at the end of the simulation period.',
                 restaked_tet: 'Restaked',
                 withdraw_tet: 'Withdraw (85%)', usdt_value: 'USDT (90%)',
-                calendar_title: 'Restake Calendar', empty_calendar: 'No restakes required during simulation.', restake_action: 'Restake N{id}', buy_action: 'Buy N{id}',
+                calendar_title: 'Restake Calendar', empty_calendar: 'No restakes required during simulation', restake_action: 'Restake N{id}', buy_action: 'Buy N{id}',
                 day_prefix: 'Day ', day_suffix: '', cal_event_prefix: 'TET Action: ', cal_desc: 'Reminder generated by TET Simulator.',
                 add_to_calendar: 'Add to Calendar', google_cal: 'Google Calendar', apple_cal: 'Apple / Outlook (.ics)', cancel: 'Cancel',
                 graph_title: 'Growth Trajectory', export_report: 'Export',
@@ -504,7 +548,7 @@
                 msg_copy: '✅ TET Profit Simulator Final Balance\n💰 Est. Balance: *{amt} TET*\n📅 Sim Days: {days}\n----------------\nGen by TET Profit Simulator',
                 activate_node: 'Active', harvested_val: 'Harvested:', enter_acc_name: 'Enter profile name (leave same to overwrite):',
                 title_name: 'Profit Simulator',
-                clear_inputs: 'Clear All Inputs', confirm_reset: 'Are you sure you want to clear all inputs?', reset_done: 'Reset Complete',
+                clear_inputs: 'Reset', confirm_reset: 'Are you sure you want to clear all inputs?', reset_done: 'Reset Complete',
                 overwrite_existing: 'Or Overwrite Existing:',
                 confirm_overwrite: 'A profile with this name exists. Overwrite?', confirm_load: 'Loading a profile will replace your current inputs. Continue?', loaded_success: 'Profile loaded successfully', confirm_delete: 'Are you sure you want to delete this profile?',
                 export: 'Export', import: 'Import', confirm_import: 'Importing will overwrite existing profiles. Continue?',
@@ -524,7 +568,6 @@
             }
         };
 
-        // BUG FIX: Properly handles empty strings (like day_suffix in English)
         function t(key) { return i18n[currentLang][key] !== undefined ? i18n[currentLang][key] : key; }
 
         const nodeDefinitions = [
@@ -545,7 +588,6 @@
             applyLanguage();
 
             if (!isPro) {
-                // Freemium Teaser Logic
                 document.getElementById('startDateInput').value = new Date().toISOString().split('T')[0];
                 document.getElementById('accelToken').value = 500;
                 document.getElementById('currentWallet').value = 1200;
@@ -556,7 +598,6 @@
                     document.getElementById(`harv_${def.id}`).value = '';
                 });
 
-                // Activate sample nodes for the teaser simulation
                 document.getElementById('active_5000').checked = true;
                 document.getElementById('harv_5000').value = 35;
 
@@ -564,15 +605,12 @@
                 document.getElementById('harv_1000').value = 20;
 
                 refreshNodes();
-                updateSyncStatus('error'); // Trigger offline mode
+                updateSyncStatus('error'); 
                 
-                // Allow DOM to settle before drawing charts
                 setTimeout(calculate, 100);
             } else {
-                // Licensed Logic
                 loadState();
                 
-                // Initialize start date if empty
                 if (!document.getElementById('startDateInput').value) {
                     document.getElementById('startDateInput').value = new Date().toISOString().split('T')[0];
                 }
@@ -582,12 +620,10 @@
             }
         }
 
-        // --- STRATEGY STYLE DICTIONARY PROFILES (Completely Unified) ---
         function getProfiles() {
             const data = localStorage.getItem(PROFILES_KEY);
             let parsed = data ? JSON.parse(data) : {};
             
-            // Auto-migrate array to dictionary if somehow left behind
             if (Array.isArray(parsed)) {
                 let temp = {};
                 parsed.forEach(p => { if (p && p.name) temp[p.name] = p; });
@@ -605,7 +641,6 @@
             select.innerHTML = options;
         }
 
-        // --- STRATEGY STYLE SYNC UPDATER ---
         function updateSyncStatus(status) {
             currentSyncStatus = status;
             const badges = document.querySelectorAll('.sync-badge');
@@ -615,17 +650,17 @@
                 const text = badge.querySelector('.sync-status-text');
 
                 if (status === 'syncing') {
-                    badge.className = "sync-badge bg-indigo-50 text-indigo-500 border border-indigo-100 shadow-sm";
+                    badge.className = "sync-badge bg-indigo-50 text-indigo-500 border border-indigo-100 shadow-sm flex-shrink-0 whitespace-nowrap";
                     if (dot) dot.className = "sync-dot bg-indigo-500";
                     if (ping) ping.className = "sync-dot-ping bg-indigo-400";
                     if (text) { text.setAttribute('data-i18n', 'syncing'); text.innerText = t('syncing'); }
                 } else if (status === 'success') {
-                    badge.className = "sync-badge bg-emerald-50 text-emerald-600 border border-emerald-100 shadow-sm";
+                    badge.className = "sync-badge bg-emerald-50 text-emerald-600 border border-emerald-100 shadow-sm flex-shrink-0 whitespace-nowrap";
                     if (dot) dot.className = "sync-dot bg-emerald-500";
                     if (ping) ping.className = "hidden"; 
                     if (text) { text.setAttribute('data-i18n', 'sync_success'); text.innerText = t('sync_success'); }
                 } else if (status === 'error') {
-                    badge.className = "sync-badge bg-amber-50 text-amber-600 border border-amber-100 shadow-sm";
+                    badge.className = "sync-badge bg-amber-50 text-amber-600 border border-amber-100 shadow-sm flex-shrink-0 whitespace-nowrap";
                     if (dot) dot.className = "sync-dot bg-amber-500";
                     if (ping) ping.className = "hidden"; 
                     if (text) { text.setAttribute('data-i18n', 'sync_fail'); text.innerText = t('sync_fail'); }
@@ -637,7 +672,6 @@
             }
         }
         
-        // --- SMART DICTIONARY MERGE LOGIC WITH TOMBSTONES ---
         function syncProfilesByTimestamp(cloudData) {
             let cloudProfiles = {};
             if (cloudData && typeof cloudData === 'object') {
@@ -694,7 +728,6 @@
             return false;
         }       
         
-        // SAFE RESTORE FUNCTION
         async function autoRestoreProfiles() {
             if (!isPro) { updateSyncStatus('error'); return; }
 
@@ -796,7 +829,6 @@
             showToast("💡 " + msg, imgUrl, false);
         }
 
-        // --- CALENDAR EXPORT FUNCTIONS ---
         function openCalModal(title, timestamp) {
             currentCalEventTitle = title;
             currentCalEventTimestamp = parseInt(timestamp);
@@ -807,7 +839,6 @@
             const inner = document.getElementById('calendarModalInner');
             
             modal.classList.remove('hidden');
-            // Trigger reflow for animation
             void modal.offsetWidth; 
             modal.classList.remove('opacity-0');
             inner.classList.remove('scale-95');
@@ -838,10 +869,10 @@
 
         function calExportGoogle() {
             const date = new Date(currentCalEventTimestamp);
-            const startStr = formatDateTimeLocal(date, 11); // 11:00 AM
+            const startStr = formatDateTimeLocal(date, 11); 
             
             const endD = new Date(date);
-            const endStr = formatDateTimeLocal(endD, 12);   // 12:00 PM
+            const endStr = formatDateTimeLocal(endD, 12);   
             
             const desc = encodeURIComponent(t('cal_desc'));
             const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(currentCalEventTitle)}&dates=${startStr}/${endStr}&details=${desc}`;
@@ -852,10 +883,10 @@
 
         function calExportICS() {
             const date = new Date(currentCalEventTimestamp);
-            const startStr = formatDateTimeLocal(date, 11); // 11:00 AM
+            const startStr = formatDateTimeLocal(date, 11); 
             
             const endD = new Date(date);
-            const endStr = formatDateTimeLocal(endD, 12);   // 12:00 PM
+            const endStr = formatDateTimeLocal(endD, 12);   
 
             const icsContent = [
                 "BEGIN:VCALENDAR",
@@ -900,39 +931,41 @@
 
             nodeDefinitions.forEach(def => {
                 container.innerHTML += `
-                    <div class="bg-white border border-slate-200 rounded-xl p-3 shadow-sm hover:border-indigo-400 transition relative h-full flex flex-col justify-between">
+                    <div class="bg-white border-2 border-slate-100 rounded-2xl p-4 sm:p-5 shadow-sm hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:border-indigo-200 transition-all duration-300 relative h-full flex flex-col justify-between group overflow-hidden">
+                        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-400 to-purple-400 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                         <div>
-                            <div class="flex justify-between items-center mb-2 border-b border-slate-100 pb-2">
-                                 <div class="flex items-center gap-2">
-                                    <div class="relative inline-block w-8 h-4 align-middle select-none transition duration-200 ease-in">
-                                        <input type="checkbox" name="toggle" id="active_${def.id}" class="toggle-checkbox absolute block w-4 h-4 rounded-full bg-white border-4 appearance-none cursor-pointer border-slate-300 transition-all duration-300" onchange="saveState(); refreshNodes()" checked/>
-                                        <label for="active_${def.id}" class="toggle-label block overflow-hidden h-4 rounded-full bg-slate-300 cursor-pointer"></label>
+                            <div class="flex justify-between items-center mb-3 pb-3 border-b border-slate-100">
+                                 <div class="flex items-center gap-2.5">
+                                    <div class="relative inline-block w-9 h-5 align-middle select-none transition duration-200 ease-in">
+                                        <input type="checkbox" name="toggle" id="active_${def.id}" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer border-slate-300 transition-all duration-300" onchange="saveState(); refreshNodes()" checked/>
+                                        <label for="active_${def.id}" class="toggle-label block overflow-hidden h-5 rounded-full bg-slate-300 cursor-pointer"></label>
                                     </div>
-                                    <span class="font-black text-sm text-slate-700 whitespace-nowrap"><span data-i18n="node_n">${t('node_n')}</span> ${def.id}</span>
+                                    <span class="font-black text-[15px] text-slate-800 tracking-tight"><span data-i18n="node_n">${t('node_n')}</span> ${def.id}</span>
                                 </div>
+                                <div class="bg-indigo-50 text-indigo-600 text-[9px] font-black px-2 py-1 rounded-md">TET</div>
                             </div>
-                            <div class="space-y-3 mt-3">
+                            <div class="space-y-3 mt-2">
                                 <div class="input-group">
                                     <label onclick="showHelp('tip_harv')"><span data-i18n="days_harv">${t('days_harv')}</span> <span class="info-btn">💡</span></label>
-                                    <input type="number" id="harv_${def.id}" placeholder="0" oninput="saveState(); updateNodeCalc(${def.id}, ${def.reward})" class="w-full border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-mono outline-none focus:border-indigo-500">
+                                    <input type="number" id="harv_${def.id}" placeholder="0" oninput="saveState(); updateNodeCalc(${def.id}, ${def.reward})" class="w-full border-2 border-slate-100 bg-slate-50/50 focus:bg-white rounded-xl px-3 py-2.5 text-sm font-bold text-slate-700 outline-none focus:border-indigo-500 transition-all">
                                     <div class="text-[10px] text-slate-400 text-right mt-1 font-mono">
-                                        <span data-i18n="harvested_val">${t('harvested_val')}</span> <span id="calc_harv_${def.id}" class="font-bold text-slate-600">0.00</span> TET
+                                        <span data-i18n="harvested_val">${t('harvested_val')}</span> <span id="calc_harv_${def.id}" class="font-bold text-indigo-600">0.00</span> TET
                                     </div>
                                 </div>
                                 <div class="input-group">
                                     <label onclick="showHelp('tip_cyc')"><span data-i18n="cycle_days">${t('cycle_days')}</span> <span class="info-btn">💡</span></label>
-                                    <select id="cyc_${def.id}" onchange="saveState(); updateNodeCalc(${def.id}, ${def.reward})" class="w-full border border-slate-200 bg-white rounded-lg px-2 py-1.5 text-xs font-mono outline-none focus:border-indigo-500">
+                                    <select id="cyc_${def.id}" onchange="saveState(); updateNodeCalc(${def.id}, ${def.reward})" class="w-full border-2 border-slate-100 bg-slate-50/50 focus:bg-white rounded-xl px-3 py-2.5 text-sm font-bold text-slate-700 outline-none focus:border-indigo-500 transition-all appearance-none">
                                         ${cycleOptions}
                                     </select>
                                 </div>
                                 <div class="input-group">
-                                    <label class="text-indigo-500" onclick="showHelp('tip_over')"><span data-i18n="override">${t('override')}</span> <span class="info-btn">💡</span></label>
-                                    <input type="number" id="over_${def.id}" placeholder="Optional" oninput="saveState(); updateNodeCalc(${def.id}, ${def.reward})" class="w-full border border-indigo-100 bg-indigo-50/10 rounded-lg px-2 py-1.5 text-xs font-mono outline-none focus:border-indigo-500">
+                                    <label class="text-indigo-500" onclick="showHelp('tip_over')"><span data-i18n="override">${t('override')}</span> <span class="info-btn bg-indigo-100 text-indigo-500 hover:bg-indigo-500 hover:text-white">💡</span></label>
+                                    <input type="number" id="over_${def.id}" placeholder="Optional" oninput="saveState(); updateNodeCalc(${def.id}, ${def.reward})" class="w-full border-2 border-indigo-100 bg-indigo-50/30 focus:bg-white rounded-xl px-3 py-2.5 text-sm font-bold text-indigo-700 outline-none focus:border-indigo-400 transition-all">
                                 </div>
                             </div>
                             
-                            <div class="flex items-center justify-between mt-4 pt-3 border-t border-slate-100">
-                                <label class="text-[10px] font-bold text-slate-500 uppercase flex items-center gap-1 cursor-pointer hover:text-indigo-500 transition-colors" onclick="showHelp('tip_restake')">
+                            <div class="flex items-center justify-between mt-5 pt-3 border-t border-slate-100">
+                                <label class="text-[10px] font-bold text-slate-500 uppercase flex items-center gap-1.5 cursor-pointer hover:text-indigo-500 transition-colors" onclick="showHelp('tip_restake')">
                                     <span data-i18n="auto_restake">${t('auto_restake')}</span> <span class="info-btn">💡</span>
                                 </label>
                                 <div class="relative inline-block w-8 h-4 align-middle select-none transition duration-200 ease-in">
@@ -1112,7 +1145,6 @@
                     }
                 });
 
-                // Collect calendar events before rendering HTML
                 rowData.forEach((r) => {
                     if (r.restake) calendarEvents.push({ day: d, id: r.id, type: 'restake' });
                     if (r.justBought) calendarEvents.push({ day: d, id: r.id, type: 'buy' });
@@ -1176,46 +1208,56 @@
             content.innerHTML = '';
 
             if (events.length === 0) {
-                content.innerHTML = `<p class="text-sm text-slate-500 italic p-2">${t('empty_calendar')}</p>`;
+                content.innerHTML = `<div class="flex flex-col items-center justify-center py-12 text-center"><div class="text-5xl mb-4 opacity-50 drop-shadow-sm">🍃</div><p class="text-sm font-bold text-slate-400">${t('empty_calendar')}</p></div>`;
                 return;
             }
 
-            // Parse start date accurately matching local timezone
             const [year, month, day] = startDateStr.split('-').map(Number);
             const startDate = new Date(year, month - 1, day);
             
-            let html = '';
+            // New YOLO-style Vertical Timeline
+            let html = '<div class="relative border-l-2 border-slate-200 ml-4 space-y-5 pb-4 mt-2">';
+            
             events.forEach(ev => {
                 let actionDate = new Date(startDate);
                 actionDate.setDate(actionDate.getDate() + ev.day);
-                
                 let dateOptions = { year: 'numeric', month: 'short', day: 'numeric', weekday: 'short' };
                 let dateStr = actionDate.toLocaleDateString(currentLang === 'zh' ? 'zh-CN' : 'en-US', dateOptions);
                 
                 let dayDisplay = `${t('day_prefix')}${ev.day}${t('day_suffix')}`;
                 let actionText = ev.type === 'restake' ? t('restake_action').replace('{id}', ev.id) : t('buy_action').replace('{id}', ev.id);
-                let colorClass = ev.type === 'restake' ? 'text-indigo-600 bg-indigo-50 border-indigo-100' : 'text-emerald-600 bg-emerald-50 border-emerald-100';
                 
                 let safeTitle = `${t('cal_event_prefix')}${actionText}`;
                 
-                // Redesigned to stack cleanly on mobile but align side-by-side on desktop
+                // Colors mapped dynamically based on action
+                let bgTheme = ev.type === 'restake' ? 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100 hover:border-indigo-300' : 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100 hover:border-emerald-300';
+                let icon = ev.type === 'restake' ? '🔄' : '⚡';
+                let dotTheme = ev.type === 'restake' ? 'bg-indigo-100 text-indigo-600 border-white' : 'bg-emerald-100 text-emerald-600 border-white';
+                let cardHover = ev.type === 'restake' ? 'hover:border-indigo-300 hover:shadow-indigo-100' : 'hover:border-emerald-300 hover:shadow-emerald-100';
+
                 html += `
-                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 border border-slate-100 rounded-xl mb-2 hover:bg-slate-50 transition group gap-3 sm:gap-0">
-                        <div class="flex items-center gap-3 w-full sm:w-auto border-b sm:border-0 border-slate-50 pb-2 sm:pb-0">
-                            <div class="bg-slate-800 text-slate-100 font-mono text-[10px] px-2.5 py-1 rounded shadow-sm font-bold uppercase tracking-wider whitespace-nowrap">${dayDisplay}</div>
-                            <div class="font-bold text-[13px] sm:text-sm text-slate-700 truncate">${dateStr}</div>
+                    <div class="relative pl-7 sm:pl-8 group">
+                        <div class="absolute -left-[17px] top-1.5 w-8 h-8 rounded-full border-4 ${dotTheme} flex items-center justify-center text-[12px] shadow-sm group-hover:scale-110 transition-transform z-10">
+                            ${icon}
                         </div>
-                        <div class="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto mt-1 sm:mt-0">
-                            <div class="flex-grow sm:flex-grow-0 sm:w-[96px] text-center flex-shrink-0 text-[10px] sm:text-[11px] font-bold px-2 py-1.5 rounded-lg border shadow-sm ${colorClass}">
-                                ${actionText}
+                        
+                        <div class="bg-white border-2 border-slate-100 rounded-2xl p-4 sm:p-5 shadow-sm hover:shadow-lg ${cardHover} transition-all duration-300 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-2.5 mb-1.5">
+                                    <span class="bg-slate-800 text-white font-mono text-[10px] px-2.5 py-0.5 rounded-md font-bold tracking-widest uppercase shadow-sm whitespace-nowrap flex-shrink-0">${dayDisplay}</span>
+                                    <span class="text-[13px] font-bold text-slate-500">${dateStr}</span>
+                                </div>
+                                <h4 class="text-[15px] font-black text-slate-800 flex items-center gap-2">${actionText}</h4>
                             </div>
-                            <button onclick="openCalModal('${safeTitle}', '${actionDate.getTime()}')" title="${t('add_to_calendar')}" class="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 border border-transparent hover:border-indigo-100 transition shadow-sm opacity-100 sm:opacity-50 sm:group-hover:opacity-100 active:scale-95 flex-shrink-0">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                            
+                            <button onclick="openCalModal('${safeTitle}', '${actionDate.getTime()}')" title="${t('add_to_calendar')}" class="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all active:scale-95 border shadow-sm w-full sm:w-auto justify-center ${bgTheme}">
+                                📅 <span>${t('add_to_calendar')}</span>
                             </button>
                         </div>
                     </div>
                 `;
             });
+            html += '</div>';
             
             content.innerHTML = html;
         }
@@ -1245,10 +1287,10 @@
 
             initDiv.classList.add('hidden'); ledgerSec.classList.remove('hidden');
 
-            resultCard.className = "text-white rounded-2xl shadow-xl overflow-hidden relative transition-all duration-700 ";
-            if (finalWallet < 1000) { resultCard.className += "bg-gradient-to-br from-blue-400 to-indigo-600"; } 
-            else if (finalWallet < 5000) { resultCard.className += "bg-gradient-to-br from-indigo-600 to-purple-800"; } 
-            else if (finalWallet < 10000) { resultCard.className += "bg-gradient-to-br from-slate-800 to-indigo-950"; } 
+            resultCard.className = "text-white rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.15)] overflow-hidden relative transition-all duration-700 border border-slate-800 ";
+            if (finalWallet < 1000) { resultCard.className += "bg-gradient-to-br from-blue-600 to-indigo-800"; } 
+            else if (finalWallet < 5000) { resultCard.className += "bg-gradient-to-br from-indigo-700 to-purple-900"; } 
+            else if (finalWallet < 10000) { resultCard.className += "bg-gradient-to-br from-slate-800 to-slate-900"; } 
             else { resultCard.className += "bg-gradient-to-br from-black via-slate-900 to-black"; }
 
             summaryDiv.classList.remove('hidden');
@@ -1302,7 +1344,7 @@
             });
 
             const resultCard = document.getElementById('resultCard');
-            resultCard.className = "bg-gradient-to-br from-slate-800 to-indigo-950 text-white rounded-2xl shadow-xl overflow-hidden relative transition-all duration-700";
+            resultCard.className = "bg-gradient-to-br from-slate-800 to-indigo-950 text-white rounded-3xl shadow-2xl overflow-hidden relative transition-all duration-700 border border-slate-800";
 
             document.getElementById('summaryState').classList.add('hidden'); document.getElementById('initialState').classList.remove('hidden');
             document.getElementById('ledgerSection').classList.add('hidden'); document.getElementById('graphSection').classList.add('hidden');
@@ -1324,7 +1366,7 @@
             if (profilesArray.length === 0) { listContainer.innerHTML = `<div class="p-4 text-xs font-bold text-slate-400 text-center">${currentLang === 'zh' ? '暂无保存的档案' : 'No saved profiles'}</div>`; } 
             else {
                 profilesArray.forEach(p => {
-                    const div = document.createElement('div'); div.className = "p-3 hover:bg-indigo-50 cursor-pointer flex justify-between items-center transition-colors text-sm font-bold text-slate-700";
+                    const div = document.createElement('div'); div.className = "p-4 hover:bg-indigo-50 cursor-pointer flex justify-between items-center transition-colors text-sm font-bold text-slate-700";
                     div.onclick = () => { nameInput.value = p.name; }; div.innerHTML = `<span>${p.name}</span> <span class="text-[10px] text-slate-400 font-normal">${p.date}</span>`;
                     listContainer.appendChild(div);
                 });
@@ -1349,13 +1391,12 @@
                 if(confirm(t('confirm_overwrite'))) { 
                     profiles[name].timestamp = Date.now();
                     profiles[name].synced = false;
-                    profiles[name].data = data; // Overwrite data structurally
+                    profiles[name].data = data; 
                     profiles[name].amt_sim = finalAmt;
                     profiles[name].date = new Date().toLocaleString();
                 } else { return; } 
             } 
             else { 
-                // NEW PROFILE
                 profiles[name] = {
                     name: name, timestamp: Date.now(), synced: false, data: data,
                     amt_sim: finalAmt, date: new Date().toLocaleString()
@@ -1397,7 +1438,7 @@
             else if (currentSyncStatus === 'error') dotClass = "bg-amber-400";
         
             if (pArray.length === 0) {
-                container.innerHTML = `<div class="p-8 text-center text-xs font-bold text-slate-400">${currentLang === 'zh' ? '暂无保存的档案' : 'No saved profiles'}</div>`;
+                container.innerHTML = `<div class="p-10 text-center text-sm font-bold text-slate-400">${currentLang === 'zh' ? '暂无保存的档案' : 'No saved profiles'}</div>`;
                 return;
             }
 
@@ -1405,10 +1446,9 @@
                 const displayName = r.name ? r.name : '-';
                 const safeName = r.name ? r.name.replace(/'/g, "\\'").replace(/"/g, "&quot;") : '';
                 
-                // Retrieve Simulator specific amount
                 let amtSim = r.amt_sim || (r.app === 'simulator' ? r.amt : null);
                 let amtDisplay = amtSim ? amtSim : '-';
-                let colorClass = 'text-indigo-500'; 
+                let colorClass = 'text-indigo-600'; 
                 
                 if (amtDisplay !== '-') {
                     if (!String(amtDisplay).includes('TET')) amtDisplay += " TET";
@@ -1417,35 +1457,35 @@
                 }
         
                 container.innerHTML += `
-                    <div class="flex flex-col p-3 sm:px-4 sm:py-3 border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                    <div class="flex flex-col p-4 sm:px-5 sm:py-4 border-b border-slate-100 hover:bg-slate-50 transition-colors">
                         <div class="flex flex-col sm:flex-row sm:items-center justify-between w-full">
                             
                             <!-- Mobile Meta -->
-                            <div class="flex justify-between items-center sm:hidden mb-2">
+                            <div class="flex justify-between items-center sm:hidden mb-3">
                                 <span class="text-[10px] text-slate-400 font-mono">${r.date || '-'}</span>
                             </div>
 
                             <!-- Desktop Date -->
-                            <div class="hidden sm:block w-[145px] flex-shrink-0 text-[10px] text-slate-500 font-mono pr-2 whitespace-nowrap">
+                            <div class="hidden sm:block w-[145px] flex-shrink-0 text-[11px] text-slate-500 font-mono pr-2 whitespace-nowrap">
                                 ${r.date || '-'}
                             </div>
 
                             <!-- Profile Name & Result -->
-                            <div class="flex items-center justify-between w-full sm:flex-1 min-w-0 mb-3 sm:mb-0">
-                                <div class="font-bold text-slate-700 text-[13px] sm:text-sm flex items-center min-w-0 pr-3">
-                                    <span class="mr-2 row-dot flex-shrink-0 ${dotClass}"><span class="row-ping"></span></span>
+                            <div class="flex items-center justify-between w-full sm:flex-1 min-w-0 mb-4 sm:mb-0">
+                                <div class="font-bold text-slate-700 text-[14px] sm:text-[15px] flex items-center min-w-0 pr-3">
+                                    <span class="mr-3 row-dot flex-shrink-0 ${dotClass}"><span class="row-ping"></span></span>
                                     <span class="text-indigo-600 truncate">${displayName}</span>
                                 </div>
                                 
-                                <div class="font-bold font-mono text-[13px] sm:text-sm ${colorClass} text-right whitespace-nowrap sm:w-[130px] sm:pr-4 flex-shrink-0">
+                                <div class="font-bold font-mono text-[14px] sm:text-[15px] ${colorClass} text-right whitespace-nowrap sm:w-[130px] sm:pr-4 flex-shrink-0">
                                     ${amtDisplay}
                                 </div>
                             </div>
 
                             <!-- Actions -->
-                            <div class="flex items-center gap-2 w-full sm:w-[90px] sm:justify-end border-t sm:border-0 border-slate-100 pt-3 sm:pt-0">
-                                <button onclick="loadProfile('${safeName}')" class="flex-1 sm:flex-none bg-indigo-50 hover:bg-indigo-100 text-indigo-600 py-2 sm:px-3 sm:py-1.5 rounded-lg text-xs sm:text-[10px] font-bold transition-colors text-center shadow-sm sm:shadow-none">${t('load')}</button>
-                                <button onclick="delProfile('${safeName}')" class="bg-slate-50 hover:bg-red-50 text-slate-400 hover:text-red-500 px-4 py-2 sm:px-2 sm:py-1.5 rounded-lg text-base leading-none transition-colors border border-slate-200 sm:border-transparent">&times;</button>
+                            <div class="flex items-center gap-2.5 w-full sm:w-[90px] sm:justify-end border-t sm:border-0 border-slate-100 pt-3 sm:pt-0">
+                                <button onclick="loadProfile('${safeName}')" class="flex-1 sm:flex-none bg-indigo-50 hover:bg-indigo-100 text-indigo-700 py-2.5 sm:px-4 sm:py-2 rounded-xl text-xs sm:text-[11px] font-bold transition-colors text-center shadow-sm sm:shadow-none">${t('load')}</button>
+                                <button onclick="delProfile('${safeName}')" class="bg-slate-50 hover:bg-red-50 text-slate-400 hover:text-red-500 px-4 py-2.5 sm:px-3 sm:py-2 rounded-xl text-lg leading-none transition-colors border border-slate-200 sm:border-transparent active:scale-95">&times;</button>
                             </div>
                         </div>
                     </div>
@@ -1530,7 +1570,6 @@
         async function exportReport() {
             const wrapper = document.getElementById('reportWrapper'); 
             
-            // Handle multiple detail tabs
             const allDetails = wrapper.querySelectorAll('details');
             const detailStates = [];
             allDetails.forEach(d => {
@@ -1547,7 +1586,6 @@
             const originalWrapperWidth = wrapper.style.width; const originalWrapperMinWidth = wrapper.style.minWidth; const originalWrapperPadding = wrapper.style.padding;
             const originalWrapperBg = wrapper.style.backgroundColor; const originalLedgerWidth = ledgerSec.style.width;
             
-            // Expand scrollable elements for screenshot
             ledgerSec.classList.remove('overflow-hidden'); logContainer.style.maxHeight = 'none'; logContainer.style.overflow = 'visible'; logContainer.style.display = 'block'; 
             calContent.style.maxHeight = 'none'; calContent.style.overflow = 'visible';
             
@@ -1575,7 +1613,6 @@
                 }
             } catch (err) { console.error("Export failed:", err); showToast("❌ Report generation failed!", null, true); } 
             finally {
-                // Restore layout
                 logContainer.style.maxHeight = originalMaxHeight; logContainer.style.overflow = originalOverflow; logContainer.style.display = originalDisplay;
                 calContent.style.maxHeight = originalCalMaxHeight; calContent.style.overflow = originalCalOverflow;
                 

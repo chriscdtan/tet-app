@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>TET 数据看板</title>
 
-    <!-- App Icons & PWA Meta Tags -->
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/png" href="icon.png">
     <link rel="apple-touch-icon" href="icon.png">
@@ -18,37 +17,39 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <style>
-        body { font-family: 'Roboto', 'PingFang SC', 'Microsoft YaHei', sans-serif; background-color: #f8fafc; -webkit-tap-highlight-color: transparent; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+        body { font-family: 'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif; background-color: #f4f7f9; -webkit-tap-highlight-color: transparent; }
         
         /* Scrollbar Styling */
-        .custom-scroll::-webkit-scrollbar { height: 6px; width: 6px; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .custom-scroll::-webkit-scrollbar { height: 8px; width: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; border: 2px solid #f1f5f9; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
         
         /* Accordion Styles */
         details > summary { list-style: none; cursor: pointer; transition: all 0.2s; }
         details > summary::-webkit-details-marker { display: none; }
-        details[open] > summary { border-bottom-color: #e2e8f0; margin-bottom: 0; }
-        details > summary:after { content: '+'; float: right; font-weight: bold; font-size: 1.2em; color: #64748b; }
-        details[open] > summary:after { content: '-'; color: #4f46e5; }
+        details > summary::after { content: '+'; float: right; font-weight: 800; font-size: 1.2em; color: #94a3b8; transition: transform 0.3s ease; }
+        details[open] > summary::after { content: '−'; color: #4f46e5; transform: rotate(180deg); }
 
         /* Animation for pulse */
         @keyframes subtle-pulse {
             0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
-            70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+            70% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
             100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
         }
         .urgent-pulse { animation: subtle-pulse 2s infinite; }
         
         /* Disabled Card Transitions */
-        .card-disabled { filter: grayscale(80%); opacity: 0.7; background-color: #f8fafc !important; }
+        .card-disabled { filter: grayscale(100%); opacity: 0.65; background-color: #f8fafc !important; border-color: #e2e8f0 !important; }
 
-        /* 3D Realistic Neumorphic Toggle (Josetxu Style) */
+        /* 3D Realistic Neumorphic Toggle */
         .switch-3d {
             position: relative;
             display: inline-block;
-            width: 64px;
-            height: 30px;
-            margin: 4px 0; /* Accounts for the taller thumb */
+            width: 60px;
+            height: 28px;
+            margin: 4px 0;
             cursor: pointer;
             -webkit-tap-highlight-color: transparent;
         }
@@ -67,45 +68,30 @@
             overflow: hidden;
         }
         .switch-3d input:checked ~ .switch-3d-track {
-            background: #15d6ed; /* Bright cyan background */
+            background: #0ea5e9;
             box-shadow: 
                 inset 0 3px 6px rgba(0,100,120,0.3),
                 inset 0 -1px 2px rgba(255,255,255,0.5),
                 0 1px 2px rgba(255,255,255,0.8);
         }
 
-        /* 3D Embossed Text */
         .switch-3d-text-on, .switch-3d-text-off {
             position: absolute;
             top: 50%;
             transform: translateY(-50%);
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 800;
-            font-family: 'Arial', sans-serif;
             transition: opacity 0.3s ease;
         }
-        .switch-3d-text-on {
-            left: 10px;
-            color: #0b8092;
-            text-shadow: 0 1px 1px rgba(255,255,255,0.4);
-            opacity: 0;
-        }
-        .switch-3d-text-off {
-            right: 8px;
-            color: #94a3b8;
-            text-shadow: 0 1px 1px rgba(255,255,255,0.8);
-            opacity: 1;
-        }
+        .switch-3d-text-on { left: 10px; color: #0284c7; text-shadow: 0 1px 1px rgba(255,255,255,0.4); opacity: 0; }
+        .switch-3d-text-off { right: 8px; color: #94a3b8; text-shadow: 0 1px 1px rgba(255,255,255,0.8); opacity: 1; }
         .switch-3d input:checked ~ .switch-3d-track .switch-3d-text-on { opacity: 1; }
         .switch-3d input:checked ~ .switch-3d-track .switch-3d-text-off { opacity: 0; }
 
-        /* Oversized Silver Thumb */
         .switch-3d-thumb {
             position: absolute;
-            top: -4px;
-            left: -2px;
-            width: 38px;
-            height: 38px;
+            top: -3px; left: -2px;
+            width: 34px; height: 34px;
             border-radius: 50%;
             background: radial-gradient(circle at 30% 30%, #ffffff 0%, #f1f5f9 30%, #cbd5e1 80%, #94a3b8 100%);
             box-shadow: 
@@ -114,10 +100,7 @@
                 inset 0 2px 3px rgba(255,255,255,0.9),
                 inset 0 -2px 3px rgba(0,0,0,0.1);
             transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 2;
+            display: flex; align-items: center; justify-content: center; z-index: 2;
         }
         .switch-3d input:checked ~ .switch-3d-thumb {
             transform: translateX(30px);
@@ -128,137 +111,175 @@
                 inset 0 -2px 3px rgba(0,0,0,0.1);
         }
 
-        /* Glowing Ridges */
-        .switch-3d-ridges {
-            display: flex;
-            gap: 3px;
-        }
+        .switch-3d-ridges { display: flex; gap: 3px; }
         .switch-3d-ridges span {
-            width: 2px;
-            height: 12px;
-            border-radius: 1px;
+            width: 2px; height: 10px; border-radius: 1px;
             background: #94a3b8;
             box-shadow: inset 0 1px 1px rgba(0,0,0,0.3), 0 1px 0 rgba(255,255,255,0.8);
             transition: all 0.4s ease;
         }
         .switch-3d input:checked ~ .switch-3d-thumb .switch-3d-ridges span {
-            background: #0ef4ff; /* Glowing neon cyan */
-            box-shadow: 0 0 5px #0ef4ff, inset 0 1px 1px rgba(255,255,255,0.8);
+            background: #38bdf8;
+            box-shadow: 0 0 5px #38bdf8, inset 0 1px 1px rgba(255,255,255,0.8);
+        }
+
+        .text-glass {
+            background: linear-gradient(to right, #ffffff, #a5b4fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 pb-24">
+<body class="text-slate-800 pb-24 lg:pb-12">
 
-    <!-- MAIN APP CONTAINER -->
-    <div id="appContainer" class="max-w-[1400px] mx-auto p-4 md:p-6 space-y-6">
+    <div id="appContainer" class="max-w-[1600px] mx-auto p-4 md:p-6 space-y-8">
         
-        <!-- HEADER (Unified Hub Format) -->
+        <!-- Header Section -->
         <div class="flex flex-wrap justify-between items-start gap-4 no-print mb-2">
             <div class="flex flex-col">
                 <div class="flex items-center gap-2">
-                    <h1 class="text-3xl font-black text-slate-800 tracking-tight">TET <span class="text-indigo-600" data-i18n="app_title">数据看板</span></h1>
+                    <h1 class="text-3xl sm:text-4xl font-black text-slate-800 tracking-tight">TET <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-500" data-i18n="app_title">数据看板</span></h1>
                 </div>
                 <div class="flex items-center gap-2 mt-1">
-                    <p class="text-[10px] font-bold text-slate-400 uppercase">V1.3.0 • Hub Edition</p>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">V1.5.0 • Hub Edition</p>
                 </div>
             </div>
             
-            <div id="topControls" class="flex gap-2 transition-opacity duration-300">
+            <div id="topControls" class="flex flex-wrap items-center gap-3 transition-opacity duration-300">
+                <!-- Live Projection Toggle -->
+                <label class="flex items-center gap-2 bg-white/90 backdrop-blur border border-slate-300 shadow-sm px-3 py-1.5 rounded-full cursor-pointer hover:bg-slate-50 transition" title="00:00 AM Midnight Boundary Engine">
+                    <span class="text-xs font-bold text-slate-700 select-none" data-i18n="live_projection">实时预测</span>
+                    <div class="relative">
+                        <input type="checkbox" id="globalProjectionToggle" class="sr-only peer" onchange="toggleGlobalProjection(this.checked)">
+                        <div class="w-8 h-4 bg-slate-300 rounded-full peer peer-checked:bg-indigo-600 transition-colors duration-300"></div>
+                        <div class="absolute left-0 top-0 bg-white w-4 h-4 rounded-full transition-transform duration-300 border border-slate-300 peer-checked:translate-x-4 peer-checked:border-indigo-600 shadow-sm"></div>
+                    </div>
+                </label>
+
+                <!-- Standard Language Switch -->
                 <button onclick="toggleLanguage()" class="bg-white/90 backdrop-blur border border-slate-300 shadow-sm text-slate-700 font-bold text-xs px-3 py-2 rounded-full hover:bg-slate-50 transition flex items-center gap-1">
                     🌐 <span id="langBtnText">EN / 中</span>
                 </button>
             </div>
         </div>
 
-        <!-- GLOBAL WARNING BANNER -->
-        <div id="globalWarningBanner" class="hidden bg-red-500 text-white font-bold text-xs md:text-sm px-4 py-3 rounded-xl shadow-md flex flex-col sm:flex-row items-start sm:items-center gap-2 mb-4 animate-pulse">
-            <span class="text-lg leading-none">⚠️</span>
+        <!-- Outdated Warning -->
+        <div id="globalWarningBanner" class="hidden bg-gradient-to-r from-rose-500 to-red-600 text-white font-bold text-sm px-5 py-4 rounded-2xl shadow-lg shadow-rose-500/20 flex flex-col sm:flex-row items-start sm:items-center gap-3 animate-pulse border border-rose-400">
+            <span class="text-2xl leading-none shadow-sm">⚠️</span>
             <span data-i18n="global_outdated_warning" class="leading-relaxed"></span>
         </div>
 
-        <!-- EMPTY STATE -->
-        <div id="emptyState" class="max-w-2xl mx-auto mt-20 p-8 text-center hidden">
-            <div class="text-6xl mb-4 opacity-50">📂</div>
-            <h2 class="text-2xl font-black text-slate-700 mb-2" data-i18n="no_data_title">暂无档案数据</h2>
-            <p class="text-slate-500 mb-6" data-i18n="no_data_desc">数据看板需要读取您的节点数据。请先在 TET YOLO 或 收益模拟器 中保存您的档案。</p>
-            <button onclick="location.reload()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-indigo-200 transition active:scale-95">
+        <!-- Empty State -->
+        <div id="emptyState" class="max-w-2xl mx-auto mt-20 p-10 text-center hidden bg-white rounded-3xl shadow-sm border border-slate-100">
+            <div class="text-7xl mb-6 opacity-30 animate-bounce">📂</div>
+            <h2 class="text-3xl font-black text-slate-800 mb-3 tracking-tight" data-i18n="no_data_title">暂无档案数据</h2>
+            <p class="text-slate-500 mb-8 font-medium leading-relaxed" data-i18n="no_data_desc">数据看板需要读取您的节点数据。请先在 TET YOLO 或 收益模拟器 中保存您的档案。</p>
+            <button onclick="location.reload()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-8 rounded-2xl shadow-xl shadow-indigo-600/30 transition-all active:scale-95 flex items-center gap-2 mx-auto">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
                 <span data-i18n="refresh">刷新数据</span>
             </button>
         </div>
 
-        <!-- DASHBOARD CONTENT -->
-        <div id="dashboardContent" class="space-y-6 hidden transition-opacity duration-500 opacity-0">
+        <!-- MAIN LAYOUT GRID (Master-Detail Split) -->
+        <div id="dashboardContent" class="flex flex-col lg:flex-row gap-8 hidden transition-opacity duration-500 opacity-0">
             
-            <!-- 1. HERO OVERVIEW -->
-            <div class="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 rounded-3xl shadow-xl overflow-hidden relative">
-                <div class="absolute top-[-50%] right-[-10%] w-96 h-96 bg-indigo-500 rounded-full mix-blend-overlay filter blur-[100px] opacity-40 pointer-events-none"></div>
+            <!-- LEFT PANEL: Account Toggles (Master) -->
+            <!-- Note: order-2 on mobile pushes it to the bottom, order-1 on lg pulls it to the left -->
+            <div class="w-full lg:w-[360px] xl:w-[400px] shrink-0 order-2 lg:order-1 flex flex-col gap-5">
+                <div class="flex items-center gap-3 px-2">
+                    <div class="w-10 h-10 rounded-xl bg-slate-200 text-slate-600 flex items-center justify-center shadow-sm shrink-0">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                    </div>
+                    <h3 class="text-lg font-black text-slate-800 tracking-tight" data-i18n="account_health">各账户健康状态</h3>
+                </div>
                 
-                <div class="p-6 md:p-10 flex flex-col md:flex-row items-center justify-between gap-8 relative z-10">
-                    <div class="text-center md:text-left">
-                        <p class="text-indigo-200 text-xs font-bold uppercase tracking-widest mb-1" data-i18n="total_safe">生态总安全提现额度</p>
-                        <div class="text-5xl md:text-7xl font-black text-white tracking-tighter drop-shadow-sm flex items-baseline justify-center md:justify-start gap-2">
-                            <span id="heroTotalSafe">0.00</span> <span class="text-2xl md:text-3xl text-indigo-300">TET</span>
+                <!-- On mobile it displays as a 1 or 2 col grid, on PC it's a strict 1 col vertical stack -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4 custom-scroll" id="accountsGrid" style="max-height: calc(100vh - 150px); overflow-y: auto; padding-right: 5px;">
+                    <!-- Profiles injected here -->
+                </div>
+            </div>
+
+            <!-- RIGHT PANEL: Dashboard Visuals (Detail) -->
+            <!-- Note: order-1 on mobile keeps it at the top, order-2 on lg pushes it to the right -->
+            <div class="flex-1 min-w-0 order-1 lg:order-2 space-y-6 md:space-y-8">
+                
+                <!-- Hero Card -->
+                <div class="bg-slate-900 rounded-[2rem] shadow-2xl overflow-hidden relative border border-slate-800">
+                    <div class="absolute top-[-50%] right-[-10%] w-96 h-96 bg-indigo-600 rounded-full mix-blend-screen filter blur-[120px] opacity-40 pointer-events-none"></div>
+                    <div class="absolute bottom-[-20%] left-[-10%] w-72 h-72 bg-emerald-600 rounded-full mix-blend-screen filter blur-[100px] opacity-20 pointer-events-none"></div>
+                    
+                    <div class="p-6 md:p-10 flex flex-col 2xl:flex-row items-center justify-between gap-6 relative z-10">
+                        <div class="text-center 2xl:text-left w-full 2xl:w-auto">
+                            <p class="text-indigo-300/80 text-xs font-bold uppercase tracking-[0.2em] mb-2" data-i18n="total_safe">生态总安全提现额度</p>
+                            <div class="text-[2.5rem] leading-none sm:text-5xl md:text-7xl xl:text-8xl font-black text-white tracking-tighter drop-shadow-lg flex items-baseline justify-center 2xl:justify-start gap-2 flex-wrap">
+                                <span id="heroTotalSafe" class="text-glass truncate max-w-full">0.00</span> 
+                                <span class="text-xl sm:text-2xl md:text-4xl text-indigo-400 font-bold tracking-normal shrink-0">TET</span>
+                            </div>
+                            <div class="mt-6 inline-flex items-center gap-2.5 bg-white/5 backdrop-blur-md px-4 py-2 rounded-xl border border-white/10 shadow-inner">
+                                <span class="relative flex h-3 w-3 shrink-0">
+                                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" id="heroPulseRing"></span>
+                                    <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500" id="heroPulseIndicator"></span>
+                                </span>
+                                <span class="text-sm text-indigo-50 font-semibold tracking-wide truncate"><span id="activeAccountsCount">0</span> <span data-i18n="accounts_monitored">个账户监测中</span></span>
+                            </div>
                         </div>
-                        <div class="mt-4 inline-flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-lg border border-white/10">
-                            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" id="heroPulseIndicator"></span>
-                            <span class="text-xs text-indigo-100 font-bold"><span id="activeAccountsCount">0</span> <span data-i18n="accounts_monitored">个账户监测中</span></span>
+                        
+                        <div class="flex flex-row gap-3 sm:gap-4 w-full 2xl:w-auto mt-2 2xl:mt-0 md:shrink-0 justify-center">
+                            <div class="flex-1 2xl:flex-none min-w-[120px] md:min-w-[160px] bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 md:p-6 text-center flex flex-col justify-center shadow-xl transition-transform hover:scale-105">
+                                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1.5 md:mb-2 leading-tight whitespace-nowrap" data-i18n="total_wallets">当前户口总余额<br/>(TET)</p>
+                                <p class="text-base sm:text-lg md:text-2xl font-black text-white tracking-tight" id="heroCurrentWallet">0.00</p>
+                            </div>
+                            <div class="flex-1 2xl:flex-none min-w-[120px] md:min-w-[160px] bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 md:p-6 text-center flex flex-col justify-center shadow-xl transition-transform hover:scale-105">
+                                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1.5 md:mb-2 leading-tight whitespace-nowrap" data-i18n="total_accel">生态总加速<br/>(TET)</p>
+                                <p class="text-base sm:text-lg md:text-2xl font-black text-sky-400 tracking-tight" id="heroTotalAccel">0</p>
+                            </div>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Rescue Section -->
+                <div id="rescueSection" class="hidden animate-fade-in-up">
+                    <div class="flex items-center gap-3 mb-4 px-2">
+                        <div class="w-10 h-10 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center shadow-sm shrink-0">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                        </div>
+                        <h3 class="text-lg font-black text-slate-800 tracking-tight" data-i18n="rescue_strategy">跨账户救援策略</h3>
                     </div>
                     
-                    <div class="grid grid-cols-2 gap-4 w-full md:w-auto">
-                        <div class="bg-black/30 backdrop-blur border border-white/10 rounded-2xl p-4 text-center min-w-[140px] flex flex-col justify-center">
-                            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1" data-i18n="total_wallets">当前户口总余额 (TET)</p>
-                            <p class="text-xl font-bold text-white" id="heroCurrentWallet">0.00</p>
+                    <div class="bg-white border border-rose-200 rounded-3xl shadow-sm hover:shadow-md transition-shadow overflow-hidden">
+                        <div class="p-5 bg-gradient-to-r from-rose-50 to-white border-b border-rose-100 flex flex-wrap gap-2 justify-between items-center">
+                            <div class="flex items-center gap-2 font-bold text-rose-700">
+                                <span data-i18n="shortage_detected">检测到资金缺口风险</span>
+                            </div>
+                            <span class="text-sm font-black bg-rose-600 text-white px-3 py-1 rounded-lg shadow-sm whitespace-nowrap" id="rescueTotalShortage">0.00 TET</span>
                         </div>
-                        <div class="bg-black/30 backdrop-blur border border-white/10 rounded-2xl p-4 text-center min-w-[140px] flex flex-col justify-center">
-                            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1" data-i18n="total_accel">生态总加速 (TET)</p>
-                            <p class="text-xl font-bold text-sky-400" id="heroTotalAccel">0</p>
-                        </div>
+                        <div class="p-6 flex flex-col gap-5" id="rescueSuggestionsContainer">
+                            </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- 2. RESCUE STRATEGY (Only shows if shortages exist) -->
-            <div id="rescueSection" class="hidden">
-                <h3 class="text-sm font-black text-slate-700 uppercase tracking-widest mb-3 px-2 flex items-center gap-2">
-                    🚨 <span data-i18n="rescue_strategy">跨账户救援策略</span>
-                </h3>
-                <div class="bg-red-50 border border-red-200 rounded-2xl shadow-sm overflow-hidden">
-                    <div class="p-4 bg-red-500 text-white flex justify-between items-center">
-                        <div class="flex items-center gap-2 font-bold text-sm">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                            <span data-i18n="shortage_detected">检测到资金缺口风险</span>
+                <!-- Ecosystem Chart -->
+                <div class="bg-white rounded-3xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow flex flex-col w-full min-w-0">
+                    <details class="group w-full" open>
+                        <summary class="px-6 py-5 bg-slate-50/50 hover:bg-slate-50 border-b border-slate-100 font-bold text-sm text-slate-700 tracking-wide flex justify-between items-center select-none outline-none">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path></svg>
+                                </div>
+                                <span data-i18n="combined_chart">合并产出趋势 (60天)</span>
+                            </div>
+                        </summary>
+                        
+                        <!-- Horizontal Scroll Wrapper for Dense Charts -->
+                        <div class="w-full bg-white overflow-x-auto custom-scroll rounded-b-3xl">
+                            <div class="p-3 sm:p-5 relative" style="min-width: 800px; height: 350px;">
+                                <canvas id="ecosystemChart"></canvas>
+                            </div>
                         </div>
-                        <span class="text-xs font-black bg-white/20 px-2 py-1 rounded" id="rescueTotalShortage">0.00 TET</span>
-                    </div>
-                    <div class="p-4 md:p-6 bg-white flex flex-col gap-3" id="rescueSuggestionsContainer">
-                        <!-- Dynamic Suggestions Injected Here -->
-                    </div>
+                    </details>
                 </div>
-            </div>
 
-            <!-- 3. COMBINED CHART (Collapsible) -->
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                <details class="group" open>
-                    <summary class="px-5 py-4 bg-slate-50 border-b border-slate-200 font-bold text-xs text-slate-600 uppercase flex justify-between items-center select-none outline-none">
-                        <span>📈 <span data-i18n="combined_chart">合并产出趋势 (60天)</span></span>
-                    </summary>
-                    <div class="p-4 w-full h-72 relative bg-white">
-                        <canvas id="ecosystemChart"></canvas>
-                    </div>
-                </details>
             </div>
-
-            <!-- 4. ACCOUNTS GRID -->
-            <div>
-                <h3 class="text-sm font-black text-slate-700 uppercase tracking-widest mb-4 px-2 mt-8 flex items-center gap-2">
-                    🗂️ <span data-i18n="account_health">各账户健康状态</span>
-                </h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="accountsGrid">
-                    <!-- Dynamic Account Cards Injected Here -->
-                </div>
-            </div>
-
         </div>
     </div>
 
@@ -266,11 +287,13 @@
         // CONFIGURATION
         const PROFILES_KEY = 'tet_hub_shared_profiles'; 
         const LANG_KEY = 'tet_hub_shared_lang';
-        const AUTO_PROJECT_KEY = 'tet_yolo_auto_project'; 
-        const DISABLED_PROFILES_KEY = 'tet_dashboard_disabled'; // New Key for Toggle States
+        const DISABLED_PROFILES_KEY = 'tet_dashboard_disabled';
+        const DASHBOARD_PROJECTION_KEY = 'tet_dashboard_projection_mode';
         
         let currentLang = localStorage.getItem(LANG_KEY) || 'zh';
         let disabledProfiles = JSON.parse(localStorage.getItem(DISABLED_PROFILES_KEY) || '[]');
+        let isProjectionEnabled = localStorage.getItem(DASHBOARD_PROJECTION_KEY) === 'true'; // Default false for strict saved data
+        
         let ecosystemChart = null;
         let processedProfiles = [];
 
@@ -286,35 +309,39 @@
         const i18n = {
             zh: {
                 app_title: '数据看板', accounts_monitored: '个账户监测中', total_safe: '生态总安全提现额度', 
-                total_wallets: '当前户口总余额 (TET)', total_accel: '生态总加速 (TET)',
-                no_data_title: '暂无档案数据', no_data_desc: '数据看板需要读取您的节点数据。请先在 TET 节点计算器 或 收益模拟器 中保存您的档案。', refresh: '刷新数据',
+                total_wallets: '当前户口总余额<br/>(TET)', total_accel: '生态总加速<br/>(TET)',
+                no_data_title: '暂无档案数据', no_data_desc: '数据看板需要读取您的节点数据。请先在 TET YOLO 或 收益模拟器 中保存您的档案。', refresh: '刷新数据',
                 combined_chart: '合并产出趋势 (60天)', account_health: '各账户健康状态',
                 rescue_strategy: '跨账户救援策略', shortage_detected: '检测到资金缺口风险',
                 status_safe: '健康', status_danger: '风险', status_disabled: '未参与', toggle_monitor: '开启/关闭看板统计',
-                safe_sell: '可售出', shortage_lbl: '资金缺口', 
+                safe_sell: '可安全售出', shortage_lbl: '资金缺口', 
                 shortage_at_day: '在第 {d} 天',
-                rescue_req: '⚠️ <span class="font-black">{name}</span> <span class="text-slate-500 font-normal ml-1">需要 {amt} TET ({day})</span>',
-                rescue_action: '建议：从账户 <strong class="text-emerald-600">{src}</strong> 划转 <strong class="text-indigo-600">{amt} TET</strong> 至 <strong class="text-red-600">{target}</strong>。',
+                rescue_req: '⚠️ <span class="font-black text-rose-700">{name}</span> <span class="text-slate-600 font-medium ml-1">需要 {amt} TET <span class="text-slate-400 text-xs">({day})</span></span>',
+                rescue_action: '建议操作：从账户 <strong class="text-emerald-600 bg-emerald-50 px-1 rounded">{src}</strong> 划转 <strong class="text-indigo-600 bg-indigo-50 px-1 rounded">{amt} TET</strong> 至 <strong class="text-rose-600 bg-rose-50 px-1 rounded">{target}</strong>。',
                 rescue_unavailable: '⚠️ 警告：其他账户没有足够的盈余来填补此缺口。',
-                saved_date: '保存于: {date}', 
-                outdated: '⚠️ 数据已过期！',
-                global_outdated_warning: '注意：部分账户数据已过期超过24小时。为了确保全生态分析的准确性，请回到 TET 节点计算器 重新保存这些档案！'
+                saved_date: '存档时间: {date}', 
+                outdated: '⚠️ 数据已过期，需重新存档！',
+                global_outdated_warning: '部分账户数据已过期超过24小时。为了确保全生态分析的准确性，请回到 TET 节点计算器 重新保存这些档案！',
+                live_projection: '实时预测',
+                projected_days: '预估 +{d}天'
             },
             en: {
                 app_title: 'Dashboard', accounts_monitored: 'Accounts Monitored', total_safe: 'Total Ecosystem Safe Withdrawal', 
-                total_wallets: 'TOTAL ACCOUNT (TET)', total_accel: 'TOTAL ACCEL (TET)',
+                total_wallets: 'TOTAL ACCOUNT<br/>(TET)', total_accel: 'TOTAL ACCEL<br/>(TET)',
                 no_data_title: 'No Profiles Found', no_data_desc: 'The Dashboard needs data to analyze. Please save your profiles in TET Node Calculator or Profit Simulator first.', refresh: 'Refresh Data',
                 combined_chart: 'Combined Production Trend (60 Days)', account_health: 'Account Health Status',
                 rescue_strategy: 'Cross-Account Rescue Strategy', shortage_detected: 'Shortage Risk Detected',
                 status_safe: 'Healthy', status_danger: 'Risk', status_disabled: 'Excluded', toggle_monitor: 'Include/Exclude from Dashboard',
-                safe_sell: 'Safe Sell', shortage_lbl: 'Shortage', 
+                safe_sell: 'Safe to Sell', shortage_lbl: 'Shortage', 
                 shortage_at_day: 'At Day {d}',
-                rescue_req: '⚠️ <span class="font-black">{name}</span> <span class="text-slate-500 font-normal ml-1">Needs {amt} TET ({day})</span>',
-                rescue_action: 'Action: Transfer <strong class="text-indigo-600">{amt} TET</strong> from <strong class="text-emerald-600">{src}</strong> to <strong class="text-red-600">{target}</strong>.',
+                rescue_req: '⚠️ <span class="font-black text-rose-700">{name}</span> <span class="text-slate-600 font-medium ml-1">Needs {amt} TET <span class="text-slate-400 text-xs">({day})</span></span>',
+                rescue_action: 'Action: Transfer <strong class="text-indigo-600 bg-indigo-50 px-1 rounded">{amt} TET</strong> from <strong class="text-emerald-600 bg-emerald-50 px-1 rounded">{src}</strong> to <strong class="text-rose-600 bg-rose-50 px-1 rounded">{target}</strong>.',
                 rescue_unavailable: '⚠️ Warning: Other accounts do not have enough surplus to cover this shortage.',
                 saved_date: 'Saved: {date}', 
-                outdated: '⚠️ Data Outdated!',
-                global_outdated_warning: 'Warning: Some account data is over 24 hours old. For accurate ecosystem analysis, please re-save these profiles in the Node Calculator today!'
+                outdated: '⚠️ Data Outdated! Resave needed.',
+                global_outdated_warning: 'Warning: Some account data is over 24 hours old. For accurate ecosystem analysis, please re-save these profiles in the Node Calculator!',
+                live_projection: 'Live Projection',
+                projected_days: 'Est. +{d}d'
             }
         };
 
@@ -324,13 +351,12 @@
             currentLang = currentLang === 'zh' ? 'en' : 'zh';
             localStorage.setItem(LANG_KEY, currentLang);
             applyLanguage();
-            // Re-render EVERYTHING when language changes
             renderAccountGrid();
             renderDashboardGlobals();
         }
 
         function applyLanguage() {
-            document.querySelectorAll('[data-i18n]').forEach(el => el.innerText = t(el.getAttribute('data-i18n')));
+            document.querySelectorAll('[data-i18n]').forEach(el => el.innerHTML = t(el.getAttribute('data-i18n')));
             document.getElementById('langBtnText').innerText = currentLang === 'zh' ? 'EN' : '中文';
         }
 
@@ -340,13 +366,22 @@
 
         // --- CORE ENGINE ---
 
-        // Step 1: Initialize
         function initApp() {
             applyLanguage();
+            
+            const pToggle = document.getElementById('globalProjectionToggle');
+            pToggle.checked = isProjectionEnabled;
+
             loadAndProcessData();
         }
 
-        // Action Handler for Toggle Switch
+        window.toggleGlobalProjection = function(enabled) {
+            isProjectionEnabled = enabled;
+            localStorage.setItem(DASHBOARD_PROJECTION_KEY, enabled);
+            
+            loadAndProcessData();
+        }
+
         window.toggleProfile = function(profileName, checkboxElement) {
             if (disabledProfiles.includes(profileName)) {
                 disabledProfiles = disabledProfiles.filter(n => n !== profileName);
@@ -355,11 +390,9 @@
             }
             localStorage.setItem(DISABLED_PROFILES_KEY, JSON.stringify(disabledProfiles));
 
-            // Update in-memory state
             let p = processedProfiles.find(x => x.name === profileName);
             if (p) p.isEnabled = !disabledProfiles.includes(profileName);
 
-            // 1. VISUALLY UPDATE THE CARD (Without destroying the DOM to keep CSS animation smooth)
             if (checkboxElement) {
                 const card = checkboxElement.closest('.profile-card');
                 const isEnabled = checkboxElement.checked;
@@ -367,43 +400,43 @@
                 if (isEnabled) {
                     card.classList.remove('card-disabled');
                     card.classList.add('bg-white');
-                    
                     card.querySelector('.badge-enabled').classList.remove('hidden');
                     card.querySelector('.badge-disabled').classList.add('hidden');
-                    
                     const valueEl = card.querySelector('.card-value');
                     valueEl.classList.remove('text-slate-400');
                     valueEl.classList.add(card.dataset.activeColor);
-                    
                     const decorEl = card.querySelector('.card-corner-decor');
-                    if (decorEl) decorEl.classList.remove('hidden');
+                    if (decorEl) decorEl.classList.remove('opacity-0');
                 } else {
                     card.classList.add('card-disabled');
                     card.classList.remove('bg-white');
-                    
                     card.querySelector('.badge-enabled').classList.add('hidden');
                     card.querySelector('.badge-disabled').classList.remove('hidden');
-                    
                     const valueEl = card.querySelector('.card-value');
                     valueEl.classList.remove(card.dataset.activeColor);
                     valueEl.classList.add('text-slate-400');
-                    
                     const decorEl = card.querySelector('.card-corner-decor');
-                    if (decorEl) decorEl.classList.add('hidden');
+                    if (decorEl) decorEl.classList.add('opacity-0');
                 }
             }
 
-            // 2. RECALCULATE GLOBALS ONLY
             renderDashboardGlobals();
         }
 
-        // Step 2: Load profiles and run simulation
+        function getCalendarDaysPassed(ts1, ts2) {
+            const d1 = new Date(ts1);
+            const d2 = new Date(ts2);
+            // Ignore timezones and hours - strictly calculate midnight UTC boundaries
+            const utc1 = Date.UTC(d1.getFullYear(), d1.getMonth(), d1.getDate());
+            const utc2 = Date.UTC(d2.getFullYear(), d2.getMonth(), d2.getDate());
+            return Math.floor((utc2 - utc1) / (1000 * 60 * 60 * 24));
+        }
+
         function loadAndProcessData() {
             const raw = localStorage.getItem(PROFILES_KEY);
             let parsed = raw ? JSON.parse(raw) : {};
 
             let profilesMap = {};
-            // Auto-migrate to dictionary format if needed
             if (Array.isArray(parsed)) {
                 parsed.forEach(p => { if (p && p.name) profilesMap[p.name] = p; });
                 localStorage.setItem(PROFILES_KEY, JSON.stringify(profilesMap)); 
@@ -411,7 +444,6 @@
                 profilesMap = parsed;
             }
 
-            // Filter out deleted tombstones
             let profiles = Object.values(profilesMap).filter(p => !p.deleted);
 
             if (profiles.length === 0) {
@@ -422,72 +454,42 @@
             document.getElementById('emptyState').classList.add('hidden');
             const dashboard = document.getElementById('dashboardContent');
             dashboard.classList.remove('hidden');
-            
-            // Auto-Project Toggle (Default ON for Dashboard unless YOLO turned it off explicitly)
-            const autoProjectSetting = localStorage.getItem(AUTO_PROJECT_KEY);
-            const shouldProject = autoProjectSetting === null ? true : (autoProjectSetting === 'true');
 
             processedProfiles = [];
 
             profiles.forEach(p => {
-                let data = JSON.parse(JSON.stringify(p.data)); // Deep copy
+                let data = JSON.parse(JSON.stringify(p.data)); 
+                let daysPassed = 0;
                 
-                // Auto-project time to "Today"
-                if (shouldProject && p.timestamp && data.nodes) {
-                    const daysPassed = Math.floor((Date.now() - p.timestamp) / (1000 * 60 * 60 * 24));
-                    if (daysPassed > 0) {
-                        for (let nodeId in data.nodes) {
-                            let nd = data.nodes[nodeId];
-                            if (nd.a) {
-                                nd.o = ''; 
-                                let h = parseFloat(nd.h) || 0;
-                                let c = parseFloat(nd.c) || 55;
-                                let daysLeft = daysPassed;
-                                
-                                while (daysLeft > 0) {
-                                    let remainingCycleDays = c - h;
-                                    if (daysLeft < remainingCycleDays) {
-                                        h += daysLeft;
-                                        daysLeft = 0;
-                                    } else {
-                                        daysLeft -= remainingCycleDays;
-                                        if (nd.r) { c = Math.min(120, c + 5); h = 0; } 
-                                        else { nd.a = false; h = c; daysLeft = 0; }
-                                    }
-                                }
-                                nd.h = h; nd.c = c;
-                            }
-                        }
-                    }
+                if (isProjectionEnabled && p.timestamp && data.nodes) {
+                    daysPassed = Math.max(0, getCalendarDaysPassed(p.timestamp, Date.now()));
                 }
 
-                // Simulate 60 Days
-                const simResult = simulateProfile(data);
+                // Simulate using Realistic Ledger Engine
+                const simResult = simulateProfile(data, daysPassed);
                 
                 processedProfiles.push({
                     name: p.name,
                     isEnabled: !disabledProfiles.includes(p.name),
                     rawAccel: parseFloat(data.accel) || 0,
-                    rawWallet: parseFloat(data.wallet) || 0,
+                    rawWallet: simResult.walletNow, // Dynamically fast-forwarded wallet balance
                     safeAmt: simResult.safe,
                     shortageAmt: simResult.shortage,
                     shortageDay: simResult.shortageDay,
                     dailyWallets: simResult.dailyWallets,
                     timestamp: p.timestamp,
-                    date: p.date
+                    date: p.date,
+                    daysProjected: daysPassed
                 });
             });
 
-            // Smooth fade in
             setTimeout(() => { dashboard.classList.remove('opacity-0'); }, 50);
 
-            // Render both sections initially
             renderAccountGrid();
             renderDashboardGlobals();
         }
 
-        // Standard 60-Day Simulator Engine
-        function simulateProfile(data) {
+        function simulateProfile(data, daysPassed = 0) {
             const accel = parseFloat(data.accel) || 0;
             const startWallet = parseFloat(data.wallet) || 0;
             const globalCycle = parseInt(data.globalCycle) || 55;
@@ -498,105 +500,126 @@
                     let nd = data.nodes[def.id];
                     let isActive = nd.a;
                     let autoRestake = nd.r;
-                    let h = parseFloat(nd.h) || 0;
                     let c = parseFloat(nd.c) || 55;
-                    let o = nd.o;
+                    let h = parseFloat(nd.h) || 0;
                     
-                    let balance = 0;
-                    let remainingDays = Math.max(0, c - h);
-
-                    if (isActive) {
-                        const dailyRateRaw = def.reward / c;
-                        const dailyRateTrunc = truncateTo2(dailyRateRaw);
-                        if (o && parseFloat(o) > 0) {
-                            balance = Math.max(0, def.reward - parseFloat(o));
-                        } else {
-                            balance = Math.max(0, def.reward - (dailyRateTrunc * h));
-                        }
+                    let o = 0;
+                    if (nd.o !== '' && nd.o !== undefined && nd.o !== null) {
+                        o = parseFloat(nd.o);
+                    } else {
+                        let baseRate = truncateTo2(def.reward / c);
+                        o = baseRate * h;
                     }
 
-                    nodes.push({ def: def, balance: balance, currentCycle: c, cycleRemainingDays: remainingDays, active: isActive, autoRestake: autoRestake, waiting: false, justBought: false, dead: false });
+                    nodes.push({ 
+                        def: def, 
+                        o: o, 
+                        currentCycle: c, 
+                        h: h, 
+                        active: isActive, 
+                        autoRestake: autoRestake, 
+                        waiting: false,
+                        dead: !isActive 
+                    });
                 }
             });
 
             let currentWallet = startWallet;
-            let lowestWalletPoint = startWallet;
-            let shortageDay = null;
-            let dailyWallets = [];
+            
+            let futureShortage = 0;
+            let futureShortageDay = null;
 
-            for (let d = 1; d <= 60; d++) {
+            function runOneDay(dayIndex, isFuture) {
                 let dailyProd = 0;
-                let dailyCost = 0;
                 let dailyAccelRemaining = accel;
 
                 nodes.forEach(node => {
-                    if (node.active && !node.dead && !node.justBought && !node.waiting && node.cycleRemainingDays > 0) { 
-                        const baseRate = truncateTo2(node.def.reward / node.currentCycle);
-                        let isLastDayOfCycle = (node.cycleRemainingDays === 1);
-                        let potentialProd = baseRate + dailyAccelRemaining;
-                        let nodeProd = 0;
-
-                        if (isLastDayOfCycle) {
-                            nodeProd = node.balance;
-                        } else {
-                            if (node.balance >= potentialProd) {
-                                nodeProd = potentialProd;
-                                dailyAccelRemaining = 0; 
-                            } else {
-                                nodeProd = node.balance;
-                                let neededAccel = Math.max(0, nodeProd - baseRate);
-                                dailyAccelRemaining -= neededAccel;
+                    if (node.active && !node.dead && !node.waiting) { 
+                        node.h += 1;
+                        let baseRate = truncateTo2(node.def.reward / node.currentCycle);
+                        
+                        if (node.h >= node.currentCycle) {
+                            let naturalRemaining = node.def.reward - node.o;
+                            if (naturalRemaining > baseRate) {
+                                baseRate = naturalRemaining; 
                             }
                         }
 
-                        node.balance -= nodeProd;
-                        dailyProd += nodeProd;
-                        node.cycleRemainingDays--;
+                        let potentialProd = baseRate + dailyAccelRemaining;
+                        let remainingCapacity = Math.max(0, node.def.reward - node.o);
+                        let nodeProd = 0;
 
-                        if (node.cycleRemainingDays <= 0 || node.balance <= 0.001) {
+                        if (remainingCapacity <= potentialProd) {
+                            nodeProd = remainingCapacity;
+                            let neededAccel = Math.max(0, remainingCapacity - baseRate);
+                            dailyAccelRemaining -= neededAccel;
+                            dailyAccelRemaining = Math.max(0, dailyAccelRemaining);
+                        } else {
+                            nodeProd = potentialProd;
+                            dailyAccelRemaining = 0; 
+                        }
+
+                        node.o += nodeProd;
+                        dailyProd += nodeProd;
+
+                        if (node.o >= node.def.reward - 0.001 || node.h >= node.currentCycle) {
+                            node.active = false;
                             if (node.autoRestake) {
-                                dailyCost += node.def.cost;
-                                node.currentCycle = Math.min(120, node.currentCycle + 5); 
-                                node.cycleRemainingDays = node.currentCycle; 
-                                node.balance = node.def.reward; 
+                                node.waiting = true; 
                             } else {
                                 node.dead = true;
-                                node.active = false;
                             }
                         }
                     }
                 });
 
-                currentWallet = currentWallet + dailyProd - dailyCost;
+                currentWallet += dailyProd;
                 
-                for(let node of nodes) {
-                    if (!node.active && !node.dead && node.autoRestake && currentWallet >= node.def.cost) {
-                        currentWallet -= node.def.cost;
-                        node.active = true;
-                        node.justBought = true; 
-                        node.balance = node.def.reward;
-                        node.currentCycle = globalCycle;
-                        node.cycleRemainingDays = globalCycle;
-                        break; 
+                nodes.forEach(node => {
+                    if (node.waiting) {
+                        if (isFuture && currentWallet < node.def.cost) {
+                            let missing = node.def.cost - currentWallet;
+                            if (futureShortage === 0) { 
+                                futureShortage = missing;
+                                futureShortageDay = dayIndex;
+                            }
+                        }
+
+                        if (currentWallet >= node.def.cost) {
+                            currentWallet -= node.def.cost;
+                            node.active = true;
+                            node.waiting = false;
+                            node.o = 0; 
+                            node.h = 0; 
+                            node.currentCycle = Math.min(120, node.currentCycle + 5);
+                        }
                     }
-                }
+                });
+            }
 
+            for (let fd = 1; fd <= daysPassed; fd++) {
+                runOneDay(fd, false);
+            }
+
+            let walletNow = currentWallet; 
+            let lowestWalletPoint = currentWallet;
+            let dailyWallets = [];
+
+            for (let d = 1; d <= 60; d++) {
+                runOneDay(d, true);
                 if (currentWallet < lowestWalletPoint) lowestWalletPoint = currentWallet;
-                if (currentWallet < 0 && shortageDay === null) { shortageDay = d; }
-
-                nodes.forEach(n => n.justBought = false);
                 dailyWallets.push(currentWallet);
             }
 
             return {
-                safe: lowestWalletPoint >= 0 ? lowestWalletPoint : 0,
-                shortage: lowestWalletPoint < 0 ? Math.abs(lowestWalletPoint) : 0,
-                shortageDay: shortageDay,
-                dailyWallets: dailyWallets
+                safe: futureShortage === 0 ? lowestWalletPoint : 0,
+                shortage: futureShortage,
+                shortageDay: futureShortageDay,
+                dailyWallets: dailyWallets,
+                walletNow: walletNow 
             };
         }
 
-        // Step 3: Render View
         function renderDashboardGlobals() {
             let totalSafe = 0;
             let totalShortage = 0;
@@ -610,7 +633,6 @@
             let activeCount = 0;
 
             processedProfiles.forEach(p => {
-                // Aggregations only run for accounts that are Toggled ON
                 if (p.isEnabled) {
                     totalSafe += p.safeAmt;
                     totalShortage += p.shortageAmt;
@@ -626,7 +648,6 @@
                     }
                 }
 
-                // Check outdated status globally (even for disabled ones, as a heads up)
                 if (p.timestamp) {
                     if ((Date.now() - p.timestamp) > (24 * 60 * 60 * 1000)) hasOutdatedProfiles = true;
                 } else {
@@ -635,22 +656,26 @@
                 }
             });
 
-            // Toggle Global Warning Banner
             if (hasOutdatedProfiles) {
                 document.getElementById('globalWarningBanner').classList.remove('hidden');
             } else {
                 document.getElementById('globalWarningBanner').classList.add('hidden');
             }
 
-            // Update Hero
-            document.getElementById('heroTotalSafe').innerText = totalSafe.toFixed(2);
-            document.getElementById('heroCurrentWallet').innerText = totalStartWallet.toFixed(2);
-            document.getElementById('heroTotalAccel').innerText = totalAccel.toFixed(2);
+            document.getElementById('heroTotalSafe').innerText = totalSafe.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            document.getElementById('heroCurrentWallet').innerText = totalStartWallet.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            document.getElementById('heroTotalAccel').innerText = totalAccel.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
             document.getElementById('activeAccountsCount').innerText = activeCount;
             
             let indicator = document.getElementById('heroPulseIndicator');
-            if (activeCount > 0) { indicator.className = "w-2 h-2 rounded-full bg-emerald-400 animate-pulse"; } 
-            else { indicator.className = "w-2 h-2 rounded-full bg-slate-400"; }
+            let ring = document.getElementById('heroPulseRing');
+            if (activeCount > 0) { 
+                indicator.className = "relative inline-flex rounded-full h-3 w-3 bg-emerald-400"; 
+                ring.classList.remove('hidden');
+            } else { 
+                indicator.className = "relative inline-flex rounded-full h-3 w-3 bg-slate-500"; 
+                ring.classList.add('hidden');
+            }
 
             renderRescueStrategy(surplusAccounts, shortageAccounts);
             renderChart(combinedChartData);
@@ -658,19 +683,20 @@
 
         function renderAccountGrid() {
             const grid = document.getElementById('accountsGrid');
-            grid.innerHTML = ''; // This only happens on load/language toggle now!
+            grid.innerHTML = ''; 
 
             processedProfiles.forEach(p => {
                 const isSafe = p.shortageAmt === 0;
                 const isEnabled = p.isEnabled;
                 
                 let valueLabel = isSafe ? t('safe_sell') : t('shortage_lbl');
-                let activeColorClass = isSafe ? 'text-emerald-500' : 'text-red-500';
+                let activeColorClass = isSafe ? 'text-emerald-500' : 'text-rose-500';
                 let valueColor = isEnabled ? activeColorClass : 'text-slate-400';
                 let valueAmt = isSafe ? p.safeAmt : p.shortageAmt;
-                let dayNote = (!isSafe && isEnabled) ? `<span class="text-[10px] text-red-500 font-bold ml-1 block mt-1">${t('shortage_at_day').replace('{d}', p.shortageDay)}</span>` : '';
+                let dayNote = (!isSafe && isEnabled) ? `<span class="text-[10px] text-rose-500 font-bold ml-2 py-0.5 px-2 rounded bg-rose-50 border border-rose-100 self-center">${t('shortage_at_day').replace('{d}', p.shortageDay)}</span>` : '';
 
-                // Outdated Warning
+                let projectionBadge = (p.daysProjected > 0) ? `<span class="ml-2 bg-indigo-50 text-indigo-600 text-[10px] px-2 py-0.5 rounded border border-indigo-100 font-bold tracking-normal whitespace-nowrap align-middle" title="Fast-forwarded ${p.daysProjected} days">${t('projected_days').replace('{d}', p.daysProjected)}</span>` : '';
+
                 let savedDate = p.date || '-';
                 let isOutdated = false;
                 if (p.timestamp) {
@@ -681,64 +707,76 @@
                 }
                 
                 let outdatedHTML = (isOutdated) ? `
-                    <div class="mt-3 bg-red-100 border border-red-300 text-red-700 text-xs font-bold px-3 py-2 rounded-lg text-center flex justify-center items-center shadow-sm urgent-pulse">
+                    <div class="mt-3 bg-rose-50 border border-rose-200 text-rose-600 text-[11px] font-bold px-3 py-2 rounded-lg text-center flex justify-center items-center shadow-sm urgent-pulse">
                         ${t('outdated')}
                     </div>
                 ` : '';
 
                 let dateHTML = `
-                    <div class="mt-4 pt-3 border-t border-slate-100 flex flex-col justify-between text-[10px] text-slate-400">
+                    <div class="mt-4 pt-3 border-t border-slate-100 flex flex-col justify-between text-xs text-slate-400 font-medium">
                         <div class="flex justify-between items-center w-full">
-                            <span>📅 ${t('saved_date').replace('{date}', savedDate)}</span>
+                            <span class="flex items-center gap-1.5">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                ${t('saved_date').replace('{date}', savedDate)}
+                            </span>
                         </div>
                         ${outdatedHTML}
                     </div>
                 `;
 
-                let bgClasses = isEnabled ? 'bg-white' : 'card-disabled';
+                let bgClasses = isEnabled ? 'bg-white border-slate-200/80 hover:border-indigo-300 hover:shadow-lg hover:-translate-y-0.5' : 'card-disabled';
 
                 let html = `
-                    <div class="profile-card ${bgClasses} border border-slate-200 rounded-2xl p-5 shadow-sm transition-all duration-300 relative overflow-hidden group flex flex-col justify-between" data-active-color="${activeColorClass}">
-                        <div>
-                            <div class="card-corner-decor absolute top-0 right-0 w-16 h-16 rounded-bl-full bg-slate-50 transition-colors group-hover:bg-indigo-50/50 -z-0 ${isEnabled ? '' : 'hidden'}"></div>
-                            
-                            <!-- Header with 3D Josetxu Neumorphic Switch -->
-                            <div class="flex justify-between items-start mb-4 relative z-10">
-                                <h4 class="font-black text-slate-800 text-lg tracking-tight truncate pr-2 flex-1">${p.name}</h4>
-                                <div class="flex flex-col items-end gap-1.5 min-w-[65px]">
-                                    <label class="switch-3d" title="${t('toggle_monitor')}">
-                                        <!-- Note: passed 'this' to toggleProfile to target the specific DOM node -->
-                                        <input type="checkbox" ${isEnabled ? 'checked' : ''} onchange="toggleProfile('${p.name.replace(/'/g, "\\'")}', this)">
-                                        <div class="switch-3d-track">
-                                            <span class="switch-3d-text-on">ON</span>
-                                            <span class="switch-3d-text-off">OFF</span>
-                                        </div>
-                                        <div class="switch-3d-thumb">
-                                            <div class="switch-3d-ridges">
-                                                <span></span><span></span><span></span>
-                                            </div>
-                                        </div>
-                                    </label>
-                                    
-                                    <!-- Badges Pre-rendered and toggled via CSS classes -->
+                    <div class="profile-card ${bgClasses} border rounded-3xl p-5 md:p-6 shadow-sm transition-all duration-300 relative overflow-hidden group flex flex-col" data-active-color="${activeColorClass}">
+                        <div class="card-corner-decor absolute top-0 right-0 w-20 h-20 bg-gradient-to-bl from-indigo-50 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100 rounded-bl-[3rem] pointer-events-none ${isEnabled ? '' : 'hidden'}"></div>
+                        
+                        <div class="flex justify-between items-start mb-4 relative z-10">
+                            <div class="flex-1 pr-3">
+                                <h4 class="font-black text-slate-800 text-lg md:text-xl tracking-tight flex items-center flex-wrap gap-y-1">
+                                    <span class="truncate max-w-full">${p.name}</span>
+                                    ${projectionBadge}
+                                </h4>
+                                
+                                <div class="mt-1.5">
                                     <div class="badge-enabled ${isEnabled ? '' : 'hidden'}">
                                         ${isSafe 
-                                            ? `<span class="bg-emerald-100 text-emerald-700 text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wider">${t('status_safe')}</span>`
-                                            : `<span class="bg-red-100 text-red-700 text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wider urgent-pulse">${t('status_danger')}</span>`
+                                            ? `<span class="bg-emerald-100/80 text-emerald-700 text-[10px] px-2.5 py-1 rounded-md font-bold uppercase tracking-widest border border-emerald-200/50">${t('status_safe')}</span>`
+                                            : `<span class="bg-rose-100/80 text-rose-700 text-[10px] px-2.5 py-1 rounded-md font-bold uppercase tracking-widest border border-rose-200/50 urgent-pulse">${t('status_danger')}</span>`
                                         }
                                     </div>
                                     <div class="badge-disabled ${isEnabled ? 'hidden' : ''}">
-                                        <span class="bg-slate-200 text-slate-500 text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wider">${t('status_disabled')}</span>
+                                        <span class="bg-slate-100 text-slate-500 text-[10px] px-2.5 py-1 rounded-md font-bold uppercase tracking-widest border border-slate-200">${t('status_disabled')}</span>
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="relative z-10">
-                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">${valueLabel}</p>
-                                <p class="card-value text-2xl font-black ${valueColor} tracking-tighter transition-colors duration-300">${valueAmt.toFixed(2)} ${dayNote}</p>
+                            <div class="flex flex-col items-end gap-1.5 min-w-[65px] pt-1">
+                                <label class="switch-3d scale-90 md:scale-100 origin-top-right" title="${t('toggle_monitor')}">
+                                    <input type="checkbox" ${isEnabled ? 'checked' : ''} onchange="toggleProfile('${p.name.replace(/'/g, "\\'")}', this)">
+                                    <div class="switch-3d-track">
+                                        <span class="switch-3d-text-on">ON</span>
+                                        <span class="switch-3d-text-off">OFF</span>
+                                    </div>
+                                    <div class="switch-3d-thumb">
+                                        <div class="switch-3d-ridges">
+                                            <span></span><span></span><span></span>
+                                        </div>
+                                    </div>
+                                </label>
                             </div>
                         </div>
-                        ${dateHTML}
+
+                        <div class="relative z-10 mb-2">
+                            <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">${valueLabel}</p>
+                            <div class="flex items-baseline flex-wrap gap-1">
+                                <p class="card-value text-2xl md:text-3xl font-black ${valueColor} tracking-tighter transition-colors duration-300 drop-shadow-sm truncate max-w-full">${valueAmt.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
+                                ${dayNote}
+                            </div>
+                        </div>
+                        
+                        <div class="mt-auto">
+                            ${dateHTML}
+                        </div>
                     </div>
                 `;
                 grid.innerHTML += html;
@@ -755,7 +793,7 @@
             }
 
             section.classList.remove('hidden');
-            document.getElementById('rescueTotalShortage').innerText = shortageList.reduce((sum, a) => sum + a.amt, 0).toFixed(2) + ' TET';
+            document.getElementById('rescueTotalShortage').innerText = shortageList.reduce((sum, a) => sum + a.amt, 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' TET';
             container.innerHTML = '';
 
             let surpluses = JSON.parse(JSON.stringify(surplusList)).sort((a,b) => b.amt - a.amt);
@@ -770,10 +808,10 @@
                 let dayStr = t('shortage_at_day').replace('{d}', short.day);
                 
                 let header = document.createElement('div');
-                header.className = "text-sm font-bold text-slate-800 border-b border-slate-100 pb-2";
+                header.className = "text-sm text-slate-800 border-b border-slate-100 pb-3 mb-1";
                 header.innerHTML = t('rescue_req')
                     .replace('{name}', short.name)
-                    .replace('{amt}', needed.toFixed(2))
+                    .replace('{amt}', needed.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}))
                     .replace('{day}', dayStr);
                 container.appendChild(header);
 
@@ -787,7 +825,7 @@
                         
                         let msg = t('rescue_action')
                             .replace('{src}', surpluses[i].name)
-                            .replace('{amt}', take.toFixed(2))
+                            .replace('{amt}', take.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}))
                             .replace('{target}', short.name);
                         transfers.push(msg);
                     }
@@ -795,17 +833,23 @@
 
                 if (needed > 0.01) {
                     let warn = document.createElement('p');
-                    warn.className = "text-xs text-red-500 font-bold mt-1 bg-red-50 p-2 rounded";
-                    warn.innerText = t('rescue_unavailable') + ` (还差 ${needed.toFixed(2)} TET)`;
+                    warn.className = "text-xs text-rose-600 font-bold mt-2 bg-rose-50 border border-rose-100 p-3 rounded-xl flex items-center gap-2 shadow-sm";
+                    warn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg> 
+                                      <span>${t('rescue_unavailable')} (还差 <strong class="font-black text-rose-700">${needed.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} TET</strong>)</span>`;
                     container.appendChild(warn);
                 }
 
-                transfers.forEach(txt => {
-                    let p = document.createElement('p');
-                    p.className = "text-xs text-slate-600 flex items-start gap-2 py-1";
-                    p.innerHTML = `<span class="text-indigo-400 mt-0.5">↳</span> <span>${txt}</span>`;
-                    container.appendChild(p);
-                });
+                if (transfers.length > 0) {
+                    let transferList = document.createElement('div');
+                    transferList.className = "mt-2 space-y-2";
+                    transfers.forEach(txt => {
+                        let p = document.createElement('p');
+                        p.className = "text-xs text-slate-600 flex items-start gap-2 p-2.5 rounded-lg bg-slate-50 border border-slate-100";
+                        p.innerHTML = `<svg class="w-4 h-4 text-indigo-400 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path></svg> <span>${txt}</span>`;
+                        transferList.appendChild(p);
+                    });
+                    container.appendChild(transferList);
+                }
             });
         }
 
@@ -816,10 +860,9 @@
             let labels = [];
             for(let i=1; i<=60; i++) labels.push(t('shortage_at_day').replace('{d}', i));
 
-            // Create gradient
             let gradient = ctx.createLinearGradient(0, 0, 0, 300);
-            gradient.addColorStop(0, 'rgba(79, 70, 229, 0.4)'); // indigo-600
-            gradient.addColorStop(1, 'rgba(79, 70, 229, 0.0)');
+            gradient.addColorStop(0, 'rgba(99, 102, 241, 0.4)'); 
+            gradient.addColorStop(1, 'rgba(99, 102, 241, 0.0)');
 
             ecosystemChart = new Chart(ctx, {
                 type: 'line',
@@ -828,14 +871,14 @@
                     datasets: [{
                         label: t('total_wallets'),
                         data: data,
-                        borderColor: '#4f46e5',
+                        borderColor: '#6366f1',
                         backgroundColor: gradient,
                         borderWidth: 3,
                         fill: true,
-                        tension: 0.4, // smooth curves
+                        tension: 0.4, 
                         pointRadius: 0,
                         pointHoverRadius: 6,
-                        pointHoverBackgroundColor: '#4f46e5',
+                        pointHoverBackgroundColor: '#6366f1',
                         pointHoverBorderColor: '#fff',
                         pointHoverBorderWidth: 2
                     }]
@@ -848,13 +891,13 @@
                         legend: { display: false },
                         tooltip: {
                             backgroundColor: 'rgba(15, 23, 42, 0.9)',
-                            titleFont: { family: 'Roboto', size: 12 },
-                            bodyFont: { family: 'Roboto', size: 14, weight: 'bold' },
+                            titleFont: { family: 'Inter', size: 12 },
+                            bodyFont: { family: 'Inter', size: 14, weight: 'bold' },
                             padding: 12,
                             cornerRadius: 8,
                             displayColors: false,
                             callbacks: {
-                                label: function(context) { return context.parsed.y.toFixed(2) + ' TET'; }
+                                label: function(context) { return context.parsed.y.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' TET'; }
                             }
                         }
                     },
@@ -862,11 +905,11 @@
                         y: { 
                             beginAtZero: false, 
                             grid: { borderDash: [4, 4], color: '#f1f5f9' },
-                            ticks: { font: { family: 'Roboto' }, color: '#94a3b8' }
+                            ticks: { font: { family: 'Inter' }, color: '#94a3b8' }
                         },
                         x: { 
                             grid: { display: false }, 
-                            ticks: { maxTicksLimit: 8, font: { family: 'Roboto' }, color: '#94a3b8' } 
+                            ticks: { maxTicksLimit: 8, font: { family: 'Inter' }, color: '#94a3b8' } 
                         }
                     }
                 }

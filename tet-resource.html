@@ -1,0 +1,1093 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TET Resource</title>
+
+    <!-- App Icons & PWA Meta Tags -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="icon.png">
+    <link rel="apple-touch-icon" href="icon.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="TET Resource">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Roboto', 'PingFang SC', 'Microsoft YaHei', sans-serif; -webkit-tap-highlight-color: transparent; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #94a3b8; border-radius: 20px; }
+
+        /* Smooth visual transitions */
+        .resource-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .resource-card:hover { transform: translateY(-4px); box-shadow: 0 12px 28px -6px rgba(0, 0, 0, 0.15), 0 8px 12px -6px rgba(0, 0, 0, 0.1); border-color: #6366f1; }
+        
+        /* Blur Lock Styles */
+        .blur-wrapper { position: relative; overflow: hidden; border-radius: inherit; width: 100%; height: 100%; }
+        .blur-content { filter: blur(6px) grayscale(50%); opacity: 0.7; pointer-events: none; user-select: none; transition: all 0.3s ease; }
+        .lock-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(15, 23, 42, 0.4); z-index: 20; border-radius: inherit; }
+        .lock-overlay-btn { background: #4f46e5; color: white; padding: 8px 16px; border-radius: 999px; font-size: 12px; font-weight: bold; margin-top: 12px; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4); display: flex; items-center; gap: 6px; transition: all 0.2s; }
+        .lock-overlay-btn:hover { background: #4338ca; transform: scale(1.05); }
+
+        /* Category Chip styling */
+        .cat-chip { transition: all 0.2s; border: 1px solid #e2e8f0; background: #ffffff; color: #475569; }
+        .cat-chip:hover { background: #f8fafc; border-color: #cbd5e1; color: #0f172a; }
+        .cat-chip.active { background-color: #4f46e5; color: #ffffff; border-color: #4f46e5; box-shadow: 0 4px 10px rgba(79, 70, 229, 0.3); }
+        .cat-chip.active .cat-icon { filter: brightness(0) invert(1); }
+
+        .toast {
+            background-color: #0f172a; color: white; padding: 12px 24px; border-radius: 9999px;
+            font-size: 14px; font-weight: bold; box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.1); transform: translateY(-20px); opacity: 0;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); pointer-events: auto;
+            text-align: center; line-height: 1.5; z-index: 99999;
+        }
+        .toast.show { transform: translateY(0); opacity: 1; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 flex flex-col h-[100dvh] overflow-hidden">
+
+    <!-- Global Toast System -->
+    <div id="toast-overlay" onclick="dismissAllToasts()" class="fixed inset-0 bg-black/10 z-[9998] hidden backdrop-blur-[1px] transition-all"></div>
+    <div id="toast-container" class="fixed top-5 left-1/2 -translate-x-1/2 z-[9999] w-[90%] max-w-[400px] flex flex-col items-center pointer-events-none gap-2"></div>
+
+    <div class="max-w-[1400px] w-full mx-auto flex flex-col flex-1 overflow-hidden h-[100dvh]">
+        
+        <!-- Header Section -->
+        <div class="flex justify-between items-center shrink-0 no-print p-4 lg:p-6 pb-2 md:pb-3 border-b border-slate-300 bg-white z-10 shadow-sm">
+            <div class="flex flex-col min-w-0 flex-1 pr-4">
+                <h1 class="text-3xl sm:text-4xl font-black text-slate-800 tracking-tight truncate">
+                    TET <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-500" id="appTitleHighlight">Resource</span>
+                </h1>
+                <p class="text-[9px] md:text-xs font-bold text-slate-400 uppercase tracking-widest mt-1 w-full whitespace-nowrap" id="appSubtitle">Official Resource Materials & Docs</p>
+            </div>
+            
+            <button onclick="toggleLanguage()" id="btnToggleLang" class="shrink-0 bg-slate-100 border border-slate-300 shadow-sm text-slate-800 font-bold text-xs px-4 py-2 md:py-2.5 rounded-full hover:bg-slate-200 transition active:scale-95">🌐 中文</button>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="flex flex-col flex-1 overflow-hidden">
+            
+            <!-- Top Control Bar (Search, Sort, Categories) -->
+            <div class="bg-white border-b border-slate-300 shrink-0 shadow-sm z-20">
+                <!-- Search & Filters Row (One Line Mobile Layout) -->
+                <div class="flex items-center gap-2 md:gap-3 p-3 md:p-4 pb-2 md:pb-3 border-b border-slate-200 flex-nowrap">
+                    
+                    <!-- Search Box -->
+                    <div class="relative flex-1 min-w-0">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500">🔍</span>
+                        <input type="text" id="searchInput" onkeyup="filterResources()" class="w-full bg-slate-50 border border-slate-300 text-slate-800 text-sm font-medium rounded-xl pl-9 pr-3 py-2.5 outline-none focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition shadow-inner truncate" placeholder="Search resources, docs, files...">
+                    </div>
+                    
+                    <!-- Sorting Dropdown (Icon on Mobile, Full on Desktop) -->
+                    <div class="relative shrink-0 flex items-center justify-center">
+                        <!-- Mobile Icon Overlay (Sleek Redesign) -->
+                        <div class="md:hidden flex items-center justify-center w-10 h-10 bg-white border border-slate-200 rounded-xl shadow-sm text-indigo-500 transition-colors pointer-events-none">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+                            </svg>
+                        </div>
+                        <select id="sortSelect" onchange="filterResources()" class="absolute inset-0 w-full h-full opacity-0 md:opacity-100 md:relative md:appearance-none bg-slate-50 border border-slate-300 text-slate-800 text-sm font-bold rounded-xl md:pl-4 md:pr-10 md:py-2.5 outline-none focus:bg-white focus:border-indigo-500 transition cursor-pointer hover:bg-slate-100 md:shadow-sm z-10">
+                            <option value="date_desc" id="optDateDesc">Newest First</option>
+                            <option value="date_asc" id="optDateAsc">Oldest First</option>
+                            <option value="title_asc" id="optTitleAsc">Title (A-Z)</option>
+                            <option value="title_desc" id="optTitleDesc">Title (Z-A)</option>
+                            <option value="size_desc" id="optSizeDesc">Size (Largest)</option>
+                            <option value="size_asc" id="optSizeAsc">Size (Smallest)</option>
+                        </select>
+                        <span class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500 text-xs hidden md:block z-20">▼</span>
+                    </div>
+
+                    <!-- View Toggle -->
+                    <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-300 shrink-0 shadow-sm">
+                        <button onclick="setViewMode('grid')" id="btnGrid" class="p-1.5 rounded-lg text-indigo-700 bg-white transition active:scale-95 shadow border border-slate-200" title="Grid View">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                        </button>
+                        <button onclick="setViewMode('list')" id="btnList" class="p-1.5 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-200 transition active:scale-95 border border-transparent" title="List View">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"></path></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Category Chips Row -->
+                <div class="px-3 md:px-4 py-2.5 w-full overflow-hidden relative bg-slate-50">
+                    <ul id="category-list" class="flex overflow-x-auto custom-scrollbar gap-2.5 pb-2 pt-1 items-center">
+                        <!-- Chips injected here -->
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Resource Container (Darker High Contrast Canvas Background) -->
+            <div class="flex-1 overflow-y-auto custom-scrollbar p-3 md:p-5 lg:p-6 pb-32 md:pb-12 bg-slate-200/80 shadow-inner" id="resource-grid">
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-5 lg:gap-6" id="resource-container">
+                    <!-- Cards injected here -->
+                </div>
+                
+                <!-- Empty State -->
+                <div id="emptyState" class="hidden flex-col items-center justify-center h-full text-slate-400 opacity-70 pb-20">
+                    <span class="text-5xl mb-4 grayscale">📭</span>
+                    <p class="font-bold text-base" id="txtEmpty">No resources found.</p>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <!-- MODALS OVERLAY SYSTEM -->
+    <div id="modalsWrapper" class="fixed inset-0 z-[100] hidden">
+        <div class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm transition-opacity" onclick="closeAllModals()" style="pointer-events: auto;"></div>
+        
+        <div class="absolute inset-0 flex items-center justify-center p-2 md:p-4 pointer-events-none z-10">
+            <!-- PREVIEW IN-APP MODAL -->
+            <div id="previewModal" class="bg-white rounded-2xl shadow-2xl w-full max-w-5xl h-[85vh] overflow-hidden hidden flex-col pointer-events-auto transform transition-all scale-95 opacity-0 duration-200 border border-slate-700">
+                
+                <!-- Modal Header -->
+                <div class="bg-slate-900 p-3 md:p-4 flex justify-between items-center shrink-0 border-b border-slate-700 shadow-md z-20">
+                    <div class="flex items-center gap-3 min-w-0 pr-4">
+                        <div id="previewIcon" class="w-8 h-8 rounded-lg flex items-center justify-center bg-slate-800 border border-slate-600 text-white shrink-0 text-lg shadow-inner">📄</div>
+                        <h3 class="font-bold text-white text-sm md:text-base truncate tracking-wide" id="previewTitle">Document Title</h3>
+                    </div>
+                    <div class="flex items-center gap-1 sm:gap-2 shrink-0">
+                        <button onclick="shareCurrentResource()" class="bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white p-2 rounded-lg transition active:scale-95 flex items-center gap-2 text-xs font-bold" title="Share Resource">
+                            <span class="hidden sm:block" id="txtShareBtn">Share</span>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
+                        </button>
+                        <button onclick="openInNewTab()" class="bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white p-2 rounded-lg transition active:scale-95 flex items-center gap-2 text-xs font-bold" title="Open External">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                        </button>
+                        <button onclick="toggleFullScreen()" class="bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white p-2 rounded-lg transition active:scale-95 text-xs font-bold" title="Toggle Fullscreen">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path id="fsMax" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15"></path>
+                                <path id="fsMin" class="hidden" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25"></path>
+                            </svg>
+                        </button>
+                        <div class="w-px h-5 bg-slate-600 mx-1"></div>
+                        <button onclick="closeAllModals()" class="bg-rose-600 hover:bg-rose-500 border border-rose-500 text-white p-2 rounded-lg transition active:scale-95 shadow-md" title="Close">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Modal Body (Iframe container) -->
+                <div id="iframeContainer" class="flex-1 bg-slate-900 relative w-full h-full flex items-center justify-center overflow-hidden">
+                    <div id="previewLoader" class="absolute inset-0 flex flex-col items-center justify-center z-0 bg-slate-900">
+                         <div class="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-indigo-500 mb-4"></div>
+                         <span class="text-xs font-bold text-slate-300 uppercase tracking-widest" id="txtLoadingPreview">Loading Source...</span>
+                    </div>
+                    <iframe id="previewIframe" class="w-full h-full relative z-10 bg-transparent border-0 shadow-inner" allowfullscreen allow="autoplay" onload="document.getElementById('previewLoader').style.display='none'"></iframe>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // --- STORAGE KEYS ---
+        const LANG_KEY = 'tet_ecosystem_lang';
+        const CAT_KEY = 'tet_resource_cat';
+        const VIEW_KEY = 'tet_resource_view';
+        const SORT_KEY = 'tet_resource_sort';
+
+        // ====================================================================================
+        // 🌟 DYNAMIC DATA URL 🌟
+        // Added /raw (without filename) so it ALWAYS fetches the latest file regardless of name
+        // ====================================================================================
+        const REMOTE_DATA_URL = "https://gist.githubusercontent.com/chriscdtan/97662ffc749c1085625e619f3728c703/raw"; 
+
+        // --- STATE & DATA ---
+        let currentLang = localStorage.getItem(LANG_KEY) || 'zh';
+        let currentCategory = localStorage.getItem(CAT_KEY) || 'all';
+        let currentView = localStorage.getItem(VIEW_KEY) || 'grid'; 
+        let currentActiveResource = null;
+        let resources = []; 
+
+        const i18n = {
+            en: {
+                appTitleHighlight: "Resource",
+                appSubtitle: "Official Resource Materials & Docs",
+                btnToggleLang: "🌐 中文",
+                searchPlaceholder: "Search resources, docs, files...",
+                txtItems: "Items",
+                txtEmpty: "No resources found matching your criteria.",
+                actionView: "View",
+                actionDownload: "Download",
+                actionOpen: "Open",
+                actionWatch: "Watch",
+                cat_all: "All Resources",
+                cat_official: "Official",
+                cat_marketing: "Marketing",
+                cat_guides: "Guides",
+                cat_entertainment: "Entertainment",
+                cat_meetings: "Meeting Recordings",
+                txtLoadingPreview: "Loading Source...",
+                txtShareBtn: "Share",
+                optDateDesc: "Newest First",
+                optDateAsc: "Oldest First",
+                optTitleAsc: "Title (A-Z)",
+                optTitleDesc: "Title (Z-A)",
+                optSizeDesc: "Size (Largest)",
+                optSizeAsc: "Size (Smallest)",
+                msgCopied: "Link copied to clipboard!",
+                msgPdfMobile: "If PDF fails to load natively, tap the 'Open External' icon.",
+                msgProRequired: "🔒 Pro License Required",
+                btnUnlock: "Unlock Access"
+            },
+            zh: {
+                appTitleHighlight: "资源中心",
+                appSubtitle: "官方资源材料与文档",
+                btnToggleLang: "🌐 EN",
+                searchPlaceholder: "搜索资源、文档、文件...",
+                txtItems: "个项目",
+                txtEmpty: "未找到符合条件的资源。",
+                actionView: "查看",
+                actionDownload: "下载",
+                actionOpen: "打开",
+                actionWatch: "观看",
+                cat_all: "所有资源",
+                cat_official: "官方文档",
+                cat_marketing: "营销素材",
+                cat_guides: "指南教程",
+                cat_entertainment: "娱乐视听",
+                cat_meetings: "会议记录",
+                txtLoadingPreview: "正在加载资源...",
+                txtShareBtn: "分享",
+                optDateDesc: "最新上传",
+                optDateAsc: "最早上传",
+                optTitleAsc: "标题 (A-Z)",
+                optTitleDesc: "标题 (Z-A)",
+                optSizeDesc: "文件大小 (从大到小)",
+                optSizeAsc: "文件大小 (从小到大)",
+                msgCopied: "链接已复制到剪贴板！",
+                msgPdfMobile: "若浏览器无法自动加载PDF，请点击右上角在新标签页打开。",
+                msgProRequired: "🔒 付费会员限制许可",
+                btnUnlock: "解锁权限"
+            }
+        };
+
+        const categories = [
+            { id: 'all', icon: '🌟' },
+            { id: 'official', icon: '📄' },
+            { id: 'marketing', icon: '🎨' },
+            { id: 'guides', icon: '🧭' },
+            { id: 'entertainment', icon: '🍿' },
+            { id: 'meetings', icon: '🔒' }
+        ];
+
+        // FALLBACK DATA
+        const fallbackData = [
+            { 
+                id: 1, type: 'PDF', category: 'official', size: '2.4 MB', date: '2026-04-01', 
+                thumbnail: '', 
+                url: '#',
+                en: { title: 'TET Whitepaper v5.0', desc: 'The comprehensive technical and strategic blueprint of the TET ecosystem.' }, 
+                zh: { title: 'TET 白皮书 v5.0', desc: 'TET 生态系统的全面技术和战略蓝图。' } 
+            },
+            { 
+                id: 2, type: 'ZIP', category: 'marketing', size: '45 MB', date: '2026-03-15', 
+                thumbnail: '', 
+                url: '#', 
+                en: { title: 'TET Brand Assets Q2', desc: 'High-res logos, social media banners, and presentation templates.' }, 
+                zh: { title: 'TET 品牌素材 (Q2)', desc: '高清Logo、社交媒体横幅和演示文稿模板。' } 
+            },
+            { 
+                id: 3, type: 'LINK', category: 'guides', size: 'Web', date: '2026-04-05', 
+                thumbnail: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=600&q=80',
+                url: 'https://example.com', 
+                en: { title: 'Node Setup Guide', desc: 'Step-by-step interactive guide to deploying your first node.' }, 
+                zh: { title: '节点配置指南', desc: '部署第一个节点的循序渐进交互式指南。' } 
+            },
+            { 
+                id: 4, type: 'VID', category: 'entertainment', size: '12 Mins', date: '2026-03-20', 
+                thumbnail: '', 
+                url: 'https://www.youtube.com/embed/dQw4w9WgXcQ', 
+                en: { title: 'Traffic Engine Token (TET) Explained: How to Earn 30% per Cycle! 💰', desc: 'A deep dive into the TET reward structure and optimal compounding strategies.' }, 
+                zh: { title: 'TET 收益机制解析：如何实现周期 30% 的增长！💰', desc: '深入解析 TET 奖励结构和最佳复利策略。' } 
+            },
+            { 
+                id: 5, type: 'PDF', category: 'official', size: '1.1 MB', date: '2026-02-10', 
+                thumbnail: '',
+                url: '#',
+                en: { title: 'Smart Contract Audit', desc: 'Security audit report by top-tier blockchain security firms.' }, 
+                zh: { title: '智能合约审计报告', desc: '由顶级区块链安全公司提供的安全审计报告。' } 
+            },
+            { 
+                id: 6, type: 'VID', category: 'meetings', size: '45 Mins', date: '2026-04-02', 
+                thumbnail: '', 
+                url: '#',
+                en: { title: 'Global Leaders Townhall - Q1 2026', desc: 'Exclusive recording of the internal strategic townhall meeting.' }, 
+                zh: { title: '全球核心领袖内部会议录影 - Q1', desc: '内部战略说明会独家录影。' } 
+            },
+        ];
+
+        // --- INITIALIZATION ---
+        async function initApp() {
+            const container = document.getElementById('resource-container');
+            container.innerHTML = '<div class="col-span-full flex justify-center py-12"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div></div>';
+            
+            try {
+                if (REMOTE_DATA_URL && REMOTE_DATA_URL.trim() !== "") {
+                    const cacheBuster = (REMOTE_DATA_URL.includes('?') ? '&' : '?') + 't=' + new Date().getTime();
+                    const response = await fetch(REMOTE_DATA_URL + cacheBuster);
+                    
+                    if (response.ok) {
+                        const rawText = await response.text();
+                        try {
+                            const data = JSON.parse(rawText);
+                            if (Array.isArray(data)) {
+                                resources = data;
+                            } else {
+                                throw new Error("Invalid JSON structure (not an array)");
+                            }
+                        } catch(parseErr) {
+                            console.error("🚨 JSON SYNTAX ERROR IN GIST! 🚨\nPlease ensure you use double quotes (\") for keys and strings.", parseErr);
+                            showToast("⚠️ Gist 数据格式错误！加载失败，显示备用数据。", null, true);
+                            resources = fallbackData;
+                        }
+                    } else {
+                        throw new Error("Network response was not ok");
+                    }
+                } else {
+                    resources = fallbackData;
+                }
+            } catch (err) {
+                console.warn("Failed to load remote resources, using fallback offline data.", err);
+                resources = fallbackData;
+            }
+
+            document.getElementById('sortSelect').value = localStorage.getItem(SORT_KEY) || 'date_desc';
+
+            renderCategories();
+            setViewMode(currentView); 
+            applyLanguage();
+            
+            document.addEventListener('fullscreenchange', updateFullscreenIcon);
+            document.addEventListener('webkitfullscreenchange', updateFullscreenIcon);
+            document.addEventListener('msfullscreenchange', updateFullscreenIcon);
+        }
+
+        // --- SMART THUMBNAIL GENERATOR ---
+        function getSmartThumbnail(res) {
+            if (res.thumbnail && res.thumbnail.trim() !== '') return res.thumbnail;
+            
+            if (res.type === 'VID' && res.url && res.url.includes('youtube.com/embed/')) {
+                try {
+                    const videoId = res.url.split('embed/')[1].split('?')[0];
+                    return `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+                } catch(e) {}
+            }
+            
+            return `GRADIENT_${res.type || 'FILE'}`;
+        }
+
+        // Multi-stage thumbnail fallback engine
+        window.onThumbError = function(img, currentUrl) {
+            if (!currentUrl) return;
+            
+            // Cascade through YouTube's guaranteed image tiers
+            if (currentUrl.includes('maxresdefault.jpg')) {
+                img.src = currentUrl.replace('maxresdefault.jpg', 'sddefault.jpg');
+            } else if (currentUrl.includes('sddefault.jpg')) {
+                img.src = currentUrl.replace('sddefault.jpg', 'hqdefault.jpg');
+            } else if (currentUrl.includes('hqdefault.jpg')) {
+                img.src = currentUrl.replace('hqdefault.jpg', 'mqdefault.jpg');
+            } else {
+                img.onerror = null;
+                img.src = '';
+                img.className = 'w-full h-full bg-slate-300';
+            }
+        };
+
+        function buildThumbnailHtml(thumbVal, title) {
+            if (thumbVal.startsWith('GRADIENT_')) {
+                const type = thumbVal.split('_')[1];
+                let gradClass = 'from-slate-500 to-slate-700';
+                if(type === 'PDF') gradClass = 'from-rose-500 to-rose-700';
+                else if(type === 'ZIP') gradClass = 'from-amber-500 to-amber-700';
+                else if(type === 'VID') gradClass = 'from-purple-500 to-purple-700';
+                else if(type === 'LINK') gradClass = 'from-blue-500 to-blue-700';
+                
+                return `
+                    <div class="w-full h-full bg-gradient-to-br ${gradClass} transition-transform duration-700 group-hover:scale-105 flex items-center justify-center shadow-inner">
+                        <span class="text-white/40 font-black text-4xl tracking-widest uppercase drop-shadow-md">${type}</span>
+                    </div>
+                `;
+            } else {
+                return `<img src="${thumbVal}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 bg-slate-200" alt="${title}" onerror="window.onThumbError(this, this.src)">`;
+            }
+        }
+
+        // --- UI RENDERING LOGIC ---
+        function renderCategories() {
+            const list = document.getElementById('category-list');
+            list.innerHTML = '';
+            
+            categories.forEach(cat => {
+                const li = document.createElement('li');
+                li.className = `cat-chip cursor-pointer px-5 py-2.5 rounded-full text-[13px] md:text-sm font-bold flex items-center gap-2 whitespace-nowrap shrink-0 shadow-sm ${currentCategory === cat.id ? 'active' : ''}`;
+                li.onclick = () => selectCategory(cat.id);
+                
+                li.innerHTML = `
+                    <span class="text-sm md:text-base cat-icon transition-all">${cat.icon}</span>
+                    <span id="catLabel_${cat.id}">${i18n[currentLang]['cat_' + cat.id]}</span>
+                `;
+                list.appendChild(li);
+            });
+        }
+
+        function triggerLicenseActivation() {
+            if (window.parent && window.parent !== window) {
+                window.parent.postMessage('open_activation', '*');
+            } else {
+                setTimeout(() => {
+                    showToast(currentLang === 'en' ? "Please return to the main menu to activate your license." : "请返回主菜单激活您的许可。", null, true);
+                }, 1500);
+            }
+        }
+
+        function selectCategory(catId) {
+            currentCategory = catId;
+            localStorage.setItem(CAT_KEY, catId);
+            
+            document.querySelectorAll('.cat-chip').forEach(el => el.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+            filterResources();
+        }
+
+        function setViewMode(mode) {
+            currentView = mode;
+            localStorage.setItem(VIEW_KEY, mode);
+            
+            const activeClass = "p-1.5 rounded-lg text-indigo-700 bg-white transition active:scale-95 shadow border border-slate-300";
+            const inactiveClass = "p-1.5 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-200 transition active:scale-95 border border-transparent";
+            
+            document.getElementById('btnGrid').className = mode === 'grid' ? activeClass : inactiveClass;
+            document.getElementById('btnList').className = mode === 'list' ? activeClass : inactiveClass;
+
+            const container = document.getElementById('resource-container');
+            if (mode === 'grid') {
+                container.className = 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-5 lg:gap-6';
+            } else {
+                container.className = 'flex flex-col gap-3.5';
+            }
+            
+            filterResources();
+        }
+
+        function getActionDetails(type) {
+            const t = i18n[currentLang];
+            switch(type) {
+                case 'PDF': return { icon: '📄', color: 'text-rose-600', bg: 'bg-rose-50', btn: t.actionView, btnStyle: 'bg-rose-100 text-rose-800 hover:bg-rose-200 border border-rose-200' };
+                case 'ZIP': return { icon: '📦', color: 'text-amber-600', bg: 'bg-amber-50', btn: t.actionDownload, btnStyle: 'bg-amber-100 text-amber-800 hover:bg-amber-200 border border-amber-200' };
+                case 'LINK': return { icon: '🔗', color: 'text-blue-600', bg: 'bg-blue-50', btn: t.actionOpen, btnStyle: 'bg-blue-100 text-blue-800 hover:bg-blue-200 border border-blue-200' };
+                case 'VID': return { icon: '▶️', color: 'text-purple-600', bg: 'bg-purple-50', btn: t.actionWatch, btnStyle: 'bg-purple-100 text-purple-800 hover:bg-purple-200 border border-purple-200' };
+                default: return { icon: '📁', color: 'text-slate-600', bg: 'bg-slate-50', btn: t.actionOpen, btnStyle: 'bg-slate-100 text-slate-800 hover:bg-slate-200 border border-slate-200' };
+            }
+        }
+
+        function filterResources() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const sortVal = document.getElementById('sortSelect').value;
+            
+            localStorage.setItem(SORT_KEY, sortVal); 
+            
+            const container = document.getElementById('resource-container');
+            const emptyState = document.getElementById('emptyState');
+            const resCount = document.getElementById('resCount');
+            const isPro = new URLSearchParams(window.location.search).get('pro') === 'true';
+            
+            container.innerHTML = '';
+            
+            // DEFENSIVE PROGRAMMING: Gracefully handle malformed data in JSON
+            let filtered = resources.filter(res => {
+                if (!res) return false; // Skip null items
+
+                const cat = res.category || 'all';
+                const titleEN = (res.en && res.en.title) ? res.en.title.toLowerCase() : '';
+                const descEN = (res.en && res.en.desc) ? res.en.desc.toLowerCase() : '';
+                const titleZH = (res.zh && res.zh.title) ? res.zh.title.toLowerCase() : '';
+                const descZH = (res.zh && res.zh.desc) ? res.zh.desc.toLowerCase() : '';
+
+                const matchCat = currentCategory === 'all' 
+                    ? cat !== 'meetings' 
+                    : cat === currentCategory;
+                
+                const titleToSearch = currentLang === 'en' ? titleEN : titleZH;
+                const descToSearch = currentLang === 'en' ? descEN : descZH;
+
+                const matchQuery = query === '' || titleToSearch.includes(query) || descToSearch.includes(query);
+                
+                return matchCat && matchQuery;
+            });
+
+            // DEFENSIVE SORTING
+            filtered.sort((a, b) => {
+                if (sortVal.startsWith('date')) {
+                    const d1 = new Date(a.date || 0).getTime();
+                    const d2 = new Date(b.date || 0).getTime();
+                    return sortVal === 'date_desc' ? d2 - d1 : d1 - d2;
+                }
+                if (sortVal.startsWith('title')) {
+                    const t1 = (a[currentLang] && a[currentLang].title) ? a[currentLang].title.toLowerCase() : '';
+                    const t2 = (b[currentLang] && b[currentLang].title) ? b[currentLang].title.toLowerCase() : '';
+                    return sortVal === 'title_asc' ? t1.localeCompare(t2) : t2.localeCompare(t1);
+                }
+                if (sortVal.startsWith('size')) {
+                    const parseSize = (str) => {
+                        if (!str) return 0;
+                        const s = String(str).toUpperCase();
+                        if(s.includes('GB')) return parseFloat(s) * 1024 * 1024;
+                        if(s.includes('MB')) return parseFloat(s) * 1024;
+                        if(s.includes('KB')) return parseFloat(s);
+                        return parseFloat(s) || 0; 
+                    };
+                    const s1 = parseSize(a.size);
+                    const s2 = parseSize(b.size);
+                    return sortVal === 'size_desc' ? s2 - s1 : s1 - s2;
+                }
+                return 0;
+            });
+
+            // Defensive Check: Only update resCount if the element still exists in the HTML
+            if (resCount) {
+                resCount.innerText = filtered.length;
+            }
+
+            if (filtered.length === 0) {
+                container.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+                emptyState.classList.add('flex');
+            } else {
+                container.classList.remove('hidden');
+                emptyState.classList.add('hidden');
+                emptyState.classList.remove('flex');
+                
+                filtered.forEach(res => {
+                    // DEFENSIVE RENDERING DEFAULTS
+                    const data = res[currentLang] || { title: 'Untitled', desc: '' };
+                    const type = res.type || 'FILE';
+                    const category = res.category || 'all';
+                    const dateStr = res.date || '-';
+                    const sizeStr = res.size || '-';
+                    const resUrl = res.url || '#';
+                    
+                    const style = getActionDetails(type);
+                    const thumbVal = getSmartThumbnail(res);
+                    const thumbElement = buildThumbnailHtml(thumbVal, data.title);
+                    
+                    const isLocked = category === 'meetings' && !isPro;
+                    const lockedIcon = category === 'meetings' ? '<span title="Pro Content">🔒</span> ' : '';
+                    
+                    const card = document.createElement('div');
+                    
+                    if (currentView === 'grid') {
+                        card.className = `resource-card bg-white border border-slate-200 rounded-2xl flex flex-col relative overflow-hidden shadow-md`;
+                        
+                        let cardInnerHtml = `
+                            <div class="h-44 w-full relative overflow-hidden shrink-0 border-b border-slate-100 cursor-pointer" onclick="openResourceInApp('${resUrl}', '${type}', '${data.title}', '${data.desc}')">
+                                ${thumbElement}
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity duration-300"></div>
+                                <div class="absolute top-3 right-3 w-10 h-10 rounded-xl flex items-center justify-center text-xl ${style.bg} ${style.color} shadow-lg backdrop-blur-sm border border-slate-200/50 z-10">
+                                    ${style.icon}
+                                </div>
+                                <span class="absolute bottom-3 left-3 text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-md bg-black/70 text-white backdrop-blur-md border border-white/20 z-10 flex items-center gap-1">
+                                    ${type}
+                                </span>
+                            </div>
+                            <div class="p-4 md:p-5 flex flex-col flex-1">
+                                <h4 class="font-bold text-slate-800 text-[15px] mb-1.5 line-clamp-2 group-hover:text-indigo-600 transition-colors leading-tight cursor-pointer" onclick="openResourceInApp('${resUrl}', '${type}', '${data.title}', '${data.desc}')">
+                                    ${lockedIcon}${data.title}
+                                </h4>
+                                <p class="text-[11px] md:text-xs text-slate-500 font-medium mb-4 flex-1 line-clamp-2 leading-relaxed cursor-pointer" onclick="openResourceInApp('${resUrl}', '${type}', '${data.title}', '${data.desc}')">${data.desc}</p>
+                                
+                                <div class="mt-auto flex items-center justify-between pt-4 border-t border-slate-100">
+                                    <div class="flex items-center gap-3">
+                                        <div class="flex flex-col gap-0.5">
+                                            <span class="text-[9px] md:text-[10px] text-slate-400 font-bold flex items-center gap-1 uppercase tracking-wider">📅 ${dateStr}</span>
+                                            <span class="text-[9px] md:text-[10px] text-slate-400 font-bold flex items-center gap-1 uppercase tracking-wider">💾 ${sizeStr}</span>
+                                        </div>
+                                    </div>
+                                    <div class="flex gap-2">
+                                        <button onclick="shareResource('${data.title}', '${resUrl}', '${data.desc}')" class="p-2 rounded-xl text-slate-500 hover:bg-slate-100 hover:text-indigo-600 transition active:scale-95 border border-transparent hover:border-slate-300" title="Share">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
+                                        </button>
+                                        <button onclick="openResourceInApp('${resUrl}', '${type}', '${data.title}', '${data.desc}')" class="px-4 py-2 rounded-xl text-xs font-bold transition active:scale-95 shadow-sm ${style.btnStyle}">${style.btn}</button>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+
+                        if (isLocked) {
+                            card.innerHTML = `
+                                <div class="blur-wrapper">
+                                    <div class="blur-content h-full flex flex-col">${cardInnerHtml}</div>
+                                    <div class="lock-overlay" onclick="triggerLicenseActivation()">
+                                        <span class="text-4xl mb-2 drop-shadow-md">🔒</span>
+                                        <div class="text-white font-bold text-sm tracking-wide text-center px-4">${i18n[currentLang].msgProRequired}</div>
+                                        <button class="lock-overlay-btn">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"></path></svg>
+                                            ${i18n[currentLang].btnUnlock}
+                                        </button>
+                                    </div>
+                                </div>
+                            `;
+                        } else {
+                            card.classList.add('group');
+                            card.innerHTML = cardInnerHtml;
+                        }
+                    } else {
+                        card.className = `resource-card bg-white border border-slate-200 rounded-xl p-3 flex items-center gap-3 md:gap-4 shadow-md ${isLocked ? 'relative overflow-hidden' : 'group hover:border-indigo-400'}`;
+                        
+                        let cardInnerHtml = `
+                            <div class="w-12 h-12 md:w-14 md:h-14 rounded-xl shrink-0 flex items-center justify-center text-2xl md:text-3xl ${style.bg} ${style.color} shadow-sm border border-slate-200 group-hover:scale-105 transition-transform cursor-pointer" onclick="openResourceInApp('${resUrl}', '${type}', '${data.title}', '${data.desc}')">
+                                ${style.icon}
+                            </div>
+                            <div class="flex-1 min-w-0 cursor-pointer" onclick="openResourceInApp('${resUrl}', '${type}', '${data.title}', '${data.desc}')">
+                                <div class="flex items-start md:items-center gap-2 mb-1 flex-col md:flex-row">
+                                    <span class="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-300 shrink-0 shadow-sm flex items-center gap-1">${type}</span>
+                                    <h4 class="font-bold text-slate-800 text-[13px] md:text-[15px] line-clamp-2 md:truncate group-hover:text-indigo-600 transition-colors leading-snug">
+                                        ${lockedIcon}${data.title}
+                                    </h4>
+                                </div>
+                                <p class="text-[11px] text-slate-500 line-clamp-2 md:truncate">${data.desc}</p>
+                            </div>
+                            <div class="hidden md:flex flex-col text-right shrink-0 px-3 border-r border-slate-200">
+                                <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">${dateStr}</span>
+                                <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">${sizeStr}</span>
+                            </div>
+                            <div class="flex shrink-0 gap-1 md:gap-2 ml-auto">
+                                <button onclick="shareResource('${data.title}', '${resUrl}', '${data.desc}')" class="p-2 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-indigo-600 transition active:scale-95 hidden sm:block border border-transparent hover:border-slate-300" title="Share">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
+                                </button>
+                                <button onclick="openResourceInApp('${resUrl}', '${type}', '${data.title}', '${data.desc}')" class="shrink-0 px-3 md:px-4 py-2 rounded-lg md:rounded-xl text-[11px] md:text-xs font-bold transition active:scale-95 shadow-sm ${style.btnStyle}">
+                                    ${style.btn}
+                                </button>
+                            </div>
+                        `;
+
+                        if (isLocked) {
+                            card.innerHTML = `
+                                <div class="blur-wrapper flex w-full">
+                                    <div class="blur-content w-full flex items-center gap-3 md:gap-4">${cardInnerHtml}</div>
+                                    <div class="lock-overlay flex-row gap-4" onclick="triggerLicenseActivation()">
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-2xl drop-shadow-md">🔒</span>
+                                            <span class="text-white font-bold text-sm tracking-wide hidden sm:block">${i18n[currentLang].msgProRequired}</span>
+                                        </div>
+                                        <button class="lock-overlay-btn !mt-0 !py-1.5">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"></path></svg>
+                                            <span class="hidden md:inline">${i18n[currentLang].btnUnlock}</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            `;
+                        } else {
+                            card.innerHTML = cardInnerHtml;
+                        }
+                    }
+
+                    container.appendChild(card);
+                });
+            }
+        }
+
+        // --- NATIVE SHARE LOGIC ---
+        async function shareResource(title, url, desc) {
+            const baseUri = window.location.href.split('?')[0];
+            const shareUrl = (url && url !== '#') ? new URL(url, baseUri).href : baseUri;
+
+            if (/MicroMessenger/i.test(navigator.userAgent)) {
+                showToast(currentLang === 'zh' ? "请点击右上角 '...' 进行分享" : "Tap '...' in the top right to share.", null, true);
+                return;
+            }
+            
+            if (navigator.share && window.isSecureContext) {
+                try {
+                    await navigator.share({ title: title, text: desc, url: shareUrl });
+                    return; 
+                } catch(e) { 
+                    if (e.name === 'AbortError') return; 
+                }
+            } 
+            
+            try {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(shareUrl);
+                    showToast(i18n[currentLang].msgCopied, null, true);
+                } else {
+                    const input = document.createElement('input');
+                    input.value = shareUrl;
+                    document.body.appendChild(input);
+                    input.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(input);
+                    showToast(i18n[currentLang].msgCopied, null, true);
+                }
+            } catch(e) {
+                showToast("Failed to copy link.", null, true);
+            }
+        }
+
+        function shareCurrentResource() {
+            if(currentActiveResource) {
+                shareResource(currentActiveResource.title, currentActiveResource.url, currentActiveResource.desc);
+            }
+        }
+
+        // --- IN-APP RESOURCE PREVIEW LOGIC ---
+        function openResourceInApp(url, type, title, desc) {
+            const isPro = new URLSearchParams(window.location.search).get('pro') === 'true';
+            const resObj = resources.find(r => r[currentLang] && r[currentLang].title === title);
+            if (resObj && resObj.category === 'meetings' && !isPro) {
+                showToast(i18n[currentLang].msgProRequired, null, true);
+                triggerLicenseActivation();
+                return;
+            }
+
+            currentActiveResource = { url, type, title, desc };
+            currentPreviewUrl = url;
+
+            handleResourceAction(type, title); 
+            
+            if (url) {
+                const modal = document.getElementById('previewModal');
+                const iframe = document.getElementById('previewIframe');
+                const loader = document.getElementById('previewLoader');
+                const container = document.getElementById('iframeContainer');
+                
+                document.getElementById('previewTitle').innerText = title;
+                document.getElementById('previewIcon').innerText = getActionDetails(type).icon;
+                
+                if (type === 'VID') {
+                    modal.classList.remove('h-[85vh]');
+                    modal.classList.add('h-auto', 'max-h-[95vh]');
+                    container.classList.remove('h-full');
+                    container.classList.add('aspect-video', 'h-auto', 'w-full');
+                } else {
+                    modal.classList.remove('h-auto', 'max-h-[95vh]');
+                    modal.classList.add('h-[85vh]');
+                    container.classList.remove('aspect-video', 'h-auto', 'w-full');
+                    container.classList.add('h-full');
+                }
+
+                loader.style.display = 'flex'; 
+                
+                if (url === '#') {
+                    iframe.removeAttribute('src');
+                    iframe.srcdoc = `
+                        <html>
+                            <body style="font-family:'Roboto',sans-serif; display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; background:#0f172a; color:#cbd5e1; margin:0; padding:20px;">
+                                <div style="text-align:center; padding: 2.5rem; background:#1e293b; border-radius:1.5rem; box-shadow:0 10px 25px rgba(0,0,0,0.5); border:1px solid #334155; max-width:500px;">
+                                    <div style="font-size:4rem; margin-bottom:1rem;">${getActionDetails(type).icon}</div>
+                                    <h2 style="color:#f8fafc; margin-bottom:0.5rem; line-height:1.3;">${title}</h2>
+                                    <p style="font-size:14px; font-weight:bold; color:#94a3b8;">Local File Simulation Viewer</p>
+                                    <p style="font-size:12px; margin-top:1.5rem; opacity:0.6;">(In production, replace '#' with valid URL)</p>
+                                </div>
+                            </body>
+                        </html>
+                    `;
+                    setTimeout(() => loader.style.display = 'none', 400);
+                } else if (type === 'PDF') {
+                    // PDF.JS INTEGRATION WITH NATIVE PINCH ZOOM
+                    iframe.removeAttribute('src');
+                    iframe.srcdoc = `
+                        <!DOCTYPE html>
+                        <html lang="en">
+                        <head>
+                            <meta charset="UTF-8">
+                            <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+                            <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"><\/script>
+                            <style>
+                                body { margin: 0; background: #cbd5e1; display: flex; flex-direction: column; align-items: center; padding: 10px 0; font-family: sans-serif; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+                                .page-container { margin-bottom: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius: 4px; overflow: hidden; background: white; display: flex; justify-content: center; width: 95vw; transition: width 0.1s ease-out; }
+                                canvas { width: 100%; height: auto; display: block; }
+                                .loading { color: #334155; font-weight: bold; margin-top: 40px; text-align: center; line-height: 1.5; }
+                                
+                                /* Floating Zoom Controls */
+                                .zoom-controls { position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 100; }
+                                .zoom-btn { width: 44px; height: 44px; border-radius: 50%; background: rgba(79, 70, 229, 0.9); color: white; border: none; font-size: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); cursor: pointer; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); transition: transform 0.1s; }
+                                .zoom-btn:active { transform: scale(0.95); }
+                            </style>
+                        </head>
+                        <body>
+                            <div id="loading" class="loading">
+                                <div style="font-size:30px; margin-bottom:10px;">📄</div>
+                                Loading PDF Engine...<br><span style="font-size:12px; font-weight:normal;">This may take a moment for large files</span>
+                            </div>
+                            
+                            <!-- Floating Zoom Buttons -->
+                            <div class="zoom-controls" id="zoom-controls" style="display: none;">
+                                <button class="zoom-btn" onclick="zoomIn()">+</button>
+                                <button class="zoom-btn" onclick="zoomOut()">-</button>
+                            </div>
+
+                            <div id="pdf-container" style="width: 100%; display: flex; flex-direction: column; align-items: center; transform-origin: top left;"></div>
+                            
+                            <script>
+                                // ==========================================
+                                // PINCH-TO-ZOOM & BUTTON LOGIC
+                                // ==========================================
+                                let currentZoom = 1;
+                                const minZoom = 0.5;
+                                const maxZoom = 4.0;
+                                let touchStartDist = 0;
+                                let initialZoom = 1;
+
+                                function updateZoom() {
+                                    const pages = document.querySelectorAll('.page-container');
+                                    pages.forEach(p => {
+                                        p.style.width = (95 * currentZoom) + 'vw';
+                                    });
+                                }
+
+                                function zoomIn() { currentZoom = Math.min(currentZoom + 0.4, maxZoom); updateZoom(); }
+                                function zoomOut() { currentZoom = Math.max(currentZoom - 0.4, minZoom); updateZoom(); }
+
+                                // Native Math-based Pinch tracking
+                                document.addEventListener('touchstart', (e) => {
+                                    if (e.touches.length === 2) {
+                                        touchStartDist = Math.hypot(
+                                            e.touches[0].pageX - e.touches[1].pageX,
+                                            e.touches[0].pageY - e.touches[1].pageY
+                                        );
+                                        initialZoom = currentZoom;
+                                    }
+                                }, { passive: false });
+
+                                document.addEventListener('touchmove', (e) => {
+                                    if (e.touches.length === 2) {
+                                        e.preventDefault(); // Stop default browser pinch clash
+                                        const touchCurrentDist = Math.hypot(
+                                            e.touches[0].pageX - e.touches[1].pageX,
+                                            e.touches[0].pageY - e.touches[1].pageY
+                                        );
+                                        const scaleChange = touchCurrentDist / touchStartDist;
+                                        currentZoom = Math.min(Math.max(minZoom, initialZoom * scaleChange), maxZoom);
+                                        updateZoom();
+                                    }
+                                }, { passive: false });
+
+
+                                // ==========================================
+                                // PDF RENDER LOGIC
+                                // ==========================================
+                                async function renderPDF() {
+                                    const fileUrl = '${url}';
+                                    const pdfjsLib = window['pdfjs-dist/build/pdf'];
+                                    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+                                    
+                                    try {
+                                        const loadingTask = pdfjsLib.getDocument(fileUrl);
+                                        const pdf = await loadingTask.promise;
+                                        
+                                        document.getElementById('loading').style.display = 'none';
+                                        document.getElementById('zoom-controls').style.display = 'flex';
+                                        const container = document.getElementById('pdf-container');
+                                        
+                                        for(let i = 1; i <= pdf.numPages; i++) {
+                                            const page = await pdf.getPage(i);
+                                            
+                                            // Render at 200% resolution natively so when zoomed in, it stays perfectly crisp!
+                                            const scale = 2.0; 
+                                            const viewport = page.getViewport({scale: scale});
+                                            
+                                            const wrapper = document.createElement('div');
+                                            wrapper.className = 'page-container';
+                                            
+                                            const canvas = document.createElement('canvas');
+                                            const ctx = canvas.getContext('2d');
+                                            
+                                            const outputScale = window.devicePixelRatio || 1;
+                                            canvas.width = Math.floor(viewport.width * outputScale);
+                                            canvas.height = Math.floor(viewport.height * outputScale);
+                                            
+                                            const transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : null;
+                                            
+                                            wrapper.appendChild(canvas);
+                                            container.appendChild(wrapper);
+                                            
+                                            const renderContext = {
+                                                canvasContext: ctx,
+                                                transform: transform,
+                                                viewport: viewport
+                                            };
+                                            await page.render(renderContext).promise;
+                                        }
+                                    } catch(e) {
+                                        document.getElementById('loading').innerHTML = "Failed to load PDF natively due to browser restrictions.<br><br><b>Please tap the 'Open External' icon above.</b>";
+                                        console.error(e);
+                                    }
+                                }
+                                renderPDF();
+                            <\/script>
+                        </body>
+                        </html>
+                    `;
+                    setTimeout(() => loader.style.display = 'none', 400); 
+                } else {
+                    iframe.removeAttribute('srcdoc');
+                    iframe.src = url;
+                }
+
+                document.getElementById('modalsWrapper').classList.remove('hidden');
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                setTimeout(() => {
+                    modal.classList.remove('scale-95', 'opacity-0');
+                    modal.classList.add('scale-100', 'opacity-100');
+                }, 10);
+            }
+        }
+
+        function openInNewTab() {
+            if (currentPreviewUrl && currentPreviewUrl !== '#') {
+                window.open(currentPreviewUrl, '_blank');
+            } else {
+                showToast("Cannot open a mock file externally.", null, true);
+            }
+        }
+
+        function toggleFullScreen() {
+            const modal = document.getElementById("previewModal");
+            if (!document.fullscreenElement) {
+                if (modal.requestFullscreen) { modal.requestFullscreen(); }
+                else if (modal.webkitRequestFullscreen) { modal.webkitRequestFullscreen(); } 
+                else if (modal.msRequestFullscreen) { modal.msRequestFullscreen(); } 
+            } else {
+                if (document.exitFullscreen) { document.exitFullscreen(); }
+                else if (document.webkitExitFullscreen) { document.webkitExitFullscreen(); }
+                else if (document.msExitFullscreen) { document.msExitFullscreen(); }
+            }
+        }
+
+        function updateFullscreenIcon() {
+            const fsMax = document.getElementById('fsMax');
+            const fsMin = document.getElementById('fsMin');
+            if (document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement) {
+                if(fsMax) fsMax.classList.add('hidden');
+                if(fsMin) fsMin.classList.remove('hidden');
+            } else {
+                if(fsMax) fsMax.classList.remove('hidden');
+                if(fsMin) fsMin.classList.add('hidden');
+            }
+        }
+
+        function handleResourceAction(type, title) {
+            let msg = '';
+            if (currentLang === 'en') {
+                if(type === 'PDF') msg = `Opening Document...`;
+                if(type === 'ZIP') msg = `Preparing Download...`;
+                if(type === 'LINK') msg = `Loading Gateway...`;
+                if(type === 'VID') msg = `Buffering Video...`;
+            } else {
+                if(type === 'PDF') msg = `正在打开文档...`;
+                if(type === 'ZIP') msg = `准备下载...`;
+                if(type === 'LINK') msg = `加载外部链接...`;
+                if(type === 'VID') msg = `缓冲视频中...`;
+            }
+            showToast(`🚀 ${msg}`, null, true);
+        }
+
+        // --- I18N LOGIC ---
+        function toggleLanguage() {
+            currentLang = currentLang === 'en' ? 'zh' : 'en';
+            localStorage.setItem(LANG_KEY, currentLang); 
+            applyLanguage();
+        }
+
+        function applyLanguage() {
+            const t = i18n[currentLang];
+            
+            document.getElementById('appTitleHighlight').innerText = t.appTitleHighlight;
+            document.getElementById('appSubtitle').innerText = t.appSubtitle;
+            document.getElementById('btnToggleLang').innerText = t.btnToggleLang;
+            document.getElementById('searchInput').placeholder = t.searchPlaceholder;
+            
+            // Defensive Check: Only update txtItems if it still exists
+            const txtItemsEl = document.getElementById('txtItems');
+            if (txtItemsEl) {
+                txtItemsEl.innerText = t.txtItems;
+            }
+            
+            document.getElementById('txtEmpty').innerText = t.txtEmpty;
+            document.getElementById('txtLoadingPreview').innerText = t.txtLoadingPreview;
+            document.getElementById('txtShareBtn').innerText = t.txtShareBtn;
+            
+            document.getElementById('optDateDesc').innerText = t.optDateDesc;
+            document.getElementById('optDateAsc').innerText = t.optDateAsc;
+            document.getElementById('optTitleAsc').innerText = t.optTitleAsc;
+            document.getElementById('optTitleDesc').innerText = t.optTitleDesc;
+            document.getElementById('optSizeDesc').innerText = t.optSizeDesc;
+            document.getElementById('optSizeAsc').innerText = t.optSizeAsc;
+
+            renderCategories();
+            filterResources();
+        }
+
+        // --- MODAL SYSTEM ---
+        function closeAllModals() {
+            const modal = document.getElementById('previewModal');
+            if (modal && !modal.classList.contains('hidden')) {
+                if (document.fullscreenElement) {
+                    if (document.exitFullscreen) document.exitFullscreen();
+                }
+
+                modal.classList.remove('scale-100', 'opacity-100');
+                modal.classList.add('scale-95', 'opacity-0');
+                
+                const iframe = document.getElementById('previewIframe');
+                if (iframe) {
+                    iframe.src = '';
+                    iframe.removeAttribute('srcdoc');
+                }
+                
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                    document.getElementById('modalsWrapper').classList.add('hidden');
+                }, 200);
+            }
+        }
+
+        function showToast(msg, imgUrl = null, autoDismiss = false) {
+            const c = document.getElementById('toast-container'); 
+            const overlay = document.getElementById('toast-overlay');
+            c.innerHTML = ''; 
+            const el = document.createElement('div'); el.className = 'toast';
+            
+            let content = ''; 
+            if(imgUrl) { content += `<img src="${imgUrl}" alt="Help" onerror="this.style.display='none'">`; }
+            content += `<div class="toast-text">${msg}</div>`; 
+            el.innerHTML = content; 
+            c.appendChild(el);
+            
+            if (autoDismiss) { 
+                overlay.style.display = 'none'; 
+                setTimeout(dismissAllToasts, 2500); 
+            } else { 
+                overlay.style.display = 'block'; 
+            }
+            setTimeout(() => el.classList.add('show'), 10);
+        }
+
+        function dismissAllToasts() {
+            const c = document.getElementById('toast-container'); 
+            const overlay = document.getElementById('toast-overlay'); 
+            const toasts = c.querySelectorAll('.toast');
+            toasts.forEach(t => t.classList.remove('show')); 
+            setTimeout(() => { c.innerHTML = ''; overlay.style.display = 'none'; }, 300);
+        }
+
+        window.onload = initApp;
+    </script>
+</body>
+</html>
