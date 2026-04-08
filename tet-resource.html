@@ -14,6 +14,7 @@
     <meta name="apple-mobile-web-app-title" content="TET Resource">
     
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -200,7 +201,6 @@
 
         // ====================================================================================
         // 🌟 DYNAMIC DATA URL 🌟
-        // Added /raw (without filename) so it ALWAYS fetches the latest file regardless of name
         // ====================================================================================
         const REMOTE_DATA_URL = "https://gist.githubusercontent.com/chriscdtan/97662ffc749c1085625e619f3728c703/raw"; 
 
@@ -292,41 +292,6 @@
                 en: { title: 'TET Whitepaper v5.0', desc: 'The comprehensive technical and strategic blueprint of the TET ecosystem.' }, 
                 zh: { title: 'TET 白皮书 v5.0', desc: 'TET 生态系统的全面技术和战略蓝图。' } 
             },
-            { 
-                id: 2, type: 'ZIP', category: 'marketing', size: '45 MB', date: '2026-03-15', 
-                thumbnail: '', 
-                url: '#', 
-                en: { title: 'TET Brand Assets Q2', desc: 'High-res logos, social media banners, and presentation templates.' }, 
-                zh: { title: 'TET 品牌素材 (Q2)', desc: '高清Logo、社交媒体横幅和演示文稿模板。' } 
-            },
-            { 
-                id: 3, type: 'LINK', category: 'guides', size: 'Web', date: '2026-04-05', 
-                thumbnail: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=600&q=80',
-                url: 'https://example.com', 
-                en: { title: 'Node Setup Guide', desc: 'Step-by-step interactive guide to deploying your first node.' }, 
-                zh: { title: '节点配置指南', desc: '部署第一个节点的循序渐进交互式指南。' } 
-            },
-            { 
-                id: 4, type: 'VID', category: 'entertainment', size: '12 Mins', date: '2026-03-20', 
-                thumbnail: '', 
-                url: 'https://www.youtube.com/embed/dQw4w9WgXcQ', 
-                en: { title: 'Traffic Engine Token (TET) Explained: How to Earn 30% per Cycle! 💰', desc: 'A deep dive into the TET reward structure and optimal compounding strategies.' }, 
-                zh: { title: 'TET 收益机制解析：如何实现周期 30% 的增长！💰', desc: '深入解析 TET 奖励结构和最佳复利策略。' } 
-            },
-            { 
-                id: 5, type: 'PDF', category: 'official', size: '1.1 MB', date: '2026-02-10', 
-                thumbnail: '',
-                url: '#',
-                en: { title: 'Smart Contract Audit', desc: 'Security audit report by top-tier blockchain security firms.' }, 
-                zh: { title: '智能合约审计报告', desc: '由顶级区块链安全公司提供的安全审计报告。' } 
-            },
-            { 
-                id: 6, type: 'VID', category: 'meetings', size: '45 Mins', date: '2026-04-02', 
-                thumbnail: '', 
-                url: '#',
-                en: { title: 'Global Leaders Townhall - Q1 2026', desc: 'Exclusive recording of the internal strategic townhall meeting.' }, 
-                zh: { title: '全球核心领袖内部会议录影 - Q1', desc: '内部战略说明会独家录影。' } 
-            },
         ];
 
         // --- INITIALIZATION ---
@@ -385,21 +350,20 @@
                     return `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
                 } catch(e) {}
             }
+
+            // Flag PDF files so they trigger the Lazy Loader Thumbnail generation
+            if (res.type === 'PDF' && res.url && res.url !== '#') {
+                return `GENERATE_PDF_${res.url}`;
+            }
             
             return `GRADIENT_${res.type || 'FILE'}`;
         }
 
-        // Multi-stage thumbnail fallback engine
+        // ONE-SHOT GUARANTEED FALLBACK ENGINE
         window.onThumbError = function(img, currentUrl) {
             if (!currentUrl) return;
-            
-            // Cascade through YouTube's guaranteed image tiers
             if (currentUrl.includes('maxresdefault.jpg')) {
-                img.src = currentUrl.replace('maxresdefault.jpg', 'sddefault.jpg');
-            } else if (currentUrl.includes('sddefault.jpg')) {
-                img.src = currentUrl.replace('sddefault.jpg', 'hqdefault.jpg');
-            } else if (currentUrl.includes('hqdefault.jpg')) {
-                img.src = currentUrl.replace('hqdefault.jpg', 'mqdefault.jpg');
+                img.src = currentUrl.replace('maxresdefault.jpg', 'hqdefault.jpg');
             } else {
                 img.onerror = null;
                 img.src = '';
@@ -408,6 +372,23 @@
         };
 
         function buildThumbnailHtml(thumbVal, title) {
+            // New PDF Thumbnail Logic
+            if (thumbVal.startsWith('GENERATE_PDF_')) {
+                const url = thumbVal.replace('GENERATE_PDF_', '');
+                return `
+                    <div class="pdf-thumb-wrapper w-full h-full bg-slate-200 transition-transform duration-700 group-hover:scale-105 flex items-center justify-center relative overflow-hidden" data-pdf-url="${url}">
+                        <div class="absolute inset-0 flex items-center justify-center pdf-thumb-loading z-10 bg-slate-100">
+                             <div class="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-indigo-500"></div>
+                        </div>
+                        <canvas class="absolute inset-0 w-full h-full object-cover object-top opacity-0 transition-opacity duration-500 z-20"></canvas>
+                        <!-- Fallback background if PDF generation fails -->
+                        <div class="absolute inset-0 bg-gradient-to-br from-rose-500 to-rose-700 flex items-center justify-center shadow-inner z-0 hidden pdf-thumb-fallback">
+                            <span class="text-white/40 font-black text-4xl tracking-widest uppercase drop-shadow-md">PDF</span>
+                        </div>
+                    </div>
+                `;
+            }
+            
             if (thumbVal.startsWith('GRADIENT_')) {
                 const type = thumbVal.split('_')[1];
                 let gradClass = 'from-slate-500 to-slate-700';
@@ -424,6 +405,68 @@
             } else {
                 return `<img src="${thumbVal}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 bg-slate-200" alt="${title}" onerror="window.onThumbError(this, this.src)">`;
             }
+        }
+
+        // --- LAZY-LOADED PDF THUMBNAIL ENGINE ---
+        function initPdfThumbnails() {
+            const wrappers = document.querySelectorAll('.pdf-thumb-wrapper:not(.observed)');
+            if (wrappers.length === 0) return;
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const wrapper = entry.target;
+                        wrapper.classList.add('observed');
+                        observer.unobserve(wrapper); // Stop observing once it's triggered
+                        generateSinglePdfThumb(wrapper);
+                    }
+                });
+            }, { rootMargin: '200px' }); // Trigger load slightly before scrolling into view
+
+            wrappers.forEach(w => observer.observe(w));
+        }
+
+        async function generateSinglePdfThumb(wrapper) {
+            const url = wrapper.getAttribute('data-pdf-url');
+            if (!url || url === '#') return showFallback(wrapper);
+
+            try {
+                const pdfjsLib = window['pdfjs-dist/build/pdf'];
+                pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+                const loadingTask = pdfjsLib.getDocument(url);
+                const pdf = await loadingTask.promise;
+                const page = await pdf.getPage(1);
+
+                // Render at a very low scale to save memory just for the thumbnail
+                const viewport = page.getViewport({ scale: 0.5 }); 
+                const canvas = wrapper.querySelector('canvas');
+                const ctx = canvas.getContext('2d');
+
+                canvas.width = viewport.width;
+                canvas.height = viewport.height;
+
+                await page.render({ canvasContext: ctx, viewport: viewport }).promise;
+
+                // Success! Fade in the canvas and remove loader
+                canvas.classList.remove('opacity-0');
+                const loader = wrapper.querySelector('.pdf-thumb-loading');
+                if (loader) loader.style.display = 'none';
+                
+                // Immediately free the memory
+                page.cleanup();
+
+            } catch (err) {
+                console.warn('PDF Thumbnail Generation failed, showing fallback:', err);
+                showFallback(wrapper);
+            }
+        }
+
+        function showFallback(wrapper) {
+            const loader = wrapper.querySelector('.pdf-thumb-loading');
+            const fallback = wrapper.querySelector('.pdf-thumb-fallback');
+            if (loader) loader.style.display = 'none';
+            if (fallback) fallback.classList.remove('hidden');
         }
 
         // --- UI RENDERING LOGIC ---
@@ -507,9 +550,8 @@
             
             container.innerHTML = '';
             
-            // DEFENSIVE PROGRAMMING: Gracefully handle malformed data in JSON
             let filtered = resources.filter(res => {
-                if (!res) return false; // Skip null items
+                if (!res) return false;
 
                 const cat = res.category || 'all';
                 const titleEN = (res.en && res.en.title) ? res.en.title.toLowerCase() : '';
@@ -529,7 +571,6 @@
                 return matchCat && matchQuery;
             });
 
-            // DEFENSIVE SORTING
             filtered.sort((a, b) => {
                 if (sortVal.startsWith('date')) {
                     const d1 = new Date(a.date || 0).getTime();
@@ -557,10 +598,7 @@
                 return 0;
             });
 
-            // Defensive Check: Only update resCount if the element still exists in the HTML
-            if (resCount) {
-                resCount.innerText = filtered.length;
-            }
+            if (resCount) { resCount.innerText = filtered.length; }
 
             if (filtered.length === 0) {
                 container.classList.add('hidden');
@@ -572,7 +610,6 @@
                 emptyState.classList.remove('flex');
                 
                 filtered.forEach(res => {
-                    // DEFENSIVE RENDERING DEFAULTS
                     const data = res[currentLang] || { title: 'Untitled', desc: '' };
                     const type = res.type || 'FILE';
                     const category = res.category || 'all';
@@ -697,6 +734,9 @@
 
                     container.appendChild(card);
                 });
+                
+                // Initialize PDF Thumbnails after rendering grid
+                initPdfThumbnails();
             }
         }
 
@@ -797,7 +837,7 @@
                     `;
                     setTimeout(() => loader.style.display = 'none', 400);
                 } else if (type === 'PDF') {
-                    // PDF.JS INTEGRATION WITH NATIVE PINCH ZOOM
+                    // PDF.JS LAZY LOADING & MEMORY OPTIMIZATION ENGINE
                     iframe.removeAttribute('src');
                     iframe.srcdoc = `
                         <!DOCTYPE html>
@@ -808,9 +848,10 @@
                             <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"><\/script>
                             <style>
                                 body { margin: 0; background: #cbd5e1; display: flex; flex-direction: column; align-items: center; padding: 10px 0; font-family: sans-serif; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-                                .page-container { margin-bottom: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius: 4px; overflow: hidden; background: white; display: flex; justify-content: center; width: 95vw; transition: width 0.1s ease-out; }
+                                .page-container { margin-bottom: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius: 4px; overflow: hidden; background: white; display: flex; justify-content: center; align-items: center; width: 95vw; min-height: 50vh; transition: width 0.1s ease-out; position: relative;}
                                 canvas { width: 100%; height: auto; display: block; }
-                                .loading { color: #334155; font-weight: bold; margin-top: 40px; text-align: center; line-height: 1.5; }
+                                .loading-overlay { color: #334155; font-weight: bold; margin-top: 40px; text-align: center; line-height: 1.5; }
+                                .page-loader { position: absolute; color: #94a3b8; font-size: 14px; font-weight: bold; }
                                 
                                 /* Floating Zoom Controls */
                                 .zoom-controls { position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 100; }
@@ -819,9 +860,9 @@
                             </style>
                         </head>
                         <body>
-                            <div id="loading" class="loading">
+                            <div id="loading" class="loading-overlay">
                                 <div style="font-size:30px; margin-bottom:10px;">📄</div>
-                                Loading PDF Engine...<br><span style="font-size:12px; font-weight:normal;">This may take a moment for large files</span>
+                                Preparing Document...
                             </div>
                             
                             <!-- Floating Zoom Buttons -->
@@ -844,32 +885,23 @@
 
                                 function updateZoom() {
                                     const pages = document.querySelectorAll('.page-container');
-                                    pages.forEach(p => {
-                                        p.style.width = (95 * currentZoom) + 'vw';
-                                    });
+                                    pages.forEach(p => { p.style.width = (95 * currentZoom) + 'vw'; });
                                 }
 
                                 function zoomIn() { currentZoom = Math.min(currentZoom + 0.4, maxZoom); updateZoom(); }
                                 function zoomOut() { currentZoom = Math.max(currentZoom - 0.4, minZoom); updateZoom(); }
 
-                                // Native Math-based Pinch tracking
                                 document.addEventListener('touchstart', (e) => {
                                     if (e.touches.length === 2) {
-                                        touchStartDist = Math.hypot(
-                                            e.touches[0].pageX - e.touches[1].pageX,
-                                            e.touches[0].pageY - e.touches[1].pageY
-                                        );
+                                        touchStartDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
                                         initialZoom = currentZoom;
                                     }
                                 }, { passive: false });
 
                                 document.addEventListener('touchmove', (e) => {
                                     if (e.touches.length === 2) {
-                                        e.preventDefault(); // Stop default browser pinch clash
-                                        const touchCurrentDist = Math.hypot(
-                                            e.touches[0].pageX - e.touches[1].pageX,
-                                            e.touches[0].pageY - e.touches[1].pageY
-                                        );
+                                        e.preventDefault(); 
+                                        const touchCurrentDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
                                         const scaleChange = touchCurrentDist / touchStartDist;
                                         currentZoom = Math.min(Math.max(minZoom, initialZoom * scaleChange), maxZoom);
                                         updateZoom();
@@ -878,7 +910,7 @@
 
 
                                 // ==========================================
-                                // PDF RENDER LOGIC
+                                // LAZY LOADING PDF RENDER ENGINE
                                 // ==========================================
                                 async function renderPDF() {
                                     const fileUrl = '${url}';
@@ -893,40 +925,83 @@
                                         document.getElementById('zoom-controls').style.display = 'flex';
                                         const container = document.getElementById('pdf-container');
                                         
+                                        // 1. Create Layout Placeholders instantly
                                         for(let i = 1; i <= pdf.numPages; i++) {
-                                            const page = await pdf.getPage(i);
-                                            
-                                            // Render at 200% resolution natively so when zoomed in, it stays perfectly crisp!
-                                            const scale = 2.0; 
-                                            const viewport = page.getViewport({scale: scale});
-                                            
                                             const wrapper = document.createElement('div');
                                             wrapper.className = 'page-container';
-                                            
-                                            const canvas = document.createElement('canvas');
-                                            const ctx = canvas.getContext('2d');
-                                            
-                                            const outputScale = window.devicePixelRatio || 1;
-                                            canvas.width = Math.floor(viewport.width * outputScale);
-                                            canvas.height = Math.floor(viewport.height * outputScale);
-                                            
-                                            const transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : null;
-                                            
-                                            wrapper.appendChild(canvas);
+                                            wrapper.dataset.page = i;
+                                            wrapper.innerHTML = '<div class="page-loader">Loading Page ' + i + '...</div>';
                                             container.appendChild(wrapper);
-                                            
-                                            const renderContext = {
-                                                canvasContext: ctx,
-                                                transform: transform,
-                                                viewport: viewport
-                                            };
-                                            await page.render(renderContext).promise;
                                         }
+
+                                        // 2. Setup Memory-Safe Lazy Loader
+                                        const observer = new IntersectionObserver((entries) => {
+                                            entries.forEach(entry => {
+                                                if (entry.isIntersecting) {
+                                                    const wrapper = entry.target;
+                                                    const pageNum = parseInt(wrapper.dataset.page);
+                                                    if (!wrapper.dataset.loaded) {
+                                                        wrapper.dataset.loaded = "true";
+                                                        renderSinglePage(pdf, pageNum, wrapper);
+                                                    }
+                                                }
+                                            });
+                                        }, { rootMargin: "200% 0px" }); // Pre-load 2 screens ahead
+
+                                        // Observe all placeholders
+                                        document.querySelectorAll('.page-container').forEach(el => observer.observe(el));
+
                                     } catch(e) {
-                                        document.getElementById('loading').innerHTML = "Failed to load PDF natively due to browser restrictions.<br><br><b>Please tap the 'Open External' icon above.</b>";
+                                        document.getElementById('loading').innerHTML = "Failed to load PDF natively.<br><br><b>Please tap the 'Open External' icon above.</b>";
                                         console.error(e);
                                     }
                                 }
+
+                                async function renderSinglePage(pdf, pageNum, wrapper) {
+                                    try {
+                                        const page = await pdf.getPage(pageNum);
+                                        
+                                        // Optimization: Lower the internal base resolution on mobile to prevent RAM crashes
+                                        const isMobile = window.innerWidth < 768;
+                                        const baseScale = isMobile ? 1.0 : 1.5; 
+                                        const viewport = page.getViewport({scale: baseScale});
+                                        
+                                        // Set correct aspect ratio dynamically to prevent jumpiness
+                                        wrapper.style.minHeight = 'auto';
+                                        wrapper.style.aspectRatio = viewport.width / viewport.height;
+                                        
+                                        const canvas = document.createElement('canvas');
+                                        const ctx = canvas.getContext('2d');
+                                        
+                                        // STRICT MEMORY LIMIT: Cap device pixel ratio on mobile (DPR 3+ on 15MB PDF causes OOM crash)
+                                        const outputScale = isMobile ? Math.min(window.devicePixelRatio || 1, 1.5) : (window.devicePixelRatio || 1);
+                                        
+                                        canvas.width = Math.floor(viewport.width * outputScale);
+                                        canvas.height = Math.floor(viewport.height * outputScale);
+                                        
+                                        const transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : null;
+                                        
+                                        const renderContext = {
+                                            canvasContext: ctx,
+                                            transform: transform,
+                                            viewport: viewport
+                                        };
+                                        
+                                        await page.render(renderContext).promise;
+                                        
+                                        // Swap placeholder with real canvas
+                                        wrapper.innerHTML = ''; 
+                                        wrapper.appendChild(canvas);
+
+                                        // VITAL: Release the heavy page object from memory after rendering
+                                        page.cleanup();
+
+                                    } catch (err) {
+                                        console.error("Page render error:", err);
+                                        wrapper.innerHTML = '<div class="page-loader" style="color:red">Failed to load page</div>';
+                                    }
+                                }
+
                                 renderPDF();
                             <\/script>
                         </body>
