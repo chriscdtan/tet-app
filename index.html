@@ -156,9 +156,15 @@
             <span class="toggle-icon">☰</span>
             <span class="brand-title">TET 管家</span>
         </div>
-        
-        <div class="menu-items">
-            <div class="menu-item active" data-url="tet-strategy.html" onclick="loadApp(this)">
+		
+		<div class="menu-items">
+			<div class="menu-item active" data-url="tet-resource.html" onclick="loadApp(this)">
+				<span class="menu-icon">⚡</span>
+				<span class="menu-text" data-i18n="nav_resource">资源中心</span>
+				<span id="badgeFree1" class="text-[9px] bg-emerald-500/20 text-emerald-500 font-bold px-1.5 py-0.5 rounded ml-auto opacity-0 transition-opacity" data-i18n="tag_free">FREE</span>
+			</div>
+		
+			<div class="menu-item" data-url="tet-strategy.html" onclick="loadApp(this)">
                 <span class="menu-icon">🌏</span>
                 <span class="menu-text" data-i18n="nav_strategy">战略布局图</span>
                 <span id="badgeFree" class="text-[9px] bg-emerald-500/20 text-emerald-500 font-bold px-1.5 py-0.5 rounded ml-auto opacity-0 transition-opacity" data-i18n="tag_free">FREE</span>
@@ -181,13 +187,7 @@
                 <span class="menu-text" data-i18n="nav_simulator">模拟器</span>
                 <span id="badgePro2" class="text-[9px] bg-indigo-500/20 text-indigo-400 font-bold px-1.5 py-0.5 rounded ml-auto opacity-0 transition-opacity">PRO</span>
             </div>
-        
-            <div class="menu-item" data-url="tet-resource.html" onclick="loadApp(this)">
-				<span class="menu-icon">⚡</span>
-                <span class="menu-text" data-i18n="nav_resource">资料库</span>
-                <span id="badgeFree1" class="text-[9px] bg-emerald-500/20 text-emerald-500 font-bold px-1.5 py-0.5 rounded ml-auto opacity-0 transition-opacity" data-i18n="tag_free">FREE</span>
-            </div>
-		</div>
+       	</div>
 		
         <div class="sidebar-bottom">
             <div class="lang-toggle-btn" onclick="toggleLanguage()">
@@ -296,7 +296,7 @@
             </div>
         </div>
 
-		<iframe id="app-frame" src="tet-strategy.html" allow="web-share; fullscreen"></iframe>
+		<iframe id="app-frame" src="tet-resource.html" allow="web-share; fullscreen"></iframe>
     </div>
 
     <script>
@@ -338,7 +338,7 @@
                 step2: '步骤 2', req_license: '提交申请单', contact_label: '姓名 / 微信号 / 手机号', screenshot_label: '支付截图', btn_submit: '提交表单',
                 step3: '步骤 3', enter_code: '验证激活状态', unlock_app: '刷新验证并解锁',
                 
-                nav_yolo: '节点计算器', nav_strategy: '战略布局图', nav_dashboard: '数据看板', nav_simulator: '模拟器', nav_resource: '资料库',
+                nav_yolo: '节点计算器', nav_strategy: '战略布局图', nav_dashboard: '数据看板', nav_simulator: '模拟器', nav_resource: '资源中心',
                 licensed_to: '授权给：', valid_until: '到期时间：', beta_tester: '公测用户',
                 tag_free: '免费', unlicensed: '未授权设备',
                 

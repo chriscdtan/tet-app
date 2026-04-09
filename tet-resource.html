@@ -36,7 +36,6 @@
         /* Blur Lock Styles */
         .blur-wrapper { position: relative; overflow: hidden; border-radius: inherit; width: 100%; height: 100%; }
         .blur-content { filter: blur(6px) grayscale(50%); opacity: 0.7; pointer-events: none; user-select: none; transition: all 0.3s ease; }
-        /* FIX: Bumped lock-overlay z-index from 20 to 40 to accommodate new card layers */
         .lock-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(15, 23, 42, 0.4); z-index: 40; border-radius: inherit; }
         .lock-overlay-btn { background: #4f46e5; color: white; padding: 8px 16px; border-radius: 999px; font-size: 12px; font-weight: bold; margin-top: 12px; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4); display: flex; items-center; gap: 6px; transition: all 0.2s; }
         .lock-overlay-btn:hover { background: #4338ca; transform: scale(1.05); }
@@ -55,6 +54,24 @@
             text-align: center; line-height: 1.5; z-index: 99999;
         }
         .toast.show { transform: translateY(0); opacity: 1; }
+
+        /* iOS Pseudo-Fullscreen Fallback Classes */
+        .pseudo-fullscreen {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            max-width: none !important;
+            max-height: none !important;
+            border-radius: 0 !important;
+            z-index: 999999 !important;
+            margin: 0 !important;
+            transform: none !important;
+        }
+        body.pseudo-fullscreen-active {
+            overflow: hidden !important;
+        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 flex flex-col h-[100dvh] overflow-hidden">
@@ -224,7 +241,7 @@
                 actionDownload: "Download",
                 actionOpen: "Open",
                 actionWatch: "Watch",
-                actionListen: "Listen", // New Audio Action
+                actionListen: "Listen", 
                 cat_all: "All Resources",
                 cat_official: "Official",
                 cat_marketing: "Marketing",
@@ -255,7 +272,7 @@
                 actionDownload: "下载",
                 actionOpen: "打开",
                 actionWatch: "观看",
-                actionListen: "收听", // New Audio Action
+                actionListen: "收听", 
                 cat_all: "所有资源",
                 cat_official: "官方文档",
                 cat_marketing: "营销素材",
@@ -354,12 +371,10 @@
                 } catch(e) {}
             }
 
-            // Flag PDF files so they trigger the Lazy Loader Thumbnail generation
             if (res.type === 'PDF' && res.url && res.url !== '#') {
                 return `GENERATE_PDF_${res.url}`;
             }
 
-            // Pictures automatically use their own URL as a thumbnail fallback
             if (res.type === 'PIC' && res.url && res.url !== '#') {
                 return res.url;
             }
@@ -367,7 +382,6 @@
             return `GRADIENT_${res.type || 'FILE'}`;
         }
 
-        // ONE-SHOT GUARANTEED FALLBACK ENGINE
         window.onThumbError = function(img, currentUrl) {
             if (!currentUrl) return;
             if (currentUrl.includes('maxresdefault.jpg')) {
@@ -380,7 +394,6 @@
         };
 
         function buildThumbnailHtml(thumbVal, title) {
-            // New PDF Thumbnail Logic
             if (thumbVal.startsWith('GENERATE_PDF_')) {
                 const url = thumbVal.replace('GENERATE_PDF_', '');
                 return `
@@ -388,9 +401,7 @@
                         <div class="absolute inset-0 flex items-center justify-center pdf-thumb-loading z-10 bg-slate-100">
                              <div class="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-indigo-500"></div>
                         </div>
-                        <!-- FIX: Dropped canvas internal z-index to 0 to prevent bleeding over UI layers -->
                         <canvas class="absolute inset-0 w-full h-full object-cover object-top opacity-0 transition-opacity duration-500 z-0"></canvas>
-                        <!-- Fallback background if PDF generation fails -->
                         <div class="absolute inset-0 bg-gradient-to-br from-rose-500 to-rose-700 flex items-center justify-center shadow-inner z-0 hidden pdf-thumb-fallback">
                             <span class="text-white/40 font-black text-4xl tracking-widest uppercase drop-shadow-md">PDF</span>
                         </div>
@@ -418,7 +429,6 @@
             }
         }
 
-        // --- LAZY-LOADED PDF THUMBNAIL ENGINE ---
         function initPdfThumbnails() {
             const wrappers = document.querySelectorAll('.pdf-thumb-wrapper:not(.observed)');
             if (wrappers.length === 0) return;
@@ -428,11 +438,11 @@
                     if (entry.isIntersecting) {
                         const wrapper = entry.target;
                         wrapper.classList.add('observed');
-                        observer.unobserve(wrapper); // Stop observing once it's triggered
+                        observer.unobserve(wrapper); 
                         generateSinglePdfThumb(wrapper);
                     }
                 });
-            }, { rootMargin: '200px' }); // Trigger load slightly before scrolling into view
+            }, { rootMargin: '200px' }); 
 
             wrappers.forEach(w => observer.observe(w));
         }
@@ -449,7 +459,6 @@
                 const pdf = await loadingTask.promise;
                 const page = await pdf.getPage(1);
 
-                // Render at a very low scale to save memory just for the thumbnail
                 const viewport = page.getViewport({ scale: 0.5 }); 
                 const canvas = wrapper.querySelector('canvas');
                 const ctx = canvas.getContext('2d');
@@ -459,12 +468,10 @@
 
                 await page.render({ canvasContext: ctx, viewport: viewport }).promise;
 
-                // Success! Fade in the canvas and remove loader
                 canvas.classList.remove('opacity-0');
                 const loader = wrapper.querySelector('.pdf-thumb-loading');
                 if (loader) loader.style.display = 'none';
                 
-                // Immediately free the memory
                 page.cleanup();
 
             } catch (err) {
@@ -642,8 +649,6 @@
                     if (currentView === 'grid') {
                         card.className = `resource-card bg-white border border-slate-200 rounded-2xl flex flex-col relative overflow-hidden shadow-md`;
                         
-                        // FIX: Added explicit high z-indexes (z-20 & z-30) to the hover gradient, action icon, and file type tag 
-                        // so they are strictly forced above the dynamically generated PDF thumbnails.
                         let cardInnerHtml = `
                             <div class="h-44 w-full relative overflow-hidden shrink-0 border-b border-slate-100 cursor-pointer" onclick="openResourceInApp('${resUrl}', '${type}', '${data.title}', '${data.desc}')">
                                 ${thumbElement}
@@ -670,7 +675,7 @@
                                     </div>
                                     <div class="flex gap-2">
                                         <button onclick="shareResource('${data.title}', '${resUrl}', '${data.desc}')" class="p-2 rounded-xl text-slate-500 hover:bg-slate-100 hover:text-indigo-600 transition active:scale-95 border border-transparent hover:border-slate-300" title="Share">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
                                         </button>
                                         <button onclick="openResourceInApp('${resUrl}', '${type}', '${data.title}', '${data.desc}')" class="px-4 py-2 rounded-xl text-xs font-bold transition active:scale-95 shadow-sm ${style.btnStyle}">${style.btn}</button>
                                     </div>
@@ -750,12 +755,10 @@
                     container.appendChild(card);
                 });
                 
-                // Initialize PDF Thumbnails after rendering grid
                 initPdfThumbnails();
             }
         }
 
-        // --- NATIVE SHARE LOGIC ---
         async function shareResource(title, url, desc) {
             const baseUri = window.location.href.split('?')[0];
             const shareUrl = (url && url !== '#') ? new URL(url, baseUri).href : baseUri;
@@ -798,7 +801,6 @@
             }
         }
 
-        // --- IN-APP RESOURCE PREVIEW LOGIC ---
         function openResourceInApp(url, type, title, desc) {
             const isPro = new URLSearchParams(window.location.search).get('pro') === 'true';
             const resObj = resources.find(r => r[currentLang] && r[currentLang].title === title);
@@ -852,7 +854,9 @@
                     `;
                     setTimeout(() => loader.style.display = 'none', 400);
                 } else if (type === 'PDF') {
-                    // PDF.JS LAZY LOADING & MEMORY OPTIMIZATION ENGINE
+                    
+                    // NEW: Completely rewritten CSS structure and Zoom math algorithm 
+                    // to support perfect "True Origin" Pinch zooming and unlimited panning.
                     iframe.removeAttribute('src');
                     iframe.srcdoc = `
                         <!DOCTYPE html>
@@ -862,13 +866,17 @@
                             <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
                             <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"><\/script>
                             <style>
-                                body { margin: 0; background: #cbd5e1; display: flex; flex-direction: column; align-items: center; padding: 10px 0; font-family: sans-serif; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-                                .page-container { margin-bottom: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius: 4px; overflow: hidden; background: white; display: flex; justify-content: center; align-items: center; width: 95vw; min-height: 50vh; transition: width 0.1s ease-out; position: relative;}
+                                html, body { margin: 0; padding: 0; background: #cbd5e1; font-family: sans-serif; overflow: auto; -webkit-overflow-scrolling: touch; width: 100%; height: 100%; }
+                                
+                                /* Structural overhaul to unlock 1-finger horizontal scroll/pan */
+                                #pdf-container { padding: 10px; min-height: 100%; width: max-content; min-width: 100%; box-sizing: border-box; }
+                                /* FIX: Added explicit 'width: 95vw' to ensure PDF forces a fitted scale on initial load! */
+                                .page-container { width: 95vw; margin: 0 auto 10px auto; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius: 4px; overflow: hidden; background: white; position: relative; }
+                                
                                 canvas { width: 100%; height: auto; display: block; }
                                 .loading-overlay { color: #334155; font-weight: bold; margin-top: 40px; text-align: center; line-height: 1.5; }
-                                .page-loader { position: absolute; color: #94a3b8; font-size: 14px; font-weight: bold; }
+                                .page-loader { position: absolute; color: #94a3b8; font-size: 14px; font-weight: bold; width: 100%; text-align: center; margin-top: 20px;}
                                 
-                                /* Floating Zoom Controls */
                                 .zoom-controls { position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 100; }
                                 .zoom-btn { width: 44px; height: 44px; border-radius: 50%; background: rgba(79, 70, 229, 0.9); color: white; border: none; font-size: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); cursor: pointer; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); transition: transform 0.1s; }
                                 .zoom-btn:active { transform: scale(0.95); }
@@ -880,53 +888,83 @@
                                 Preparing Document...
                             </div>
                             
-                            <!-- Floating Zoom Buttons -->
                             <div class="zoom-controls" id="zoom-controls" style="display: none;">
                                 <button class="zoom-btn" onclick="zoomIn()">+</button>
                                 <button class="zoom-btn" onclick="zoomOut()">-</button>
                             </div>
 
-                            <div id="pdf-container" style="width: 100%; display: flex; flex-direction: column; align-items: center; transform-origin: top left;"></div>
+                            <div id="pdf-container"></div>
                             
                             <script>
-                                // ==========================================
-                                // PINCH-TO-ZOOM & BUTTON LOGIC
-                                // ==========================================
                                 let currentZoom = 1;
                                 const minZoom = 0.5;
                                 const maxZoom = 4.0;
-                                let touchStartDist = 0;
-                                let initialZoom = 1;
+                                let pinchStart = { zoom: 1, dist: 0 };
 
-                                function updateZoom() {
+                                // NEW MATH ENGINE: "True Origin Scroll Compensation"
+                                function updateZoom(newZoom, originClientX, originClientY) {
+                                    newZoom = Math.min(Math.max(minZoom, newZoom), maxZoom);
+                                    if (newZoom === currentZoom) return;
+
+                                    // Default to screen center for +/- button clicks
+                                    if (originClientX === undefined) originClientX = window.innerWidth / 2;
+                                    if (originClientY === undefined) originClientY = window.innerHeight / 2;
+
+                                    // Where was this pixel on the raw document *before* we zoom?
+                                    const docX = originClientX + window.scrollX;
+                                    const docY = originClientY + window.scrollY;
+
+                                    const zoomRatio = newZoom / currentZoom;
+                                    currentZoom = newZoom;
+
+                                    // Apply the new scale widths
                                     const pages = document.querySelectorAll('.page-container');
-                                    pages.forEach(p => { p.style.width = (95 * currentZoom) + 'vw'; });
+                                    pages.forEach(p => { 
+                                        p.style.width = (95 * currentZoom) + 'vw'; 
+                                        
+                                        // Panning Fix: Re-align left when zooming out of bounds to unblock scrollbars
+                                        if (currentZoom > 1.05) {
+                                            p.style.marginLeft = "0px";
+                                            p.style.marginRight = "10px";
+                                        } else {
+                                            p.style.marginLeft = "auto";
+                                            p.style.marginRight = "auto";
+                                        }
+                                    });
+
+                                    // Mathematical shift accounting for the 10px container padding
+                                    const newDocX = 10 + (docX - 10) * zoomRatio;
+                                    const newDocY = 10 + (docY - 10) * zoomRatio;
+
+                                    // Snap the document scroll so the pixel stays glued right under your fingers
+                                    window.scrollTo(newDocX - originClientX, newDocY - originClientY);
                                 }
 
-                                function zoomIn() { currentZoom = Math.min(currentZoom + 0.4, maxZoom); updateZoom(); }
-                                function zoomOut() { currentZoom = Math.max(currentZoom - 0.4, minZoom); updateZoom(); }
+                                function zoomIn() { updateZoom(currentZoom + 0.4); }
+                                function zoomOut() { updateZoom(currentZoom - 0.4); }
 
                                 document.addEventListener('touchstart', (e) => {
                                     if (e.touches.length === 2) {
-                                        touchStartDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
-                                        initialZoom = currentZoom;
+                                        pinchStart.dist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
+                                        pinchStart.zoom = currentZoom;
                                     }
                                 }, { passive: false });
 
                                 document.addEventListener('touchmove', (e) => {
                                     if (e.touches.length === 2) {
-                                        e.preventDefault(); 
-                                        const touchCurrentDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
-                                        const scaleChange = touchCurrentDist / touchStartDist;
-                                        currentZoom = Math.min(Math.max(minZoom, initialZoom * scaleChange), maxZoom);
-                                        updateZoom();
+                                        e.preventDefault(); // Stop native zoom, run our high-precision math instead
+                                        const currentDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
+                                        const scaleChange = currentDist / pinchStart.dist;
+                                        const newZoom = pinchStart.zoom * scaleChange;
+
+                                        // Pinpoint the exact center between the two fingers
+                                        const originClientX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+                                        const originClientY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+
+                                        updateZoom(newZoom, originClientX, originClientY);
                                     }
                                 }, { passive: false });
 
-
-                                // ==========================================
-                                // LAZY LOADING PDF RENDER ENGINE
-                                // ==========================================
                                 async function renderPDF() {
                                     const fileUrl = '${url}';
                                     const pdfjsLib = window['pdfjs-dist/build/pdf'];
@@ -940,7 +978,6 @@
                                         document.getElementById('zoom-controls').style.display = 'flex';
                                         const container = document.getElementById('pdf-container');
                                         
-                                        // 1. Create Layout Placeholders instantly
                                         for(let i = 1; i <= pdf.numPages; i++) {
                                             const wrapper = document.createElement('div');
                                             wrapper.className = 'page-container';
@@ -949,7 +986,6 @@
                                             container.appendChild(wrapper);
                                         }
 
-                                        // 2. Setup Memory-Safe Lazy Loader
                                         const observer = new IntersectionObserver((entries) => {
                                             entries.forEach(entry => {
                                                 if (entry.isIntersecting) {
@@ -961,9 +997,8 @@
                                                     }
                                                 }
                                             });
-                                        }, { rootMargin: "200% 0px" }); // Pre-load 2 screens ahead
+                                        }, { rootMargin: "200% 0px" });
 
-                                        // Observe all placeholders
                                         document.querySelectorAll('.page-container').forEach(el => observer.observe(el));
 
                                     } catch(e) {
@@ -976,19 +1011,16 @@
                                     try {
                                         const page = await pdf.getPage(pageNum);
                                         
-                                        // Optimization: Lower the internal base resolution on mobile to prevent RAM crashes
                                         const isMobile = window.innerWidth < 768;
                                         const baseScale = isMobile ? 1.0 : 1.5; 
                                         const viewport = page.getViewport({scale: baseScale});
                                         
-                                        // Set correct aspect ratio dynamically to prevent jumpiness
                                         wrapper.style.minHeight = 'auto';
                                         wrapper.style.aspectRatio = viewport.width / viewport.height;
                                         
                                         const canvas = document.createElement('canvas');
                                         const ctx = canvas.getContext('2d');
                                         
-                                        // STRICT MEMORY LIMIT: Cap device pixel ratio on mobile (DPR 3+ on 15MB PDF causes OOM crash)
                                         const outputScale = isMobile ? Math.min(window.devicePixelRatio || 1, 1.5) : (window.devicePixelRatio || 1);
                                         
                                         canvas.width = Math.floor(viewport.width * outputScale);
@@ -1004,11 +1036,9 @@
                                         
                                         await page.render(renderContext).promise;
                                         
-                                        // Swap placeholder with real canvas
                                         wrapper.innerHTML = ''; 
                                         wrapper.appendChild(canvas);
 
-                                        // VITAL: Release the heavy page object from memory after rendering
                                         page.cleanup();
 
                                     } catch (err) {
@@ -1048,21 +1078,59 @@
 
         function toggleFullScreen() {
             const modal = document.getElementById("previewModal");
-            if (!document.fullscreenElement) {
-                if (modal.requestFullscreen) { modal.requestFullscreen(); }
-                else if (modal.webkitRequestFullscreen) { modal.webkitRequestFullscreen(); } 
-                else if (modal.msRequestFullscreen) { modal.msRequestFullscreen(); } 
+            const docEl = document.documentElement;
+
+            const hasNativeFullscreen = docEl.requestFullscreen || docEl.webkitRequestFullscreen || docEl.msRequestFullscreen;
+            const isNativeFullscreenActive = document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
+            const isPseudoFullscreenActive = modal.classList.contains('pseudo-fullscreen');
+
+            if (!isNativeFullscreenActive && !isPseudoFullscreenActive) {
+                // Try Native
+                if (hasNativeFullscreen && typeof modal.requestFullscreen === 'function') {
+                    try {
+                        if (modal.requestFullscreen) { modal.requestFullscreen(); }
+                        else if (modal.webkitRequestFullscreen) { modal.webkitRequestFullscreen(); } 
+                        else if (modal.msRequestFullscreen) { modal.msRequestFullscreen(); } 
+                    } catch(e) {
+                        enablePseudoFullscreen(modal);
+                    }
+                } else {
+                    // Fallback for iOS
+                    enablePseudoFullscreen(modal);
+                }
             } else {
-                if (document.exitFullscreen) { document.exitFullscreen(); }
-                else if (document.webkitExitFullscreen) { document.webkitExitFullscreen(); }
-                else if (document.msExitFullscreen) { document.msExitFullscreen(); }
+                // Exit Fullscreen
+                if (isNativeFullscreenActive) {
+                    if (document.exitFullscreen) { document.exitFullscreen(); }
+                    else if (document.webkitExitFullscreen) { document.webkitExitFullscreen(); }
+                    else if (document.msExitFullscreen) { document.msExitFullscreen(); }
+                }
+                if (isPseudoFullscreenActive) {
+                    disablePseudoFullscreen(modal);
+                }
             }
+            setTimeout(updateFullscreenIcon, 100);
+        }
+
+        function enablePseudoFullscreen(modal) {
+            modal.classList.add('pseudo-fullscreen');
+            document.body.classList.add('pseudo-fullscreen-active');
+        }
+
+        function disablePseudoFullscreen(modal) {
+            modal.classList.remove('pseudo-fullscreen');
+            document.body.classList.remove('pseudo-fullscreen-active');
         }
 
         function updateFullscreenIcon() {
             const fsMax = document.getElementById('fsMax');
             const fsMin = document.getElementById('fsMin');
-            if (document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement) {
+            const modal = document.getElementById("previewModal");
+            
+            const isNative = document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
+            const isPseudo = modal && modal.classList.contains('pseudo-fullscreen');
+
+            if (isNative || isPseudo) {
                 if(fsMax) fsMax.classList.add('hidden');
                 if(fsMin) fsMin.classList.remove('hidden');
             } else {
@@ -1136,6 +1204,9 @@
                 if (document.fullscreenElement) {
                     if (document.exitFullscreen) document.exitFullscreen();
                 }
+                
+                // Clear out pseudo fullscreen automatically
+                disablePseudoFullscreen(modal);
 
                 modal.classList.remove('scale-100', 'opacity-100');
                 modal.classList.add('scale-95', 'opacity-0');
