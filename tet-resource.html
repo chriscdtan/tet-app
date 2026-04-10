@@ -198,12 +198,13 @@
                 </div>
 
                 <!-- Modal Body (Iframe container) -->
-                <div id="iframeContainer" class="flex-1 bg-slate-900 relative w-full h-full flex items-center justify-center overflow-hidden">
-                    <div id="previewLoader" class="absolute inset-0 flex flex-col items-center justify-center z-0 bg-slate-900">
+                <!-- FIX: Replaced default hardcoded background colors with dynamic JS-controlled classes -->
+                <div id="iframeContainer" class="flex-1 relative w-full h-full flex items-center justify-center overflow-hidden transition-colors">
+                    <div id="previewLoader" class="absolute inset-0 flex flex-col items-center justify-center z-0 transition-colors">
                          <div class="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-indigo-500 mb-4"></div>
-                         <span class="text-xs font-bold text-slate-300 uppercase tracking-widest" id="txtLoadingPreview">Loading Source...</span>
+                         <span class="text-xs font-bold uppercase tracking-widest" id="txtLoadingPreview">Loading Source...</span>
                     </div>
-                    <iframe id="previewIframe" class="w-full h-full relative z-10 bg-transparent border-0 shadow-inner" allowfullscreen allow="autoplay" onload="document.getElementById('previewLoader').style.display='none'"></iframe>
+                    <iframe id="previewIframe" class="w-full h-full relative z-10 border-0 shadow-inner transition-colors" allowfullscreen allow="autoplay" onload="document.getElementById('previewLoader').style.display='none'"></iframe>
                 </div>
             </div>
 
@@ -305,13 +306,17 @@
 
         // FALLBACK DATA
         const fallbackData = [
-            { 
-                id: 1, type: 'PDF', category: 'official', size: '2.4 MB', date: '2026-04-01', 
-                thumbnail: '', 
-                url: '#',
-                en: { title: 'TET Whitepaper v5.0', desc: 'The comprehensive technical and strategic blueprint of the TET ecosystem.' }, 
-                zh: { title: 'TET 白皮书 v5.0', desc: 'TET 生态系统的全面技术和战略蓝图。' } 
-            },
+			{ 
+			"id": 1, 
+			"type": "PDF", 
+			"category": "official", 
+			"size": "9.5 MB", 
+			"date": "2026-01-15", 
+			"thumbnail": "", 
+			"url": "https://pub-52a58abd92114df58bd0f1addd9659d8.r2.dev/Official/DrixPay%20%E7%99%BD%E7%9A%AE%E4%B9%A6.pdf",
+			"en": { "title": "TET Whitepaper", "desc": "The comprehensive technical and strategic blueprint of the TET ecosystem." }, 
+			"zh": { "title": "TET 白皮书", "desc": "TET 生态系统的全面技术和战略蓝图。" } 
+			},
         ];
 
         // --- INITIALIZATION ---
@@ -820,10 +825,36 @@
                 const iframe = document.getElementById('previewIframe');
                 const loader = document.getElementById('previewLoader');
                 const container = document.getElementById('iframeContainer');
+                const txtLoader = document.getElementById('txtLoadingPreview');
                 
                 document.getElementById('previewTitle').innerText = title;
                 document.getElementById('previewIcon').innerText = getActionDetails(type).icon;
                 
+                // 1. Reset specific sizing and dynamic theme classes
+                container.classList.remove('bg-slate-900', 'bg-white', 'bg-slate-300');
+                loader.classList.remove('bg-slate-900', 'bg-white', 'bg-slate-300');
+                txtLoader.classList.remove('text-slate-300', 'text-slate-700');
+                iframe.classList.remove('bg-transparent', 'bg-white');
+
+                // 2. Apply dynamic themes based on File Type to prevent transparent bleeding
+                if (type === 'LINK') {
+                    container.classList.add('bg-white');
+                    loader.classList.add('bg-white');
+                    txtLoader.classList.add('text-slate-700');
+                    iframe.classList.add('bg-white');
+                } else if (type === 'PDF') {
+                    container.classList.add('bg-slate-300');
+                    loader.classList.add('bg-slate-300');
+                    txtLoader.classList.add('text-slate-700');
+                    iframe.classList.add('bg-transparent');
+                } else {
+                    container.classList.add('bg-slate-900');
+                    loader.classList.add('bg-slate-900');
+                    txtLoader.classList.add('text-slate-300');
+                    iframe.classList.add('bg-transparent');
+                }
+
+                // 3. Size layout
                 if (type === 'VID' || type === 'AUDIO') {
                     modal.classList.remove('h-[85vh]');
                     modal.classList.add('h-auto', 'max-h-[95vh]');
@@ -854,9 +885,6 @@
                     `;
                     setTimeout(() => loader.style.display = 'none', 400);
                 } else if (type === 'PDF') {
-                    
-                    // NEW: Completely rewritten CSS structure and Zoom math algorithm 
-                    // to support perfect "True Origin" Pinch zooming and unlimited panning.
                     iframe.removeAttribute('src');
                     iframe.srcdoc = `
                         <!DOCTYPE html>
@@ -867,12 +895,8 @@
                             <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"><\/script>
                             <style>
                                 html, body { margin: 0; padding: 0; background: #cbd5e1; font-family: sans-serif; overflow: auto; -webkit-overflow-scrolling: touch; width: 100%; height: 100%; }
-                                
-                                /* Structural overhaul to unlock 1-finger horizontal scroll/pan */
                                 #pdf-container { padding: 10px; min-height: 100%; width: max-content; min-width: 100%; box-sizing: border-box; }
-                                /* FIX: Added explicit 'width: 95vw' to ensure PDF forces a fitted scale on initial load! */
                                 .page-container { width: 95vw; margin: 0 auto 10px auto; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius: 4px; overflow: hidden; background: white; position: relative; }
-                                
                                 canvas { width: 100%; height: auto; display: block; }
                                 .loading-overlay { color: #334155; font-weight: bold; margin-top: 40px; text-align: center; line-height: 1.5; }
                                 .page-loader { position: absolute; color: #94a3b8; font-size: 14px; font-weight: bold; width: 100%; text-align: center; margin-top: 20px;}
@@ -901,28 +925,23 @@
                                 const maxZoom = 4.0;
                                 let pinchStart = { zoom: 1, dist: 0 };
 
-                                // NEW MATH ENGINE: "True Origin Scroll Compensation"
                                 function updateZoom(newZoom, originClientX, originClientY) {
                                     newZoom = Math.min(Math.max(minZoom, newZoom), maxZoom);
                                     if (newZoom === currentZoom) return;
 
-                                    // Default to screen center for +/- button clicks
                                     if (originClientX === undefined) originClientX = window.innerWidth / 2;
                                     if (originClientY === undefined) originClientY = window.innerHeight / 2;
 
-                                    // Where was this pixel on the raw document *before* we zoom?
                                     const docX = originClientX + window.scrollX;
                                     const docY = originClientY + window.scrollY;
 
                                     const zoomRatio = newZoom / currentZoom;
                                     currentZoom = newZoom;
 
-                                    // Apply the new scale widths
                                     const pages = document.querySelectorAll('.page-container');
                                     pages.forEach(p => { 
                                         p.style.width = (95 * currentZoom) + 'vw'; 
                                         
-                                        // Panning Fix: Re-align left when zooming out of bounds to unblock scrollbars
                                         if (currentZoom > 1.05) {
                                             p.style.marginLeft = "0px";
                                             p.style.marginRight = "10px";
@@ -932,11 +951,9 @@
                                         }
                                     });
 
-                                    // Mathematical shift accounting for the 10px container padding
                                     const newDocX = 10 + (docX - 10) * zoomRatio;
                                     const newDocY = 10 + (docY - 10) * zoomRatio;
 
-                                    // Snap the document scroll so the pixel stays glued right under your fingers
                                     window.scrollTo(newDocX - originClientX, newDocY - originClientY);
                                 }
 
@@ -952,12 +969,11 @@
 
                                 document.addEventListener('touchmove', (e) => {
                                     if (e.touches.length === 2) {
-                                        e.preventDefault(); // Stop native zoom, run our high-precision math instead
+                                        e.preventDefault(); 
                                         const currentDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
                                         const scaleChange = currentDist / pinchStart.dist;
                                         const newZoom = pinchStart.zoom * scaleChange;
 
-                                        // Pinpoint the exact center between the two fingers
                                         const originClientX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
                                         const originClientY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
 
