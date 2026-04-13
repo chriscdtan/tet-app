@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TET 收益模拟器 (V2.4.7)</title>
+    <title>TET 收益模拟器 (V2.4.9)</title>
 
     <!-- ANTI-FLICKER SCRIPT: Runs before the body renders -->
     <script>
@@ -230,7 +230,7 @@
                 </div>
                 <!-- MOBILE WRAPPING FIX applied here -->
                 <div class="flex items-center gap-1.5 mt-2 overflow-x-auto no-scrollbar pb-1 w-full max-w-[100vw]">
-                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-100 px-2 py-0.5 rounded-md whitespace-nowrap flex-shrink-0">V2.4.7 • Hub Edition</span>
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-100 px-2 py-0.5 rounded-md whitespace-nowrap flex-shrink-0">V2.4.9 • Hub Edition</span>
                     
                     <div class="sync-badge bg-indigo-50 text-indigo-500 border border-indigo-100 shadow-sm flex-shrink-0 whitespace-nowrap">
                         <div class="sync-dot bg-indigo-500">
@@ -280,7 +280,8 @@
                             </span>
                         </summary>
                         <div class="p-5 sm:p-6 bg-slate-50/50">
-                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 sm:gap-5" id="nodesContainer">
+                            <!-- Adjusted for 9 Nodes (3x3 grid on lg/xl screens) -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5" id="nodesContainer">
                                 <!-- Dynamic Nodes -->
                             </div>
                         </div>
@@ -352,18 +353,18 @@
                         <p class="text-[11px] text-white/60 max-w-sm mx-auto mt-2 leading-relaxed" data-i18n="final_desc">This is the estimated TET balance in your account at the end of the simulation period.</p>
                         
                         <!-- RESTAKED / REINVESTED Grid -->
-                        <div class="grid grid-cols-3 gap-2 mt-8 bg-white/10 backdrop-blur-md rounded-2xl p-3 sm:p-4 border border-white/10 shadow-inner">
-                            <div class="border-r border-white/10 px-1 text-center overflow-hidden">
-                                <div class="text-[8px] sm:text-[10px] uppercase text-white/60 font-black tracking-wider whitespace-nowrap truncate" data-i18n="restaked_tet">Restaked</div>
-                                <div class="text-sm sm:text-lg md:text-xl font-bold mt-1.5 text-sky-300 drop-shadow truncate" id="totalSpentAmount">0</div>
+                        <div class="flex flex-col sm:grid sm:grid-cols-3 gap-3 sm:gap-2 mt-8 bg-white/10 backdrop-blur-md rounded-2xl p-4 sm:p-4 border border-white/10 shadow-inner">
+                            <div class="flex justify-between items-center sm:block sm:border-r sm:border-white/10 border-b border-white/10 pb-3 sm:pb-0 sm:border-b-0 px-1 sm:text-center">
+                                <div class="text-[10px] sm:text-[10px] uppercase text-white/60 font-black tracking-wider whitespace-nowrap" data-i18n="restaked_tet">Restaked</div>
+                                <div class="text-sm sm:text-lg md:text-xl font-bold sm:mt-1.5 text-sky-300 drop-shadow break-words text-right sm:text-center" id="totalSpentAmount">0</div>
                             </div>
-                            <div class="border-r border-white/10 px-1 text-center overflow-hidden">
-                                <div class="text-[8px] sm:text-[10px] uppercase text-white/60 font-black tracking-wider whitespace-nowrap truncate" data-i18n="withdraw_tet">Withdraw (85%)</div>
-                                <div class="text-sm sm:text-lg md:text-xl font-bold mt-1.5 text-indigo-200 drop-shadow truncate" id="withdrawAmount">0</div>
+                            <div class="flex justify-between items-center sm:block sm:border-r sm:border-white/10 border-b border-white/10 pb-3 sm:pb-0 sm:border-b-0 px-1 sm:text-center">
+                                <div class="text-[10px] sm:text-[10px] uppercase text-white/60 font-black tracking-wider whitespace-nowrap" data-i18n="withdraw_tet">Withdraw (85%)</div>
+                                <div class="text-sm sm:text-lg md:text-xl font-bold sm:mt-1.5 text-indigo-200 drop-shadow break-words text-right sm:text-center" id="withdrawAmount">0</div>
                             </div>
-                            <div class="px-1 text-center overflow-hidden">
-                                <div class="text-[8px] sm:text-[10px] uppercase text-white/60 font-black tracking-wider whitespace-nowrap truncate" data-i18n="usdt_value">USDT (90%)</div>
-                                <div class="text-sm sm:text-lg md:text-xl font-bold mt-1.5 text-emerald-300 drop-shadow truncate" id="usdtAmount">$0.00</div>
+                            <div class="flex justify-between items-center sm:block px-1 sm:text-center">
+                                <div class="text-[10px] sm:text-[10px] uppercase text-white/60 font-black tracking-wider whitespace-nowrap" data-i18n="usdt_value">USDT (90%)</div>
+                                <div class="text-sm sm:text-lg md:text-xl font-bold sm:mt-1.5 text-emerald-300 drop-shadow break-words text-right sm:text-center" id="usdtAmount">$0.00</div>
                             </div>
                         </div>
                     </div>
@@ -571,6 +572,9 @@
         function t(key) { return i18n[currentLang][key] !== undefined ? i18n[currentLang][key] : key; }
 
         const nodeDefinitions = [
+            { id: 50000, cost: 50000, reward: 65000 },
+            { id: 30000, cost: 30000, reward: 39000 },
+            { id: 10000, cost: 10000, reward: 13000 },
             { id: 5000, cost: 5000, reward: 6500 },
             { id: 3000, cost: 3000, reward: 3900 },
             { id: 1000, cost: 1000, reward: 1300 },
@@ -1275,8 +1279,26 @@
                     }]
                 },
                 options: {
-                    responsive: true, maintainAspectRatio: false, animation: { duration: 500 }, plugins: { legend: { display: false } },
-                    scales: { y: { beginAtZero: true, grid: { borderDash: [2, 4], color: '#f1f5f9' } }, x: { grid: { display: false }, ticks: { maxTicksLimit: 10 } } }
+                    responsive: true, maintainAspectRatio: false, animation: { duration: 500 }, 
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: { 
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                            titleFont: { family: 'Roboto', size: 12 },
+                            bodyFont: { family: 'Roboto', size: 14, weight: 'bold' },
+                            padding: 12,
+                            cornerRadius: 8,
+                            displayColors: false,
+                            callbacks: {
+                                label: function(context) { return context.parsed.y.toFixed(2) + ' TET'; }
+                            }
+                        }
+                    },
+                    scales: { 
+                        y: { beginAtZero: true, grid: { borderDash: [2, 4], color: '#f1f5f9' } }, 
+                        x: { grid: { display: false }, ticks: { maxTicksLimit: 10 } } 
+                    }
                 }
             });
             document.getElementById('graphSection').classList.remove('hidden');
@@ -1294,15 +1316,18 @@
             else { resultCard.className += "bg-gradient-to-br from-black via-slate-900 to-black"; }
 
             summaryDiv.classList.remove('hidden');
-            document.getElementById('finalAmount').innerText = finalWallet.toFixed(2);
-            document.getElementById('totalSpentAmount').innerText = totalSpent.toFixed(2);
+            
+            const formatNum = (num) => num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            
+            document.getElementById('finalAmount').innerText = formatNum(finalWallet);
+            document.getElementById('totalSpentAmount').innerText = formatNum(totalSpent);
             
             const tetPrice = parseFloat(document.getElementById('tetPriceInput').value) || 0;
             const withdrawAmt = finalWallet * 0.85; 
             const usdtAmt = withdrawAmt * tetPrice * 0.90; 
 
-            document.getElementById('withdrawAmount').innerText = withdrawAmt.toFixed(2);
-            document.getElementById('usdtAmount').innerText = "$" + usdtAmt.toFixed(2);
+            document.getElementById('withdrawAmount').innerText = formatNum(withdrawAmt);
+            document.getElementById('usdtAmount').innerText = "$" + formatNum(usdtAmt);
         }
 
         // --- STATE & PROFILE MANAGEMENT ---

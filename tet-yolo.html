@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TET 节点计算器 (V11.4.0)</title>
+    <title>TET 节点计算器 (V11.5.0)</title>
 
     <!-- App Icons & PWA Meta Tags -->
     <link rel="manifest" href="manifest.json">
@@ -182,7 +182,7 @@
                 </div>
                 <!-- Mobile & Desktop Tag Header (Unified Wrap) -->
                 <div class="flex flex-wrap items-center gap-1.5 sm:gap-2 mt-2">
-                    <span class="text-[9px] font-bold text-slate-500 bg-slate-200/60 px-2 py-1 rounded-md uppercase tracking-widest border border-slate-200">V11.4.0 • Refined</span>
+                    <span class="text-[9px] font-bold text-slate-500 bg-slate-200/60 px-2 py-1 rounded-md uppercase tracking-widest border border-slate-200">V11.5.0 • High-Tier Nodes</span>
                     
                     <div class="sync-badge bg-indigo-50 text-indigo-500 border border-indigo-100 shadow-sm px-2 py-1 rounded-md">
                         <div class="sync-dot bg-indigo-500">
@@ -422,7 +422,7 @@
                 title_name: '节点计算器', sample_data: '演示数据 - 请解锁',
                 clear_inputs: '清除所有输入', confirm_reset: '确定要清除所有输入吗？', reset_done: '已重置',
                 auto_restake: '自动复投/质押',
-                tip_accel: '输入你账户当前的加速总额 (TET)。', tip_wallet: '输入你钱包里目前可用的 TET 余额。', tip_global_cycle: '当节点自动复投或自动质押时，将默认使用此周期天数。', tip_harv: '该节点从质押至今已经运行了多少天。', tip_cyc: '节点的生命周期。默认为 55 天，复投后会增加。', tip_over: '【可选】如果您知道确切的已产出数量，在此输入以覆盖自动计算。若未受加速影响请留空。', tip_restake: '开启后，该节点将在钱包余额充足时自动复投或自动质押。关闭则让其自然过期停止。',
+                tip_accel: '输入你账户当前的加速总额 (TET)。', tip_wallet: '输入你钱包里目前可用的 TET 余额。', tip_global_cycle: '当节点自动复投或自动质押时，将默认使用此周期天数。', tip_harv: '该节点从质押至今已经运行了多少天。', tip_cyc: '节点的生命周期。默认为 60 天，复投后会增加。', tip_over: '【可选】如果您知道确切的已产出数量，在此输入以覆盖自动计算。若未受加速影响请留空。', tip_restake: '开启后，该节点将在钱包余额充足时自动复投或自动质押。关闭则让其自然过期停止。',
                 pro_only: '专业版专属', pro_desc: '解锁全功能以自定义节点、设置全局加速并开启云端同步。', unlock_btn: '解锁权限'
             },
             en: {
@@ -448,7 +448,7 @@
                 title_name: 'Node Calculator', sample_data: 'Sample Data - Unlock',
                 clear_inputs: 'Clear All Inputs', confirm_reset: 'Are you sure you want to clear all inputs?', reset_done: 'Reset Complete',
                 auto_restake: 'Auto Stake/Restake',
-                tip_accel: 'Enter your current total Acceleration (TET).', tip_wallet: 'Enter the current available TET in your account.', tip_global_cycle: 'When a node auto-restakes or auto-Stakes, it will default to this cycle length.', tip_harv: 'How many days this node has been running since purchase.', tip_cyc: 'Lifecycle of the node. Default 55, increases after restake.', tip_over: '[Optional] Enter exact harvested amount here to override calculation. Leave blank if not accelerated.', tip_restake: 'If enabled, this node will auto-restake or auto-Stake when funds are available. Disable to let it stop.',
+                tip_accel: 'Enter your current total Acceleration (TET).', tip_wallet: 'Enter the current available TET in your account.', tip_global_cycle: 'When a node auto-restakes or auto-Stakes, it will default to this cycle length.', tip_harv: 'How many days this node has been running since purchase.', tip_cyc: 'Lifecycle of the node. Default 60, increases after restake.', tip_over: '[Optional] Enter exact harvested amount here to override calculation. Leave blank if not accelerated.', tip_restake: 'If enabled, this node will auto-restake or auto-Stake when funds are available. Disable to let it stop.',
                 pro_only: 'PRO ONLY', pro_desc: 'Unlock to customize node settings, adjust acceleration, and sync to the cloud.', unlock_btn: 'Unlock Access'
             }
         };
@@ -456,6 +456,7 @@
         function t(key) { return i18n[currentLang][key] || key; }
 
         const nodeDefinitions = [
+            { id: 50000, cost: 50000, reward: 65000 }, { id: 30000, cost: 30000, reward: 39000 }, { id: 10000, cost: 10000, reward: 13000 },
             { id: 5000, cost: 5000, reward: 6500 }, { id: 3000, cost: 3000, reward: 3900 }, { id: 1000, cost: 1000, reward: 1300 },
             { id: 500,  cost: 500,  reward: 650 }, { id: 300,  cost: 300,  reward: 390 }, { id: 100,  cost: 100,  reward: 130 }
         ];
@@ -682,7 +683,7 @@
             const select = document.getElementById('globalCycleInput');
             if (!select) return;
             let options = '';
-            for(let i=55; i<=120; i+=5) { options += `<option value="${i}">${i}</option>`; }
+            for(let i=60; i<=120; i+=5) { options += `<option value="${i}">${i}</option>`; }
             select.innerHTML = options;
         }
 
@@ -714,7 +715,7 @@
             const container = document.getElementById('nodesContainer');
             container.innerHTML = '';
             let cycleOptions = '';
-            for(let i=55; i<=120; i+=5) { cycleOptions += `<option value="${i}">${i}</option>`; }
+            for(let i=60; i<=120; i+=5) { cycleOptions += `<option value="${i}">${i}</option>`; }
 
             nodeDefinitions.forEach(def => {
                 container.innerHTML += `
@@ -767,7 +768,7 @@
 
         function updateBadge(id, reward) {
             const h = parseFloat(document.getElementById(`harv_${id}`).value) || 0;
-            const c = parseFloat(document.getElementById(`cyc_${id}`).value) || 55;
+            const c = parseFloat(document.getElementById(`cyc_${id}`).value) || 60;
             const o = parseFloat(document.getElementById(`over_${id}`).value) || 0;
             const globalAccel = parseFloat(document.getElementById('accelToken').value) || 0;
             const isActive = document.getElementById(`active_${id}`).checked;
@@ -806,13 +807,13 @@
         function getInitialState() {
             const accel = parseFloat(document.getElementById('accelToken').value) || 0;
             const startWallet = parseFloat(document.getElementById('currentWallet').value) || 0;
-            const globalCycle = parseInt(document.getElementById('globalCycleInput').value) || 55;
+            const globalCycle = parseInt(document.getElementById('globalCycleInput').value) || 60;
             let nodes = [];
             nodeDefinitions.forEach(def => {
                 const isActive = document.getElementById(`active_${def.id}`).checked;
                 const autoRestake = document.getElementById(`restake_${def.id}`).checked;
                 const h = parseFloat(document.getElementById(`harv_${def.id}`).value) || 0;
-                const c = parseFloat(document.getElementById(`cyc_${def.id}`).value) || 55;
+                const c = parseFloat(document.getElementById(`cyc_${def.id}`).value) || 60;
                 const oStr = document.getElementById(`over_${def.id}`).value;
                 
                 let o = 0;
@@ -1140,7 +1141,7 @@
 
         function getInputsData() {
             const raw = localStorage.getItem(INPUTS_KEY); let existingData = raw ? JSON.parse(raw) : {};
-            const data = { accel: document.getElementById('accelToken').value, wallet: document.getElementById('currentWallet').value, globalCycle: document.getElementById('globalCycleInput') ? document.getElementById('globalCycleInput').value : 55, simDays: existingData.simDays || '', price: existingData.price || '0.50', nodes: {} };
+            const data = { accel: document.getElementById('accelToken').value, wallet: document.getElementById('currentWallet').value, globalCycle: document.getElementById('globalCycleInput') ? document.getElementById('globalCycleInput').value : 60, simDays: existingData.simDays || '', price: existingData.price || '0.50', nodes: {} };
             nodeDefinitions.forEach(def => {
                 const restakeEl = document.getElementById(`restake_${def.id}`);
                 data.nodes[def.id] = { h: document.getElementById(`harv_${def.id}`).value, c: document.getElementById(`cyc_${def.id}`).value, o: document.getElementById(`over_${def.id}`).value, a: document.getElementById(`active_${def.id}`).checked, r: restakeEl ? restakeEl.checked : true };
@@ -1153,11 +1154,11 @@
 
         function applyInputsData(data) {
             document.getElementById('accelToken').value = data.accel || 0; document.getElementById('currentWallet').value = data.wallet || 0;
-            if (document.getElementById('globalCycleInput')) { document.getElementById('globalCycleInput').value = data.globalCycle || 55; }
+            if (document.getElementById('globalCycleInput')) { document.getElementById('globalCycleInput').value = data.globalCycle || 60; }
             if(data.nodes) {
                 nodeDefinitions.forEach(def => {
                     if(data.nodes[def.id]) {
-                        document.getElementById(`harv_${def.id}`).value = data.nodes[def.id].h || ''; document.getElementById(`cyc_${def.id}`).value = data.nodes[def.id].c || 55; document.getElementById(`over_${def.id}`).value = data.nodes[def.id].o || ''; document.getElementById(`active_${def.id}`).checked = (data.nodes[def.id].a !== undefined) ? data.nodes[def.id].a : true;
+                        document.getElementById(`harv_${def.id}`).value = data.nodes[def.id].h || ''; document.getElementById(`cyc_${def.id}`).value = data.nodes[def.id].c || 60; document.getElementById(`over_${def.id}`).value = data.nodes[def.id].o || ''; document.getElementById(`active_${def.id}`).checked = (data.nodes[def.id].a !== undefined) ? data.nodes[def.id].a : true;
                         const restakeEl = document.getElementById(`restake_${def.id}`); if (restakeEl) { restakeEl.checked = (data.nodes[def.id].r !== undefined) ? data.nodes[def.id].r : true; }
                     }
                 });
@@ -1169,9 +1170,9 @@
             if(!confirm(t('confirm_reset'))) return;
             localStorage.removeItem(INPUTS_KEY); activeProfileName = ''; localStorage.removeItem(ACTIVE_PROFILE_KEY);
             document.getElementById('accelToken').value = 0; document.getElementById('currentWallet').value = 0;
-            if (document.getElementById('globalCycleInput')) { document.getElementById('globalCycleInput').value = 55; }
+            if (document.getElementById('globalCycleInput')) { document.getElementById('globalCycleInput').value = 60; }
             nodeDefinitions.forEach(def => {
-                document.getElementById(`active_${def.id}`).checked = true; document.getElementById(`harv_${def.id}`).value = ''; document.getElementById(`cyc_${def.id}`).value = 55; document.getElementById(`over_${def.id}`).value = '';
+                document.getElementById(`active_${def.id}`).checked = true; document.getElementById(`harv_${def.id}`).value = ''; document.getElementById(`cyc_${def.id}`).value = 60; document.getElementById(`over_${def.id}`).value = '';
                 const restakeEl = document.getElementById(`restake_${def.id}`); if(restakeEl) restakeEl.checked = true;
             });
             document.getElementById('resultCard').className = "bg-gradient-to-br from-slate-800 to-slate-900 text-white rounded-3xl shadow-2xl overflow-hidden relative transition-all duration-700";
@@ -1321,13 +1322,13 @@
             if (daysPassed <= 0) return;
             const accel = parseFloat(profileData.accel) || 0;
             let currentWallet = parseFloat(profileData.wallet) || 0;
-            const globalCycle = parseInt(profileData.globalCycle) || 55;
+            const globalCycle = parseInt(profileData.globalCycle) || 60;
 
             let simNodes = [];
             nodeDefinitions.forEach(def => {
                 if (profileData.nodes && profileData.nodes[def.id]) {
                     let nd = profileData.nodes[def.id];
-                    let c = parseFloat(nd.c) || 55;
+                    let c = parseFloat(nd.c) || 60;
                     let h = parseFloat(nd.h) || 0;
                     let o = 0;
                     if (nd.o !== '' && nd.o !== undefined && nd.o !== null) {
